@@ -1,21 +1,24 @@
+.default_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" &&$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =="main"'
+      when: always
+
 stages:
   - build
   - test
   - deliver
 
-# Compile (if needed) here.
 compile:
   stage: build
   script:
     - echo "Compiled"
-# Compiled file(s) are temporarily saved, and will appear in the next jobs' containers
-  artifacts: 
+  artifacts:
     paths:
       - compiled.file
     expire_in: 10 minutes
+  extends: .default_rules
 
-# test-image is built and stored in the project registry
-build_test_image:
+deploy_test_image:
   dependencies: 
     - compile
   image: docker:latest
@@ -25,10 +28,9 @@ build_test_image:
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-  # This refers to a Dockerfile in the root of the project. To add more, make several folders with Dockerfiles, 
-  # or name them differently and include that in the build command.
     - docker build -t "$CI_REGISTRY_IMAGE/name-test:latest" .
     - docker push "$CI_REGISTRY_IMAGE/name-test:latest"
+  extends: .default_rules
 
 unit-tests:
   stage: test
@@ -36,16 +38,4 @@ unit-tests:
   script:
     - echo "run test in test image"
     - echo "run other test in test image"
-
-acceptance-tests:
-  stage: test
-  dependencies:
-    - unit-tests
-  script:
-    - echo "run some test"
-
-integration-tests:
-  stage: test
-  dependencies:
-    - acceptance-tests
-  script:
+  extends: .default_rules
