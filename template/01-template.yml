@@ -51,9 +51,12 @@ acceptance-tests:
     - unit-tests
   script:
     - echo "run some test"
+  extends: .default_rules
 
 integration-tests:
   stage: test
   dependencies:
     - acceptance-tests
   script:
+    - echo "run acceptance test"
+  extends: .default_rules
