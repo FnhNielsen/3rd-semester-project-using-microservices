@@ -7,6 +7,7 @@ stages:
   - build
   - test
   - deliver
+  - cleanup
 
 # Compile (if needed) here.
 compile:
@@ -60,3 +61,18 @@ integration-tests:
   script:
     - echo "run acceptance test"
   extends: .default_rules
+
+cleanup_build_job:
+  stage: cleanup
+  when: on_failure
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - apk add curl
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - curl -L https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64 > /bin/reg
+    - chmod +x /bin/reg
+  script:
+    - curl -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" "https://gitlab.com/jwt/auth?account=$CI_REGISTRY_USER&scope=repository:$CI_REGISTRY_IMAGE/test-image:delete&service=container_registry"
+    - /bin/reg -d -r $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD rm "$CI_PROJECT_PATH/test-image:${CI_COMMIT_SHA:0:10}"
