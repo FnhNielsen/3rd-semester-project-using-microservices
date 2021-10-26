@@ -1,0 +1,33 @@
+stages:
+  - build
+  - test
+  - deliver
+
+compile:
+  stage: build
+  script:
+    - echo "Compiled"
+  artifacts:
+    paths:
+      - compiled.file
+    expire_in: 10 minutes
+
+deploy_test_image:
+  dependencies: 
+    - compile
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/name-test:latest" .
+    - docker push "$CI_REGISTRY_IMAGE/name-test:latest"
+
+unit-tests:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE/name:latest"
+  script:
+    - echo "run test in test image"
+    - echo "run other test in test image"
