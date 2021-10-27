@@ -3,6 +3,13 @@
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" &&$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =="main"'
       when: always
 
+.default_rules_push:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =="main"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "test-merge-into"'
+      when: always
+
 stages:
   - build
   - test
@@ -44,7 +51,7 @@ unit-tests:
   script:
     - echo "run test in test image"
     - echo "run other test in test image"
-  extends: .default_rules
+  extends: .default_rules_push
 
 acceptance-tests:
   stage: test
