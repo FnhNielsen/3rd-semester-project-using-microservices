@@ -94,7 +94,8 @@ stages:
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
     - echo ${CI_CD_DOCKER_FILE_PATH}
     - ls
-    - if [ -z "${CI_CD_DOCKER_FILE_PATH}" ]; then cd ${CI_CD_DOCKER_FILE_PATH}; fi
+    - if [ ! -z "${CI_CD_DOCKER_FILE_PATH}" ]; then cd ${CI_CD_DOCKER_FILE_PATH}; fi
+    - ls
   script:
     - ls
     - docker build -t "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" -f "${CI_CD_DOCKER_FILE}" .
