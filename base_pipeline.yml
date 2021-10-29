@@ -128,8 +128,8 @@ stages:
     - chmod a+x "/usr/local/bin/reg"
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
   script:
-    - curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_NAME}:delete&service=container_registry"
-    - /usr/local/bin/reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_TEST_IMAGE_NAME}:${CI_CD_TAG}"
+    - curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:delete&service=container_registry"
+    - /usr/local/bin/reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
 .check_for_tag:
   before_script:
