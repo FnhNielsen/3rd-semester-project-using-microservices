@@ -15,7 +15,7 @@ variables:
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
     ref: dev
-    file: 'to_include.yml'
+    file: 'base_pipeline.yml'
 
 ##############################
 ############ JOBS ############
