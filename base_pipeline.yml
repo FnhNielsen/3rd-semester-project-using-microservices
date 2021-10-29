@@ -1,3 +1,9 @@
+### Default ###
+image: docker:latest
+
+services:
+  - docker:dind
+
 stages:
   - build
   - test
@@ -7,6 +13,21 @@ stages:
 .only_production_branch:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+      when: on_success
+
+.except_production:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
       when: on_success
 
 .default:
@@ -84,12 +105,12 @@ stages:
   stage: deliver
   extends: .only_production_branch
 
-.finish:
+.cleanup_dev:
   stage: finish
-  extends: .always
+  extends: .except_production
 
 ### Methods ¤¤¤
-.deploy_image:
+.push_image:
   before_script:
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
     - if [ ! -z "${CI_CD_DOCKER_FILE_PATH}" ]; then cd ${CI_CD_DOCKER_FILE_PATH}; fi
@@ -129,12 +150,6 @@ stages:
     paths:
       - "/builds"
     expire_in: 3 hrs
-
-### Default ###
-image: docker:latest
-
-services:
-  - docker:dind
 
 finish:failure:
   stage: finish

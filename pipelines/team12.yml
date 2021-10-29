@@ -29,22 +29,36 @@ build:compile:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
 
-build:docker_test_image:
+build:image:
   extends:
     - .build
-    - .deploy_image
+    - .push_image
   needs:
     - build:compile
   variables:
-    CI_CD_IMAGE_NAME: test-image
+    CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_FILE: Dockerfile
     CI_CD_DOCKER_FILE_PATH: api
     CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
 
+# IF another image(sql), then add:
+#build:image:
+#  extends:
+#    - .build
+#    - .push_image
+#  needs:
+#    - build:compile
+#  variables:
+#    CI_CD_IMAGE_NAME: sql
+#    CI_CD_DOCKER_FILE: Dockerfile
+#    CI_CD_DOCKER_FILE_PATH: sql
+#    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+    
+
 test:unit:
   extends: .unit
   needs:
-    - build:docker_test_image
+    - build:image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -78,22 +92,12 @@ test:performance:
 #    - .build
 #    - .check_for_tag
 #  variables:
-#    CI_CD_IMAGE_NAME: test-image
-
-#deliver:release_image:
-#  extends:
-#    - .deliver
-#    - .deploy_image
-#  variables:
 #    CI_CD_IMAGE_NAME: api
-#    CI_CD_DOCKER_FILE: Dockerfile
-#    CI_CD_DOCKER_FILE_PATH: api
-#    CI_CD_TAG: ${CI_MERGE_REQUEST_TITLE}
 
-#finish:remove_image:
-#  extends:
-#    - .finish
-#    - .remove_image
-#  variables:
-#    CI_CD_IMAGE_NAME: test-image
-#    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+finish:remove_image:
+  extends:
+    - .cleanup_dev
+    - .remove_image
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
