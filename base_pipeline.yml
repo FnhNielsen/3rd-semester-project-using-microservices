@@ -10,6 +10,8 @@ stages:
   - deliver
   - finish
 
+### Rules ###
+
 .only_production_branch:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
@@ -133,6 +135,7 @@ stages:
       - "/builds"
     expire_in: 3 hrs
 
+### Jobs ###
 finish:failure:
   stage: finish
   extends: .on_failure
