@@ -7,9 +7,9 @@ stages:
 .only_production_branch:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
-      when:
-        - on_success
-        - manual
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+      when: manual
 
 .default:
   rules:
