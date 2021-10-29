@@ -130,12 +130,12 @@ cache:
   paths:
     - "/builds"
 
-#finish:failure:
-#  stage: finish
-#  extends: .on_failure
-#  script: echo "Create artifact"
-#  artifacts:
-#    name: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
-#    paths:
-#      - "/"
-#    expire_in: 8 hrs
+finish:failure:
+  stage: finish
+  extends: .on_failure
+  script: echo "Create artifact"
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - "/builds"
+    expire_in: 8 hrs
