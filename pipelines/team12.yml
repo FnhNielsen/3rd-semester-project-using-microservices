@@ -24,7 +24,7 @@ include:
 build:compile:
   extends:
     - .build
-    - .artifacts
+    - .artifact
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
