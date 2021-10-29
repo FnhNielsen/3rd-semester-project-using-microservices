@@ -1,14 +1,14 @@
 ### Default ###
-image: docker:latest
-
-services:
-  - docker:dind
-
 stages:
   - build
   - test
   - deliver
   - finish
+
+image: docker:latest
+
+services:
+  - docker:dind
 
 ### Rules ###
 
