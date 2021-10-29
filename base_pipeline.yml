@@ -5,10 +5,7 @@ stages:
   - deliver
   - finish
 
-image: docker:latest
-
-services:
-  - docker:dind
+image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/cicd-exam/base_image:0.0.1
 
 ### Rules ###
 .default:
@@ -92,6 +89,9 @@ services:
 
 ### Methods ¤¤¤
 .push_image:
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/cicd-exam/docker:0.0.1
+  services:
+    - docker:dind
   before_script:
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
     - if [ ! -z "${CI_CD_DOCKER_FILE_PATH}" ]; then cd ${CI_CD_DOCKER_FILE_PATH}; fi
@@ -101,21 +101,17 @@ services:
     - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
 .remove_image:
+  # Docker registry v2: https://gitlab.com/gitlab-org/gitlab-foss/-/issues/40096
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/cicd-exam/docker:0.0.1
+  services:
+    - docker:dind
   before_script:
-    - apk add curl
-    # Install Docker registry v2
-    - curl -fSL "https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64" -o "/usr/local/bin/reg"
-    - 'if [ "$(echo "d6096b30d8b0eefe3ba57895769ca5bfdade5c7105dc5995e3029e8d70877e06 /usr/local/bin/reg" | sha256sum -c -)" == "/usr/local/bin/reg: OK" ]; then echo "ERROR: reg has wrong check sum. - Contact CI/CD team!"; exit 1; fi'
-    - chmod a+x "/usr/local/bin/reg"
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
   script:
     - curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:delete&service=container_registry"
-    - /usr/local/bin/reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
+    - reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
 .check_for_tag:
-  before_script:
-    - apk add curl
-    - apk add jq
   script:
     - 'if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ [0-9]+\.[0-9]+\.[0-9]+ ]] && [ "${CI_MERGE_REQUEST_TITLE}" != "mockup" ]; then echo "ERROR: Wrong version number format. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
     - 'IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${CI_CD_IMAGE_NAME}\") | .id")'
