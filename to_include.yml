@@ -120,22 +120,29 @@ stages:
     - if [ -z "${IMAGE_ID}" ]; then exit 0; fi
     - 'if [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${CI_MERGE_REQUEST_TITLE}\") | any") == "true" ]; then echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
 
+.artifact:
+  stage: finish
+  extends: .on_failure
+  artifacts:
+    expose_as: "artifact"
+    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - "/builds"
+    expire_in: 3 hrs
+
 ### Default ###
 image: docker:latest
 
 services:
   - docker:dind
 
-cache:
-  paths:
-    - "/builds"
-
 finish:failure:
   stage: finish
   extends: .on_failure
   script: echo "Create artifact"
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
+    expose_as: "failure"
+    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
       - "/builds"
     expire_in: 8 hrs
