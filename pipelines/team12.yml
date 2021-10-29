@@ -21,10 +21,20 @@ include:
 ############ JOBS ############
 ##############################
 
+build:compile:
+  extends:
+    - .build
+    - .artifacts
+  script:
+    - echo "run unit test cmds or script"
+    - echo "run unit test cmds or script"
+
 build:docker_test_image:
   extends:
     - .build
     - .deploy_image
+  needs:
+    - build:compile
   variables:
     CI_CD_IMAGE_NAME: test-image
     CI_CD_DOCKER_FILE: Dockerfile
@@ -33,9 +43,11 @@ build:docker_test_image:
 
 test:unit:
   extends: .unit
+  needs:
+    - build:docker_test_image
   script:
     - echo "run unit test cmds or script"
-    - ls /cache
+    - echo "run unit test cmds or script"
 
 test:acceptance:
   extends: .acceptance
