@@ -126,7 +126,6 @@ stages:
     - 'if [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${CI_MERGE_REQUEST_TITLE}\") | any") == "true" ]; then echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
 
 .artifact:
-  stage: finish
   artifacts:
     expose_as: "artifact"
     name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
