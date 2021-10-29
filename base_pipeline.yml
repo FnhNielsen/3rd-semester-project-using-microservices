@@ -108,7 +108,7 @@ stages:
     - apk add curl
     # Install Docker registry v2
     - curl -fSL "https://github.com/genuinetools/reg/releases/download/v0.13.0/reg-linux-amd64" -o "/usr/local/bin/reg"
-#    - 'if [ "$(echo "ade837fc5224acd8c34732bf54a94f579b47851cc6a7fd5899a98386b782e228 /usr/local/bin/reg" | sha256sum -c -)" == "/usr/local/bin/reg: OK" ]; then echo "ERROR: reg has wrong check sum. - Contact CI/CD team!"; exit 1; fi'
+    - 'if [ "$(echo "d6096b30d8b0eefe3ba57895769ca5bfdade5c7105dc5995e3029e8d70877e06 /usr/local/bin/reg" | sha256sum -c -)" == "/usr/local/bin/reg: OK" ]; then echo "ERROR: reg has wrong check sum. - Contact CI/CD team!"; exit 1; fi'
     - chmod a+x "/usr/local/bin/reg"
     - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
   script:
