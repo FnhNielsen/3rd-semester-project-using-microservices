@@ -13,23 +13,23 @@ variables:
 ##############################
 
 include:
-    - project: 'semester-project-e2021/team-12/ci-cd'
-      ref: dev
-      file: 'to_include.yml'
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: dev
+    file: 'to_include.yml'
 
 ##############################
 ############ JOBS ############
 ##############################
 
 build:docker_test_image:
-   extends:
-     - .build
-     - .deploy_image
-   variables:
-     CI_CD_IMAGE_NAME: test-image
-     CI_CD_DOCKER_FILE: Dockerfile
-     CI_CD_DOCKER_FILE_PATH: api
-     CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+  extends:
+    - .build
+    - .deploy_image
+  variables:
+    CI_CD_IMAGE_NAME: test-image
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: api
+    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
 
 test:unit:
   extends: .unit
