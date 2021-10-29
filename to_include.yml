@@ -78,6 +78,16 @@ stages:
     - curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_NAME}:delete&service=container_registry"
     - /usr/local/bin/reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_TEST_IMAGE_NAME}:${CI_CD_TAG}"
 
+.check_for_tag:
+  before_script:
+    - apk add curl
+    - apk add jq
+  script:
+    - 'if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ [0-9]+\.[0-9]+\.[0-9]+ ]] && [ "${CI_MERGE_REQUEST_TITLE}" != "mockup" ]; then echo "ERROR: Wrong version number format. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
+    - 'IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${CI_CD_IMAGE_NAME}\") | .id")'
+    - if [ -z "${IMAGE_ID}" ]; then exit 0; fi
+    - 'if [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${CI_MERGE_REQUEST_TITLE}\") | any") == "true" ]; then echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
+
 ### Default ###
 image: docker:latest
 
@@ -87,17 +97,6 @@ services:
 cache:
   paths:
     - "/"
-
-build:check_for_tag:
-  stage: build
-  before_script:
-    - apk add curl
-    - apk add jq
-  script:
-    - 'if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ [0-9]+\.[0-9]+\.[0-9]+ ]] && [ "${CI_MERGE_REQUEST_TITLE}" != "mockup" ]; then echo "ERROR: Wrong version number format. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
-    - 'IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${CI_CD_IMAGE_NAME}\") | .id")'
-    - if [ -z "${IMAGE_ID}" ]; then exit 0; fi
-    - 'if [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${CI_MERGE_REQUEST_TITLE}\") | any") == "true" ]; then echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
 
 finish:failure:
   stage: finish
