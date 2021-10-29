@@ -11,6 +11,18 @@ services:
   - docker:dind
 
 ### Rules ###
+.default:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+      when: on_success
 
 .only_production_branch:
   rules:
@@ -27,19 +39,6 @@ services:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
       when: always
-
-.default:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
-      when: on_success
 
 .always:
   rules:
@@ -125,7 +124,7 @@ services:
 
 .artifact:
   artifacts:
-    expose_as: "artifact"
+    expose_as: "Artifact"
     name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
       - "/builds"
@@ -137,7 +136,7 @@ finish:failure:
   extends: .on_failure
   script: echo "Create artifact"
   artifacts:
-    expose_as: "failure"
+    expose_as: "Failure Artifact"
     name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
       - "/builds"
