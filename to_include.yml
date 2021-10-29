@@ -128,7 +128,7 @@ services:
 
 cache:
   paths:
-    - "/"
+    - "/builds"
 
 #finish:failure:
 #  stage: finish
