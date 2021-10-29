@@ -95,8 +95,9 @@ test:performance:
 #    CI_CD_IMAGE_NAME: api
 
 finish:remove_image:
+  stage: finish
   extends:
-    - .cleanup_dev
+    - .always_except_production
     - .remove_image
   variables:
     CI_CD_IMAGE_NAME: api
