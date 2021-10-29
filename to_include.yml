@@ -26,6 +26,40 @@ stages:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
       when: on_success
 
+.always:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+      when: always
+
+.on_failure:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+      when: on_failure
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+      when: on_failure
+
 .build:
   stage: build
   extends: .default
@@ -52,7 +86,7 @@ stages:
 
 .finish:
   stage: finish
-  when: always
+  extends: .always
 
 ### Methods ¤¤¤
 .deploy_image:
@@ -98,7 +132,7 @@ cache:
 
 finish:failure:
   stage: finish
-  when: on_failure
+  extends: .on_failure
   script: echo "Create artifact"
   artifacts:
     name: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
