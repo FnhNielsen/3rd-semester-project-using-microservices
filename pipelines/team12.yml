@@ -1,0 +1,87 @@
+##############################
+########## Settings ##########
+##############################
+
+variables:
+  CI_CD_PRODUCTION_BRANCH: "main"
+  CI_CD_DEVELOPMENT_BRANCH: "dev"
+  CI_CD_RELEASE_BRANCH: "release"
+  CI_CD_HOTFIX_BRANCH: "hotfix"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+    - project: 'semester-project-e2021/team-12/ci-cd'
+      ref: dev
+      file: 'to_include.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+build:docker_test_image:
+   extends:
+     - .build
+     - .deploy_image
+   variables:
+     CI_CD_IMAGE_NAME: test-image
+     CI_CD_DOCKER_FILE: Dockerfile
+     CI_CD_DOCKER_FILE_PATH: api
+     CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+
+test:unit:
+  extends: .unit
+  script:
+    - echo "run unit test cmds or script"
+    - ls /cache
+
+test:acceptance:
+  extends: .acceptance
+  needs:
+    - test:unit
+  script:
+    - echo "run acceptance test cmds or script"
+    - echo "run acceptance test cmds or script"
+
+test:integration:
+  extends: .integration
+  needs:
+    - test:acceptance
+  script:
+    - echo "run integration test cmds or script"
+    - echo "run integration test cmds or script"
+
+test:performance:
+  extends: .performance
+  needs:
+    - test:integration
+  script:
+    - echo "run performance test cmds or script"
+    - echo "run performance test cmds or script"
+
+#build:check_for_tag:
+#  extends:
+#    - .build
+#    - .check_for_tag
+#  variables:
+#    CI_CD_IMAGE_NAME: test-image
+
+#deliver:release_image:
+#  extends:
+#    - .deliver
+#    - .deploy_image
+#  variables:
+#    CI_CD_IMAGE_NAME: api
+#    CI_CD_DOCKER_FILE: Dockerfile
+#    CI_CD_DOCKER_FILE_PATH: api
+#    CI_CD_TAG: ${CI_MERGE_REQUEST_TITLE}
+
+#finish:remove_image:
+#  extends:
+#    - .finish
+#    - .remove_image
+#  variables:
+#    CI_CD_IMAGE_NAME: test-image
+#    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
