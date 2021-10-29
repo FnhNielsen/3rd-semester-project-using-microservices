@@ -1,3 +1,9 @@
+stages:
+  - build
+  - test
+  - deliver
+  - finish
+
 .only_production_branch:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
@@ -26,14 +32,10 @@
 .build:
   stage: build
   extends: .default
-  needs:
-    - build:check_for_tag
 
 .unit:
   stage: test
   extends: .default
-  needs:
-    - build:docker_test_image
 
 .acceptance:
   stage: test
@@ -100,9 +102,8 @@ build:check_for_tag:
 finish:failure:
   stage: finish
   when: on_failure
-  script: echo "Creat artifact"
+  script: echo "Create artifact"
   artifacts:
-    expose_as: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     name: "${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
       - "/"
