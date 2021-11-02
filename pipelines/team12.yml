@@ -7,6 +7,7 @@ variables:
   CI_CD_DEVELOPMENT_BRANCH: "dev"
   CI_CD_RELEASE_BRANCH: "release"
   CI_CD_HOTFIX_BRANCH: "hotfix"
+  CI_CD_STATIC_IMAGE_NAME: "test_image"
 
 ##############################
 ######## DON'T TOUCH #########
@@ -39,7 +40,7 @@ build:image:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_FILE: Dockerfile
     CI_CD_DOCKER_FILE_PATH: api
-    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
 # IF another image(sql), then add:
 #build:image:
@@ -52,7 +53,7 @@ build:image:
 #    CI_CD_IMAGE_NAME: sql
 #    CI_CD_DOCKER_FILE: Dockerfile
 #    CI_CD_DOCKER_FILE_PATH: sql
-#    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
     
 
 test:unit:
@@ -102,4 +103,4 @@ finish:remove_image:
     - .remove_image
   variables:
     CI_CD_IMAGE_NAME: api
-    CI_CD_TAG: ${CI_COMMIT_SHORT_SHA}
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
