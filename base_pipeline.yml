@@ -5,7 +5,7 @@ stages:
   - deliver
   - finish
 
-image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/cicd-exam/base_image:0.0.1
+image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
 
 ### Rules ###
 .default:
