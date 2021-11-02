@@ -105,19 +105,18 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   after_script:
     - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
-
-#.tag_production_image:
-#  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-#  services:
-#    - docker:dind
-#  before_script:
-#    - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
-#  script:
-#    - 
-#    - docker tag "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:"
-#    - docker build -t "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" -f "${CI_CD_DOCKER_FILE}" .
-#  after_script:
-#    - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
+.tag_production_image:
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
+  services:
+    - docker:dind
+  before_script:
+    - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
+  script:
+    - apk add grep
+    - CI_CD_VERSION_NUMBER=`echo ${CI_COMMIT_DESCRIPTION} | grep -o '^[0-9.]\+'`
+    - docker tag "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
+  after_script:
+    - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
 
 
 .remove_image:
