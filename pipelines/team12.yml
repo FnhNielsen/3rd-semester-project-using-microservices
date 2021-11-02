@@ -27,7 +27,7 @@ build:compile:
     - .build
     - .artifact
   script:
-    - apt-get install grep
+    - apk add grep
     - echo ${CI_COMMIT_DESCRIPTION} | grep -o '^[0-9.]\+'
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
