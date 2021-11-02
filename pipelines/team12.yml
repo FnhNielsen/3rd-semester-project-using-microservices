@@ -27,8 +27,8 @@ build:compile:
     - .build
     - .artifact
   script:
-    - echo ${CI_COMMIT_DESCRIPTION}
-    - CI_CD_VERSION_NUMBER_ARRAY=(${CI_COMMIT_DESCRIPTION[@]})
+#    - echo ${CI_COMMIT_DESCRIPTION}
+#    - CI_CD_VERSION_NUMBER_ARRAY=(${CI_COMMIT_DESCRIPTION[@]})
     - echo "${CI_CD_VERSION_NUMBER_ARRAY[1]}"
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
