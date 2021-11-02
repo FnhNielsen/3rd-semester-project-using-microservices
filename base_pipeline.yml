@@ -114,6 +114,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   script:
     - apk add grep
     - CI_CD_VERSION_NUMBER=`echo ${CI_COMMIT_DESCRIPTION} | grep -o '^[0-9.]\+'`
+    - docker pull "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
     - docker tag "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
   after_script:
     - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
