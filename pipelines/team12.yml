@@ -30,6 +30,8 @@ build:check_for_tag:
     CI_CD_IMAGE_NAME: api
 
 build:compile:
+  needs:
+    - build:check_for_tag
   extends:
     - .build
     - .artifact
