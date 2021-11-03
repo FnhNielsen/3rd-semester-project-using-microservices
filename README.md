@@ -6,7 +6,7 @@ The purpose of CI is to *continuously* test your code as you write it. The benef
 
 Now how do you actually use what we (team 12) have developed, that'll be explained in the ["How to use and understand CI in your project"](#how-to-use-and-understand-ci-in-your-project) section. First there is some setup and general information to be read, but most of you have already been told some of it, so skip whatever is irrelevant.
 
-* [Prerequisites](#prequisites)
+* [Prerequisites](#prerequisites)
 * [Git Workflow](#git-workflow)
 * [Setup](#setup)
     * [Default branch](#default-branch)
