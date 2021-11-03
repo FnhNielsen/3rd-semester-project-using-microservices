@@ -21,7 +21,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
       when: on_success
 
-.only_production_branch:
+.merge_request_production_branch:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
       when: on_success
@@ -78,19 +78,19 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
 
 .acceptance:
   stage: test
-  extends: .only_production_branch
+  extends: .merge_request_production_branch
 
 .integration:
   stage: test
-  extends: .only_production_branch
+  extends: .merge_request_production_branch
 
 .performance:
   stage: test
-  extends: .only_production_branch
+  extends: .merge_request_production_branch
 
 .deliver:
   stage: deliver
-  extends: .only_production_branch
+  extends: .merge_request_production_branch
 
 ### Methods ¤¤¤
 .push_image:
