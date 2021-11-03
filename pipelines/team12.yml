@@ -108,15 +108,15 @@ deliver:retag_image:
     CI_CD_DOCKER_FILE_PATH: api
     CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
-#deliver:remove_test_tag:
-#  needs: 
-#    - deliver:retag_image
-#  extends:
-#    - .deliver
-#    - .remove_image
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+deliver:remove_test_tag:
+  needs: 
+    - deliver:retag_image
+  extends:
+    - .deliver
+    - .remove_tag
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
 finish:remove_image:
   stage: finish
