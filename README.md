@@ -22,7 +22,7 @@ All of these things should be somewhere in your repository so we can make sure t
 
 The Git Workflow that was decided upon for everyone, has the following MANDATORY branches:
 
-**dev** - This branch should reflect the current version you are working on. Depending on how you set up your [protected branches](#protected-branches) (reference here). 
+**dev** - This branch should reflect the current version you are working on. Depending on how you set up your [protected branches](#protected-branches). 
 
 **main** - This branch reflects the current working version that is in the production environment. This branch cannot be pushed to directly, it can only be merged into.
 
@@ -117,7 +117,7 @@ If you created a merge-request that triggered a certain pipeline, you will see i
 
 To release, you first make a merge-request to main with the title being your version number (use semantic versioning) or "mockup". This will start a pipeline which will run your test and build your images. If your merge-request title is a version that already exists, or is something different than a 3-numbered version number, the pipeline fails and you have to edit the merge request and retry the pipeline . 
 
-At this stage you can follow the progress of the pipeline (reference to pipeline inspection stuff) and see if any tests fail or errors occur. When the pipeline succeeds you approve the merge-request and merge to main, which will then deploy your release (when that is implemented).
+At this stage you can [follow the progress of the pipeline](#inspecting-pipelines) and see if any tests fail or errors occur. When the pipeline succeeds you approve the merge-request and merge to main, which will then deploy your release (when that is implemented).
 
 The details of where your Dockerfile(s) and Kubernetes manifest is located can be discussed with your CI-contact.
 
