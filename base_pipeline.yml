@@ -88,9 +88,13 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   stage: test
   extends: .merge_request_production_branch
 
-.deliver:
+.deliver_merge_request:
   stage: deliver
   extends: .merge_request_production_branch
+
+.deliver_merge:
+  stage: deliver
+  extends: .merge_production
 
 ### Methods ¤¤¤
 .push_image:
