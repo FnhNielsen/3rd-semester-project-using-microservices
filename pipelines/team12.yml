@@ -22,6 +22,13 @@ include:
 ############ JOBS ############
 ##############################
 
+build:check_for_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: api
+
 build:compile:
   extends:
     - .build
@@ -54,7 +61,6 @@ build:image:
 #    CI_CD_DOCKER_FILE: Dockerfile
 #    CI_CD_DOCKER_FILE_PATH: sql
 #    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-    
 
 test:unit:
   extends: .unit
@@ -89,16 +95,9 @@ test:performance:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
 
-#build:check_for_tag:
-#  extends:
-#    - .build
-#    - .check_for_tag
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-
 deliver:retag_image:
   extends:
-    - ..deliver_merge
+    - ..deliver
     - .tag_production_image
   variables:
     CI_CD_IMAGE_NAME: api
@@ -110,7 +109,7 @@ deliver:remove_test_tag:
   needs: 
     - deliver:retag_image
   extends:
-    - .deliver_merge
+    - .deliver
     - .remove_image
   variables:
     CI_CD_IMAGE_NAME: api
