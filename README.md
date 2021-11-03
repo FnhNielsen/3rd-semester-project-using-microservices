@@ -61,8 +61,6 @@ For this project, we have decided that the setup for CI in your project is mainl
 
 2. Enter the file and write the following:
 
-   ``
-
    ```yaml
    include:
        - project: 'semester-project-e2021/team-12/ci-cd'
@@ -71,8 +69,6 @@ For this project, we have decided that the setup for CI in your project is mainl
    ```
 
    But instead of "\<team-number\>" on line 4 write your team-number. For team 2 it would look like:
-
-   ``
 
    ```yaml
    include:
