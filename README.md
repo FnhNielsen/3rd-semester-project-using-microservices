@@ -101,15 +101,15 @@ CI in GitLab uses **pipelines**. Every time you do some commit/push/merge or sim
 
 To see the pipelines, go to your repository, find "CI/CD" in your sidebar and select "Pipelines". This should give you a list of all pipelines, this includes failed, passed and currently running pipelines. This view contains information about who triggered the pipeline, how far the pipeline is in it's progress, what commit triggered it, and more. To inspect a pipeline click the pipeline id.
 
-![pipeline-id](\guide-resources\pipeline-id.png)
+![pipeline-id](resources/guide-resources/pipeline-id.png)
 
 You should now be seeing a view of the stages (categorization of jobs) and the jobs. 
 
-![job-view](\guide-resources\job-view.png)
+![job-view](resources/guide-resources/job-view.png)
 
 It should be clear which jobs have or haven't been run, and which jobs passed or failed. To inspect a job, simply click it, and here you will see the CLI for the runner when it executed that job, but you cannot interact with this, you can merely look what the runner did, and see error messages if there are any. This is where you should figure out what went wrong, if a job did not pass.
 
-![error](\guide-resources\error.png)
+![error](resources/guide-resources/error.png)
 
 #### Additional tips
 
