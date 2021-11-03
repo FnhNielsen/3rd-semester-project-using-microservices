@@ -4,7 +4,7 @@ Why should you care about Continuous Integration (CI) and what does it actually 
 
 The purpose of CI is to *continuously* test your code as you write it. The benefit of this is catching errors early in development, along with stopping overseen errors and bugs from reaching production. If that isn't enough to convince you, then you also have to realize that CI and its "friends" Continuous Delivery and Continuous Deployment are concepts widely used in software development. It is highly unlikely that none of use will run in to CI/CD in the future, so understanding it now will benefit us all.
 
-Now how do you actually use what we (team 12) have developed, that'll be explained in the "How to use and understand CI in your project"(insert reference) section. First there is some setup and general information to be read, but most of you have already been told some of it, so skip whatever is irrelevant.
+Now how do you actually use what we (team 12) have developed, that'll be explained in the ["How to use and understand CI in your project"](#how-to-use-and-understand-ci-in-your-project) section. First there is some setup and general information to be read, but most of you have already been told some of it, so skip whatever is irrelevant.
 
 ## Prerequisites
 
