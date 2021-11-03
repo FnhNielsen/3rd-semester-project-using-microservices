@@ -137,6 +137,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
 .check_for_tag:
   image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
   script:
+    - apk add jq
     - 'if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ [0-9]+\.[0-9]+\.[0-9]+ ]] && [ "${CI_MERGE_REQUEST_TITLE}" != "mockup" ]; then echo "ERROR: Wrong version number format. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
     - 'IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${CI_CD_IMAGE_NAME}\") | .id")'
     - if [ -z "${IMAGE_ID}" ]; then exit 0; fi
