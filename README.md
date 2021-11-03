@@ -57,7 +57,7 @@ For this project, we have decided that the setup for CI in your project is mainl
 
 1. Add a file called ".gitlab-ci.yml" in the root of your repository
 
-![ci-file](\resources\guide-resources\ci-file.png)
+![ci-file](resources\guide-resources\ci-file.png)
 
 2. Enter the file and write the following:
 
