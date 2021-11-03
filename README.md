@@ -6,6 +6,20 @@ The purpose of CI is to *continuously* test your code as you write it. The benef
 
 Now how do you actually use what we (team 12) have developed, that'll be explained in the ["How to use and understand CI in your project"](#how-to-use-and-understand-ci-in-your-project) section. First there is some setup and general information to be read, but most of you have already been told some of it, so skip whatever is irrelevant.
 
+* [Prerequisites](#prequisites)
+* [Git Workflow](#git-workflow)
+* [Setup](#setup)
+    * [Default branch](#default-branch)
+	* [Protected branches](#protected-branches)
+	* [Only merge when pipeline succeeds](#only-merge-when-pipeline-succeeds)
+	* [The CI file](#the-ci-file)
+* [Semantic versioning](#semantic-versioning)
+* [How to use and understand CI in your project](#how-to-use-and-understand-ci-in-your-project)
+    * [Inspecting pipelines](#inspecting-pipelines)
+	* [Additional tips](#additional-tips)
+	* [Releasing](#releasing)
+* [Other issues](#other-issues)
+
 ## Prerequisites
 
 In the end, each group should have the following things:
@@ -49,7 +63,7 @@ To make sure no faulty code goes to main, maintainer does the following:
 
 Go to Settings -> General -> Merge Requests -> Merge checks, and check the box with "Pipelines must succeed".
 
-### The .gitlab-ci.yml file
+### The CI file
 
 For this project, we have decided that the setup for CI in your project is mainly described in our repository. This means that all we ask of you is to insert a simple file in the root of your repository on EVERY SINGLE BRANCH. Sidenote: We can technically do this ourselves as each of us has been given "developer" role in the groups' repositories that we are working with, but to be transparent and as a guide to ourselves, here is what to do:
 
