@@ -93,9 +93,19 @@ For this project, we have decided that the setup for CI in your project is mainl
 
 3. Commit the changes. 
 
-As stated, this should be done for all branches. When doing this for the main branch, create a branch from main, add and/or edit the file, commit, create a merge-request and merge it.
+As stated, this should be done for all branches. When doing this for the main branch, it gets a little complicated.
 
-If there are any problems, contact us.
+Earlier you enabled a setting to stop merging from happening unless the pipeline succeeds(see [Only merge when pipeline succeeds](#only-merge-when-pipeline-succeeds))... well currently there is no pipeline to succeed, or it probably fails. So do the following:
+
+1. Maintainer go to Settings -> General -> Merge Requests -> Merge checks, and UNcheck the box with "Pipelines must succeed".
+2. Create a branch from main
+3. Add and/or edit the file as above
+4. Commit
+5. Create merge-request from this new branch to main
+6. Merge
+7. Maintainer go to Settings -> General -> Merge Requests -> Merge checks, and check the box again with "Pipelines must succeed".
+
+We apologize for the premature setup of the settings causing this setup to be necessary. If there are any issues, contact us.
 
 ## Semantic versioning
 Use [semantic versioning 2.0.0](https://semver.org/).
