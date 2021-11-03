@@ -97,9 +97,8 @@ test:performance:
 #    CI_CD_IMAGE_NAME: api
 
 deliver:retag_image:
-  stage: deliver
   extends:
-    - .merge_production
+    - ..deliver_merge
     - .tag_production_image
   variables:
     CI_CD_IMAGE_NAME: api
@@ -108,11 +107,10 @@ deliver:retag_image:
     CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
 deliver:remove_test_tag:
-  stage: deliver
   needs: 
     - deliver:retag_image
   extends:
-    - .merge_production
+    - .deliver_merge
     - .remove_image
   variables:
     CI_CD_IMAGE_NAME: api
