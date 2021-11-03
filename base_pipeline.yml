@@ -72,6 +72,10 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   stage: build
   extends: .default
 
+.build_production:
+  stage: build
+  extends: .merge_request_production_branch
+
 .unit:
   stage: test
   extends: .default
@@ -88,6 +92,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   stage: test
   extends: .merge_request_production_branch
 
+# Might not need this one
 .deliver_merge_request:
   stage: deliver
   extends: .merge_request_production_branch
