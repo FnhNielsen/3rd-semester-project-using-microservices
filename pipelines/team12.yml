@@ -115,11 +115,11 @@ deliver:remove_test_tag:
     CI_CD_IMAGE_NAME: api
     CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
-#finish:remove_image:
-#  stage: finish
-#  extends:
-#    - .always_except_production
-#    - .remove_image
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+finish:remove_image:
+  stage: finish
+  extends:
+    - .always_except_production
+    - .remove_image
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
