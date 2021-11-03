@@ -22,7 +22,7 @@ All of these things should be somewhere in your repository so we can make sure t
 
 The Git Workflow that was decided upon for everyone, has the following MANDATORY branches:
 
-**dev** - This branch should reflect the current version you are working on. Depending on how you set up your protected branches (reference here). 
+**dev** - This branch should reflect the current version you are working on. Depending on how you set up your [protected branches](#protected-branches) (reference here). 
 
 **main** - This branch reflects the current working version that is in the production environment. This branch cannot be pushed to directly, it can only be merged into.
 
