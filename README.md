@@ -56,8 +56,8 @@ For this project, we have decided that the setup for CI in your project is mainl
 (this has to be done for every single branch. If you have branches that are not in use, delete them to make it easier)
 
 1. Add a file called ".gitlab-ci.yml" in the root of your repository
-
-![ci-file](resources/guide-resources/ci-file.png)
+  
+  ![ci-file](resources/guide-resources/ci-file.png)
 
 2. Enter the file and write the following:
 
@@ -80,6 +80,8 @@ For this project, we have decided that the setup for CI in your project is mainl
 3. Commit the changes. 
 
 As stated, this should be done for all branches. When doing this for the main branch, create a branch from main, add and/or edit the file, commit, create a merge-request and merge it.
+
+If there are any problems, contact us.
 
 ## Semantic versioning
 Use [semantic versioning 2.0.0](https://semver.org/).
@@ -123,3 +125,7 @@ The details of where your Dockerfile(s) and Kubernetes manifest is located can b
 ## Other issues
 Contact us if other issues or doubts:
 - Sebastian, Discord: SebastianM#4015
+- Frederik Primdahl, Discord: PrettyFace#7904
+- Frederik Nørager, Discord: FnhNielsen#2831
+- Magnus, Discord: MagnusSoerensen#2710
+- Simon, Discord: simonkruger10#2409
