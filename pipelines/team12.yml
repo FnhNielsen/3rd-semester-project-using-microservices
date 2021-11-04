@@ -1,0 +1,118 @@
+##############################
+########## Settings ##########
+##############################
+
+variables:
+  CI_CD_PRODUCTION_BRANCH: "main"
+  CI_CD_DEVELOPMENT_BRANCH: "dev"
+  CI_CD_RELEASE_BRANCH: "release"
+  CI_CD_HOTFIX_BRANCH: "hotfix"
+  CI_CD_STATIC_IMAGE_NAME: "test_image"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: dev
+    file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+build:check_for_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: api
+
+build:compile:
+  needs:
+    - job: build:check_for_tag
+      optional: true
+  extends:
+    - .build
+    - .artifact
+  script:
+    - echo "compiling"
+    - echo "compiling"
+
+build:image:
+  extends:
+    - .build
+    - .push_image
+  needs:
+    - build:compile
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: api
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+# IF another image(sql), then add:
+#build:image:
+#  extends:
+#    - .build
+#    - .push_image
+#  needs:
+#    - build:compile
+#  variables:
+#    CI_CD_IMAGE_NAME: sql
+#    CI_CD_DOCKER_FILE: Dockerfile
+#    CI_CD_DOCKER_FILE_PATH: sql
+#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+test:unit:
+  extends: .unit
+  needs:
+    - build:image
+  script:
+    - echo "run unit test cmds or script"
+    - echo "run unit test cmds or script"
+    - printenv
+
+test:acceptance:
+  extends: .acceptance
+  needs:
+    - test:unit
+  script:
+    - echo "run acceptance test cmds or script"
+    - echo "run acceptance test cmds or script"
+
+test:integration:
+  extends: .integration
+  needs:
+    - test:acceptance
+  script:
+    - echo "run integration test cmds or script"
+    - echo "run integration test cmds or script"
+
+test:performance:
+  extends: .performance
+  needs:
+    - test:integration
+  script:
+    - echo "run performance test cmds or script"
+    - echo "run performance test cmds or script"
+
+deliver:retag_image:
+  extends:
+    - .deliver
+    - .tag_production_image
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: api
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+#finish:remove_image:
+#  stage: finish
+#  extends:
+#    - .always_except_production
+#    - .remove_image
+#  variables:
+#    CI_CD_IMAGE_NAME: api
+#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
