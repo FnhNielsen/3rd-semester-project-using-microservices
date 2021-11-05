@@ -37,20 +37,14 @@ build:check_api_tag:
   variables:
     CI_CD_IMAGE_NAME: api
 
-#Run unit tests
-test:unit:
-  image: node:latest
-  extends: .unit
-  script:
-    - echo "Unit tests will be run here"
-
 #Build images
 build:database_image:
   extends:
-    - .build
+    - .build_production
     - .push_image
   needs:
-    - test:unit
+    - build:check_database_tag
+    - build:check_api_tag
   variables:
     CI_CD_IMAGE_NAME: database
     CI_CD_DOCKER_FILE: Dockerfile
@@ -59,15 +53,23 @@ build:database_image:
 
 build:api_image:
   extends:
-    - .build
+    - .build_production
     - .push_image
   needs:
-    - test:unit
+    - build:check_database_tag
+    - build:check_api_tag
   variables:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_FILE: Dockerfile
     CI_CD_DOCKER_FILE_PATH: NodeJS
     CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+#Run unit tests
+test:unit:
+  image: node:latest
+  extends: .unit
+  script:
+    - echo "Unit tests will be run here"
 
 # test:acceptance:
 #   extends: .acceptance
