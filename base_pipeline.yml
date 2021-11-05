@@ -148,7 +148,7 @@ variables:
     expose_as: "Artifact"
     name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
-      - "/builds"
+      - ${CI_BUILDS_DIR}
     expire_in: 3 hrs
 
 ### Jobs ###
@@ -171,5 +171,5 @@ finish:failure:
     expose_as: "Failure Artifact"
     name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
     paths:
-      - "/builds"
+      - ${CI_BUILDS_DIR}
     expire_in: 8 hrs
