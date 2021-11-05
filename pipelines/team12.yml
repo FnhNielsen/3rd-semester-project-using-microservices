@@ -63,7 +63,6 @@ test:unit:
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
-    - printenv
 
 test:acceptance:
   extends: .acceptance
