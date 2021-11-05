@@ -22,17 +22,7 @@ include:
 ############ Jobs ############
 ##############################
 ### Build ###
-build:check_for_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: api
-
 build:compile:
-  needs:
-    - job: build:check_for_tag
-      optional: true
   extends:
     - .build
     - .artifact
