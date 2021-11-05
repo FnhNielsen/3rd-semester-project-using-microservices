@@ -31,7 +31,7 @@ build:check_database_tag:
     CI_CD_IMAGE_NAME: database
 
 build:check_api_tag:
-  extens:
+  extends:
     - .build_production
     - .check_for_tag
   variables:
@@ -39,9 +39,10 @@ build:check_api_tag:
 
 #Run unit tests
 test:unit:
+  image: node:latest
   extends: .unit
   script:
-    - echo "should run unit tests here"
+    - echo "Unit tests will be run here"
 
 #Build images
 build:database_image:
@@ -49,8 +50,7 @@ build:database_image:
     - .build
     - .push_image
   needs:
-    - build:check_database_tag
-    - build:check_api_tag
+    - test:unit
   variables:
     CI_CD_IMAGE_NAME: database
     CI_CD_DOCKER_FILE: Dockerfile
@@ -62,8 +62,7 @@ build:api_image:
     - .build
     - .push_image
   needs:
-    - build:check_database_tag
-    - build:check_api_tag
+    - test:unit
   variables:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_FILE: Dockerfile
