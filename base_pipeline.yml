@@ -105,6 +105,10 @@ variables:
   stage: deliver
   extends: .merge_production
 
+.finish:
+  stage: finish
+  extends: .always_merge_production
+
 ### Methods ###
 .push_image:
   image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
