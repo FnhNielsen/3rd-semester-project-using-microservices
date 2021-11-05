@@ -9,10 +9,13 @@ stages:
 image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
 
 variables:
+  CI_CD_GUIDE_URL: 'https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide'
   # Regex to check version number
   #  Regex has been changed from having not captured groups
   #  See https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
   CI_CD_SEMVER_REGEX: '^(0|[1-9]\d*)\\.(0|[1-9]\d*)\\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$'
+  CI_CD_API: 'https://gitlab.sdu.dk/api/v4/projects'
+  CI_CD_DOCKER_IMAGE: 'gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.2'
 
 ### Rules ###
 # Trigger rules
@@ -129,7 +132,7 @@ variables:
   #       ["image_name_3", "image_name_path_3"]
   #    ]'
   #
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.2
+  image: ${CI_CD_DOCKER_IMAGE}
   services:
     - docker:dind
   script:
@@ -175,7 +178,7 @@ variables:
         let i+=1;
       done
 
-.remove_test_images:
+.remove_images:
   # variables
   #
   # CI_CD_IMAGE_NAMES: (string)
@@ -185,7 +188,7 @@ variables:
   #    * image_name_1 image_name_2 image_name_3 ...
   #
   # NOTE: This does not work. We this method to self handle tags
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.2
+  image: ${CI_CD_DOCKER_IMAGE}
   services:
     - docker:dind
   script:
@@ -215,7 +218,7 @@ variables:
   #   Several images at once
   #    * image_name_1 image_name_2 image_name_3 ...
   #
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.2
+  image: ${CI_CD_DOCKER_IMAGE}
   services:
     - docker:dind
   script:
@@ -228,14 +231,14 @@ variables:
       # Get tag of test image
       tag=$(git rev-parse --short HEAD^1)
       if [ -z "${tag}" ]; then
-        echo "ERROR: It was not possible to detect source image tag. - See possibly https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide";
+        echo "ERROR: It was not possible to detect source image tag. - See possibly ${CI_CD_GUIDE_URL}";
         exit 1;
       fi
 
       # Get version number
       for version in $CI_COMMIT_DESCRIPTION; do
         if [[ ! ${version} =~ ${CI_CD_SEMVER_REGEX} ]]; then
-          echo "ERROR: It was not possible to detect version number. - See possibly https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide";
+          echo "ERROR: It was not possible to detect version number. - See possibly ${CI_CD_GUIDE_URL}";
           exit 1;
         fi
         break;
@@ -243,9 +246,9 @@ variables:
 
       # Checking if tag is free
       for name in ${CI_CD_IMAGE_NAMES}; do
-        IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${name}\") | .id")
-        if [ ! -z "${IMAGE_ID}" ] && [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${version}\") | any") == "true" ]; then
-          echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide";
+        IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "${CI_CD_API}/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${name}\") | .id")
+        if [ ! -z "${IMAGE_ID}" ] && [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "${CI_CD_API}/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${version}\") | any") == "true" ]; then
+          echo "ERROR: Version number already exist. - See ${CI_CD_GUIDE_URL}";
           exit 1;
         fi
         break;
@@ -286,7 +289,7 @@ build:check_request_title:
   script:
     - |
       if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ ${CI_CD_SEMVER_REGEX} ]]; then
-        echo "ERROR: Wrong request title. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide";
+        echo "ERROR: Wrong request title. - See ${CI_CD_GUIDE_URL}";
         exit 1;
       fi
 
