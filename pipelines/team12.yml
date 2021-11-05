@@ -19,9 +19,9 @@ include:
     file: 'base_pipeline.yml'
 
 ##############################
-############ JOBS ############
+############ Jobs ############
 ##############################
-
+### Build ###
 build:check_for_tag:
   extends:
     - .build_production
@@ -65,6 +65,7 @@ build:image:
 #    CI_CD_DOCKER_FILE_PATH: sql
 #    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
+### Test ###
 test:unit:
   extends: .unit
   needs:
@@ -98,6 +99,7 @@ test:performance:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
 
+### Deliver ###
 deliver:retag_image:
   extends:
     - .deliver
@@ -108,11 +110,18 @@ deliver:retag_image:
     CI_CD_DOCKER_FILE_PATH: api
     CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
-#finish:remove_image:
-#  stage: finish
-#  extends:
-#    - .always_except_production
-#    - .remove_image
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+### Cleanup ###
+finish:remove_test_images:
+  extends:
+    - .finish
+    - .remove_images
+  variables:
+    # variables
+    #
+    # CI_CD_IMAGE_NAMES: (string)
+    #   Single image
+    #    * image_name
+    #   Several images at once
+    #    * image_name_1 image_name_2 image_name_3 ...
+    #
+    CI_CD_IMAGE_NAMES: api

@@ -5,9 +5,11 @@ stages:
   - deliver
   - finish
 
+# Standard job image
 image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
 
 ### Rules ###
+# Trigger rules
 .default:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
@@ -68,6 +70,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
       when: on_failure
 
+# Jobs rules
 .build:
   stage: build
   extends: .default
@@ -96,7 +99,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
   stage: deliver
   extends: .merge_production
 
-### Methods ¤¤¤
+### Methods ###
 .push_image:
   image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
   services:
