@@ -1,11 +1,110 @@
-stages:
-  - build
+##############################
+########## Settings ##########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
+variables:
+  CI_CD_PRODUCTION_BRANCH: "main"
+  CI_CD_DEVELOPMENT_BRANCH: "devBranch"
+  CI_CD_RELEASE_BRANCH: "release"
+  CI_CD_HOTFIX_BRANCH: "hotfix"
+  CI_CD_STATI_IMAGE_NAME: "test_image"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+  -project: 'semester-project-e2021/team-12/ci-cd'
+  ref: main
+  file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+#validates if mailService tag exist
+build:check_mailService_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: mailService
+
+#validates if subscriptionService tag exist
+build:check_subscriptionService_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: subscriptionService
+
+#Run unit tests
+test:unit:
+  image: 
+    - gradle:7.2.0-jdk17
+    - openjdk:17
+  extends: .unit
   script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "main"'
-      when: on_success
+    -echo "this test should run"
+
+#Builds mailService iamge
+build:mailService_image:
+    extends: 
+      - .build 
+      - .push_image
+    needs:
+      - build:check_mailService_tag
+      - build:check_subscriptionService_tag
+    variables: 
+      - CI_CD_IMAGE_NAME: mailService
+      - CI_CD_DOCKERFILE: Dockerfile 
+      - CI_CD_DOCKERFILE_PATH: ''
+      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+  #Builds mailService iamge
+build:subscriptionService_image:
+    extends: 
+      - .build 
+      - .push_image
+    needs:
+      - build:check_mailService_tag
+      - build:check_subscriptionService_tag
+    variables: 
+      - CI_CD_IMAGE_NAME: subscriptionService
+      - CI_CD_DOCKERFILE: Dockerfile 
+      - CI_CD_DOCKERFILE_PATH: ''
+      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+deliver:retag_mailService_image:
+    extends: 
+      - .deliver 
+      - .tag_production_image
+    variables: 
+      - CI_CD_IMAGE_NAME: mailService
+      - CI_CD_DOCKERFILE: Dockerfile 
+      - CI_CD_DOCKERFILE_PATH: ''
+      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+deliver:retag_subscriptionService_image:
+    extends: 
+      - .deliver 
+      - .tag_production_image
+    variables: 
+      - CI_CD_IMAGE_NAME: subscriptionService
+      - CI_CD_DOCKERFILE: Dockerfile 
+      - CI_CD_DOCKERFILE_PATH: ''
+      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+
+
+#stages:
+# - build
+
+#temporary_job:
+# stage: build
+#image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
+#script:
+#    - echo "This is temporary"
+#  rules:
+#    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "main"'
+#      when: on_success
