@@ -7,7 +7,6 @@ variables:
   CI_CD_DEVELOPMENT_BRANCH: "dev"
   CI_CD_RELEASE_BRANCH: "release"
   CI_CD_HOTFIX_BRANCH: "hotfix"
-  CI_CD_STATIC_IMAGE_NAME: "test_image"
 
 ##############################
 ######## DON'T TOUCH #########
@@ -30,30 +29,34 @@ build:compile:
     - echo "compiling"
     - echo "compiling"
 
-build:image:
+build:images:
   extends:
     - .build
-    - .push_image
+    - .test_images
   needs:
     - build:compile
   variables:
-    CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: api
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
-# IF another image(sql), then add:
-#build:image:
-#  extends:
-#    - .build
-#    - .push_image
-#  needs:
-#    - build:compile
-#  variables:
-#    CI_CD_IMAGE_NAME: sql
-#    CI_CD_DOCKER_FILE: Dockerfile
-#    CI_CD_DOCKER_FILE_PATH: sql
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+    # variables
+    #
+    # CI_CD_BUILD_ARGS: (string or JSON)
+    #   Different examples of building the same image.
+    #    * image_name
+    #    * '{"name": "image_name", "path": "."}'
+    #    * '{"name": "image_name", "path": ".", "file": "Dockerfile"}'
+    #    * '["image_name"]'
+    #    * '["image_name", "."]'
+    #    * '["image_name", ".", "Dockerfile"]'
+    #
+    #   Several images at once
+    #    '[
+    #       {"name": "image_name"},
+    #       {"name": "image_name_2", "file": "Dockerfile_2"},
+    #       ["image_name_3", "image_name_path_3"]
+    #    ]'
+    #
+    CI_CD_BUILD_ARGS: '[
+      {"name": "api", "path": "api"}
+    ]'
 
 ### Test ###
 test:unit:
@@ -89,21 +92,26 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Deliver ###
-deliver:retag_image:
+deliver:retag_images:
   extends:
     - .deliver
-    - .tag_production_image
+    - .production_images
   variables:
-    CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: api
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+    # variables
+    #
+    # CI_CD_IMAGE_NAMES: (string)
+    #   Single image
+    #    * image_name
+    #   Several images at once
+    #    * image_name_1 image_name_2 image_name_3 ...
+    #
+    CI_CD_IMAGE_NAMES: api
 
 ### Cleanup ###
 finish:remove_test_images:
   extends:
     - .finish
-    - .remove_images
+    - .remove_test_images
   variables:
     # variables
     #
