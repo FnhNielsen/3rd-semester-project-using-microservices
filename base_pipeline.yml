@@ -168,12 +168,11 @@ build:check_request_title:
       fi
 
 finish:failure:
-  stage: finish
-  extends: .on_failure
+  extends:
+    .finish
+    .on_failure
+    .artifact
   script: echo "Create artifact"
   artifacts:
     expose_as: "Failure Artifact"
-    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
-    paths:
-      - ${CI_BUILDS_DIR}
     expire_in: 8 hrs
