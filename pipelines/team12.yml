@@ -29,34 +29,24 @@ build:compile:
     - echo "compiling"
     - echo "compiling"
 
-build:images:
+build:image:
   extends:
     - .build
-    - .test_images
+    - .test_image
   needs:
     - build:compile
   variables:
-    # variables
+    # Variables
     #
-    # CI_CD_BUILD_ARGS: (string or JSON)
-    #   Different examples of building the same image.
-    #    * image_name
-    #    * '{"name": "image_name", "path": "."}'
-    #    * '{"name": "image_name", "path": ".", "file": "Dockerfile"}'
-    #    * '["image_name"]'
-    #    * '["image_name", "."]'
-    #    * '["image_name", ".", "Dockerfile"]'
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    # CI_CD_PATH: (string)
+    #   Default: .
+    # CI_CD_FILE_NAME: (string)
+    #   Default: Dockerfile
     #
-    #   Several images at once
-    #    '[
-    #       {"name": "image_name"},
-    #       {"name": "image_name_2", "file": "Dockerfile_2"},
-    #       ["image_name_3", "image_name_path_3"]
-    #    ]'
-    #
-    CI_CD_BUILD_ARGS: '[
-      {"name": "api", "path": "api"}
-    ]'
+    CI_CD_IMAGE_NAME: "api"
+    CI_CD_PATH: "api"
 
 ### Test ###
 test:unit:
@@ -92,33 +82,27 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Deliver ###
-deliver:retag_images:
+deliver:production_image:
   extends:
     - .deliver
-    - .production_images
+    - .production_image
   variables:
-    # variables
+    # Variable
     #
-    # CI_CD_IMAGE_NAMES: (string)
-    #   Single image
-    #    * image_name
-    #   Several images at once
-    #    * image_name_1 image_name_2 image_name_3 ...
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
     #
     CI_CD_IMAGE_NAMES: api
 
 ### Cleanup ###
-finish:remove_test_images:
+finish:remove_test_image:
   extends:
     - .finish
-    - .remove_test_images
+    - .remove_test_image
   variables:
-    # variables
+    # Variable
     #
-    # CI_CD_IMAGE_NAMES: (string)
-    #   Single image
-    #    * image_name
-    #   Several images at once
-    #    * image_name_1 image_name_2 image_name_3 ...
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
     #
     CI_CD_IMAGE_NAMES: api

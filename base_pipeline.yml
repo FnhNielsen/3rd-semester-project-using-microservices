@@ -6,16 +6,7 @@ stages:
   - finish
 
 # Standard job image
-image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
-
-variables:
-  CI_CD_GUIDE_URL: 'https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide'
-  # Regex to check version number
-  #  Regex has been changed from having not captured groups
-  #  See https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
-  CI_CD_SEMVER_REGEX: '^(0|[1-9]\d*)\\.(0|[1-9]\d*)\\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$'
-  CI_CD_API: 'https://gitlab.sdu.dk/api/v4/projects'
-  CI_CD_DOCKER_IMAGE: 'gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.2'
+image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
 
 ### Rules ###
 # Trigger rules
@@ -113,165 +104,45 @@ variables:
   extends: .always_merge_production
 
 ### Methods ###
-.test_images:
-  # variables
+.test_image:
+  # Variables
   #
-  # CI_CD_BUILD_ARGS: (string or JSON)
-  #   Different examples of building the same image.
-  #    * image_name
-  #    * '{"name": "image_name", "path": "."}'
-  #    * '{"name": "image_name", "path": ".", "file": "Dockerfile"}'
-  #    * '["image_name"]'
-  #    * '["image_name", "."]'
-  #    * '["image_name", ".", "Dockerfile"]'
+  # CI_CD_IMAGE_NAME: (string)
+  #   Required
+  # CI_CD_PATH: (string)
+  #   Default: .
+  # CI_CD_FILE_NAME: (string)
+  #   Default: Dockerfile
   #
-  #   Several images at once
-  #    '[
-  #       {"name": "image_name"},
-  #       {"name": "image_name_2", "file": "Dockerfile_2"},
-  #       ["image_name_3", "image_name_path_3"]
-  #    ]'
-  #
-  image: ${CI_CD_DOCKER_IMAGE}
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
   services:
     - docker:dind
   script:
-    - |
-      args=${CI_CD_BUILD_ARGS};
-      work_dir=$(pwd);
+    - ci_cd_tool test create
 
-      if [ "$(echo $args | jq 'type=="object"' 2>/dev/null)" == "true" ] || [ "$(echo $args | jq '.[0] | type=="string"' 2>/dev/null)" == "true" ]; then
-          args="[$args]";
-      elif [ "$(echo "[\"$args\"]" | jq '.[0] | type=="string"' 2>/dev/null)" == "true" ]; then
-          args="[[\"$args\"]]";
-      elif [ -z "$(echo $args | jq '.' 2>/dev/null)" ]; then
-          args='[[]]';
-      fi
-
-      # Login to docker registry
-      echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY};
-
-      total=$(echo $args | jq ". | length");
-      i=0;
-      while [ $i -lt $total ]; do
-        # Find image name by looking first for array 0 and then object "name"
-        name=$(echo $args | jq ".[$i] | (if (try .[0] catch \"-n-o-\") == \"-n-o-\" then .name else .[0] end) // \"\"");
-        # Find path by looking first for array 1 and then object "path". If no value set . as default value
-        path=$(echo $args | jq ".[$i] | (if (try .[1] catch \"-n-o-\") == \"-n-o-\" then .path else .[1] end) // \"\" | if . == \"\" then \".\" else . end");
-        # Find path by looking first for array 2 and then object "file". If no value set Dockerfile as default value
-        file=$(echo $args | jq ".[$i] | (if (try .[2] catch \"-n-o-\") == \"-n-o-\" then .file else .[2] end) // \"\" | if . == \"\" then \"Dockerfile\" else . end");
-
-        # Do we have a image name?
-        if [ -z "${name}" ]; then
-          echo "ERROR: Missing image name.";
-          echo $(echo $args | jq ".[$i]");
-          exit 1;
-        fi
-
-        # Go to the dir with the dockerfile
-        cd "${work_dir}/${path}";
-        # Build image
-        docker build -t "${CI_REGISTRY_IMAGE}/${name}:${CI_COMMIT_SHORT_SHA}" -f "${file}" .;
-        # Push image
-        docker push "${CI_REGISTRY_IMAGE}/${name}:${CI_COMMIT_SHORT_SHA}";
-
-        let i+=1;
-      done
-
-.remove_images:
-  # variables
+.remove_test_image:
+  # Variable
   #
-  # CI_CD_IMAGE_NAMES: (string)
-  #   Single image
-  #    * image_name
-  #   Several images at once
-  #    * image_name_1 image_name_2 image_name_3 ...
+  # CI_CD_IMAGE_NAME: (string)
+  #   Required
   #
-  # NOTE: This does not work. We this method to self handle tags
-  image: ${CI_CD_DOCKER_IMAGE}
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
   services:
     - docker:dind
   script:
-    - |
-      if [ -z "${CI_CD_IMAGE_NAMES}" ]; then
-        echo "ERROR: No image names were specified.";
-        exit 1;
-      fi
+    - ci_cd_tool test remove
 
-      # Login to docker registry
-      echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY};
-
-      # Delete images from the registry
-      for name in ${CI_CD_IMAGE_NAMES}; do
-        curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${name}:delete&service=container_registry";
-        # Docker registry v2: https://gitlab.com/gitlab-org/gitlab-foss/-/issues/40096
-        reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${name}:${CI_COMMIT_SHORT_SHA}";
-      done
-
-
-.production_images:
-  # variables
+.production_image:
+  # Variable
   #
-  # CI_CD_IMAGE_NAMES: (string)
-  #   Single image
-  #    * image_name
-  #   Several images at once
-  #    * image_name_1 image_name_2 image_name_3 ...
+  # CI_CD_IMAGE_NAME: (string)
+  #   Required
   #
-  image: ${CI_CD_DOCKER_IMAGE}
+  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
   services:
     - docker:dind
   script:
-    - |
-      if [ -z "${CI_CD_IMAGE_NAMES}" ]; then
-        echo "ERROR: Missing image names.";
-        exit 1;
-      fi
-
-      # Get tag of test image
-      tag=$(git rev-parse --short HEAD^1)
-      if [ -z "${tag}" ]; then
-        echo "ERROR: It was not possible to detect source image tag. - See possibly ${CI_CD_GUIDE_URL}";
-        exit 1;
-      fi
-
-      # Get version number
-      for version in $CI_COMMIT_DESCRIPTION; do
-        if [[ ! ${version} =~ ${CI_CD_SEMVER_REGEX} ]]; then
-          echo "ERROR: It was not possible to detect version number. - See possibly ${CI_CD_GUIDE_URL}";
-          exit 1;
-        fi
-        break;
-      done
-
-      # Checking if tag is free
-      for name in ${CI_CD_IMAGE_NAMES}; do
-        IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "${CI_CD_API}/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${name}\") | .id")
-        if [ ! -z "${IMAGE_ID}" ] && [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "${CI_CD_API}/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${version}\") | any") == "true" ]; then
-          echo "ERROR: Version number already exist. - See ${CI_CD_GUIDE_URL}";
-          exit 1;
-        fi
-        break;
-      done
-
-      # Login to docker registry
-      echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY};
-
-      # Create prodution images and push the images
-      for name in ${CI_CD_IMAGE_NAMES}; do
-        docker pull "${CI_REGISTRY_IMAGE}/${name}:${tag}";
-
-        # Create the following tags: {major}.{minor}.{patch}, {major}.{minor} and latest
-        for new_tag in "${version} ${version%.*} latest"; do
-          docker tag "${CI_REGISTRY_IMAGE}/${name}:${tag}" "${CI_REGISTRY_IMAGE}/${name}:${new_tag}";
-          docker push "${CI_REGISTRY_IMAGE}/${name}:${new_tag}";
-        done
-
-        let i+=1;
-      done
-
-      git tag ${version} ${tag}
-      git push origin --tags
+    - ci_cd_tool production
 
 .artifact:
   artifacts:
@@ -287,11 +158,7 @@ build:check_request_title:
     - .build
     - .merge_request_production_branch
   script:
-    - |
-      if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ ${CI_CD_SEMVER_REGEX} ]]; then
-        echo "ERROR: Wrong request title. - See ${CI_CD_GUIDE_URL}";
-        exit 1;
-      fi
+    - ci_cd_tool version
 
 finish:failure:
   extends:
