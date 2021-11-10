@@ -87,7 +87,7 @@ function create_test_image {
   [ -z "${image_name}" ] && error "Docker image name is missing."
 
   # Get test tag
-  sha_tag=$(get_git_commit_sha 0)
+  sha_tag=$(get_git_commit_sha)
 
   info "Check if Docker image and tag exist."
   if exist_image_tag_gitlab "${image_name}" "${sha_tag}"; then
@@ -135,7 +135,7 @@ function create_production_image {
   exist_image_tag_gitlab "${image_name}" "${version}" && error "Version '${version}' already exists."
 
   info "Pull test image."
-  sha_tag=$(get_git_commit_sha 1)
+  sha_tag=$(get_git_commit_sha)
   exist_image_tag_gitlab "${test_image_name}" "${sha_tag}" || error "It was not possible to find the test image."
   pull_image_gitlab "${test_image_name}:${sha_tag}"
 

@@ -3,9 +3,7 @@
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/tools.sh"
 
 function get_git_commit_sha {
-  # $1: Go backward (string) [Optional]
-  [ -z "$1" ] && back=0 || back=$1
-  sha=$(git rev-parse --short "HEAD~${back}")
+  sha=$(git log --pretty=format:%h --no-merges -n 1 HEAD)
 
   debug "SHA: ${sha}"
   echo "${sha}"
