@@ -92,7 +92,7 @@ function create_test_image {
   info "Check if Docker image and tag exist."
   if exist_image_tag_gitlab "${image_name}" "${sha_tag}"; then
     info "Docker image already exist."
-    exit 0
+    finish
   fi
 
   info "Build test image."
@@ -199,4 +199,4 @@ case $1 in
   *) echo "Unknown command: $1"; unknown_help;;
 esac
 
-info "The job was run successfully."
+finish

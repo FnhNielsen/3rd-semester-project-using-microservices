@@ -37,3 +37,8 @@ function error {
   echo -e "ERROR (${FUNCNAME[1]}): $1" >&2
   exit 1
 }
+
+function finish {
+  echo "The job was run successfully."
+  exit 0
+}
