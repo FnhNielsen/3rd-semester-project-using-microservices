@@ -1,20 +1,28 @@
 #!/bin/bash
 
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/gitlab.sh"
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/tools.sh"
 
 function get_git_commit_sha {
-  is_merge_production_gitlab \
-    && git rev-parse --short HEAD^1 \
-    || echo "${CI_COMMIT_SHORT_SHA}"
+  # $1: Go backward (string) [Optional]
+  [ -z "$1" ] && back=0 || back=$1
+  sha=$(git rev-parse --short "HEAD~${back}")
+
+  debug "SHA: ${sha}"
+  echo "${sha}"
 }
 
 function add_git_tag {
-  # $1: version
-  # $2: commit SHA
-  git tag "${1}" "${2}"
+  # $1: Tag (string)
+  # $2: Commit SHA (string)
+  debug "Tag: \"$1\""
+  debug "Commit SHA: \"$2\""
+  git tag "$1" "$2"
 }
 
 function push_git_tag {
-  # $1: branch
-  git push "${1:='origin'}" --tags
+  # $1: Branch (string) [Optional]
+  is_empty "$1" && branch="origin" || branch=$1
+
+  debug "push tags to \"${branch}\" branch"
+  git push "${branch}" --tags
 }

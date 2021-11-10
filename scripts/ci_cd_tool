@@ -1,150 +1,202 @@
 #!/bin/bash
 
-# shellcheck disable=SC2164
-if [ -f "/usr/local/lib/ci_cd_lib/gitlab.sh" ]; then
-  source "/usr/local/lib/ci_cd_lib/gitlab.sh"
-else
-  source "$(cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P)/lib/gitlab.sh"
-fi
+##### Begin Setup #####
 
-CI_CD_GUIDE_URL='https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide'
+TEST_IMAGE_GROUP="test-image"
+GUIDE_TEXT=""
+DEBUG=0
+
+##### End setup #####
 
 PROG="ci_cd_tool"
 
 USAGE="\
 Usage:
-  ${PROG} test (create|remove) <image_name> [<docker_file>] [<path>]
-  ${PROG} production <image_name>
-  ${PROG} version check
+  ${PROG} test [--debug] <image_name> [<docker_file>] [<build_path>]
+  ${PROG} production [--debug] <image_name>
+  ${PROG} version [--debug] [<version>]
   ${PROG} --help
 
-Arguments:
-  <image_name>  Docker image name.
-  <docker_file> It specify the docker file name.
-  <path>        It specify the location of the docker file.
-
 Options:
-  -h, --help    Print this help message.
+  -v, --debug  Print more info.
+  -h, --help   Print this help message.
+
+Arguments:
+  All arguments can be replaced with system variables.
+  - See commands section.
 
 Commands:
-  test        Use 'create' to build and push test image or 'remove' to remove a test
-              image.
-              The <image_name> specify the Docker image name. The argument is always
-              required.
+  test        Use 'create' to build and push test image or 'remove' to remove a test image.
+              Argument:
+                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
 
-              Optional arguments when creating image:
-              <docker_file> can bee specify when test image is created. It specify
-              the docker file name. Default value is 'Dockerfile'.
-              <path> can bee specify when test image is created. It specify
-              the location of the docker file. Default path is '.'.
+              Optional:
+                <docker_file>, CI_CD_DOCKER_FILE  - Specify Docker file name and possibly path
+                <build_path>, CI_CD_DOCKER_PATH   - Specify the build folder for files to be
+                                                    included in the Docker image
 
-  production  This command will push test image to production.
-              <image_name> specify the Docker image name. The <image_name> must fit
-              with a test image name. The argument is required.
+  production  This command will create new tag from a test image and push it to the production.
+              Argument:
+                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
 
-  version     Check that the new release version is valid with Semantic Versioning."
+  version     Check that the new release version is valid with Semantic Versioning.
+              Optional:
+                <version>  - Alternatively, you can specify a version to validate."
+
+LIB_DIR="/usr/local/lib/ci_cd_lib"
+if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
+  LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/lib"
+fi
+
+source "${LIB_DIR}/tools.sh"
+source "${LIB_DIR}/docker.sh"
+source "${LIB_DIR}/semver_version.sh"
+source "${LIB_DIR}/git.sh"
+source "${LIB_DIR}/gitlab.sh"
+
+if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:upper:]' '[:lower:]')" == "true" ]; then
+  DEBUG=1
+fi
+[ -n "${CI_CD_TEST_IMAGE_GROUP}" ] && TEST_IMAGE_GROUP=${CI_CD_TEST_IMAGE_GROUP}
+[ -n "${CI_CD_GUIDE_URL}" ] && GUIDE_TEXT=" See ${CI_CD_GUIDE_URL}."
 
 function usage_help() {
-    echo -e "$USAGE"
+    echo -e "${USAGE}"
     exit 0
 }
 
+function unknown_help() {
+    echo -e "${USAGE}" >&2;
+    exit 1
+}
+
+
 
 function create_test_image {
-  # ${CI_CD_IMAGE_NAME}: Image name
-  # ${CI_CD_DOCKER_FILE}: Docker file name (Optional)
-  # ${CI_CD_DOCKER_PATH}: Build path (Optional)
+  # $1 | ${CI_CD_IMAGE_NAME}: Image name (string)
+  # $2 | ${CI_CD_DOCKER_FILE}: Docker file name (string) [Optional]
+  # $3 | ${CI_CD_DOCKER_PATH}: Build path (string) [Optional]
 
-  # Is image name specified?
-  [ -z "${CI_CD_IMAGE_NAME}" ] && error "Docker image name is missing."
+  # Arguments
+  [ -z "$1" ] && image_name="${TEST_IMAGE_GROUP}/${CI_CD_IMAGE_NAME}" || image_name="${TEST_IMAGE_GROUP}/$1"
+  [ -z "$2" ] && docker_file=${CI_CD_DOCKER_FILE} || docker_file=$2
+  [ -z "$3" ] && docker_path=${CI_CD_DOCKER_PATH} || docker_path=$3
 
-  # Get tag
-  sha_tag=$(get_git_commit_sha)
-  exist_tag_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}" && error "The tag '${sha_tag}' is already in use."
+  # Image name
+  debug "Image name: ${image_name}"
+  [ -z "${image_name}" ] && error "Docker image name is missing."
 
-  # Build test image
-  build_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}" "${CI_CD_DOCKER_FILE}" "${CI_CD_DOCKER_PATH}"
+  # Get test tag
+  sha_tag=$(get_git_commit_sha 0)
 
-  # Push test image
-  push_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}"
+  info "Check if Docker image and tag exist."
+  if exist_image_tag_gitlab "${image_name}" "${sha_tag}"; then
+    info "Docker image already exist."
+    exit 0
+  fi
+
+  info "Build test image."
+  build_image_gitlab "${image_name}:${sha_tag}" "${docker_file}" "${docker_path}"
+
+  info "Push test image."
+  push_image_gitlab "${image_name}:${sha_tag}"
 }
 
-function remove_test_image {
-  # ${CI_CD_IMAGE_NAME}: Image name
+function validate_version_scheme {
+  # $1: Version (string) [Optional]
 
-  sha_tag=$(get_git_commit_sha)
-  exist_tag_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}" || error "It was not possible to find the test image."
+  # Argument
+  [ -z "$1" ] && version=$(get_version_gitlab) || version=$1
 
-  remove_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}"
-}
-
-function check_version_scheme {
-  version=$(get_new_version)
-  check_semver_scheme "${version}" || error "Version \"${version}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'. See ${CI_CD_GUIDE_URL}.";
+  info "Validate version scheme."
+  check_version_scheme "${version}" \
+    || error "Version \"${version}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
 }
 
 function create_production_image {
-  # ${CI_CD_IMAGE_NAME}: Image name
+  # $1 | ${CI_CD_IMAGE_NAME}: Image name (string)
 
-  # Is image name specified?
-  [ -z "${CI_CD_IMAGE_NAME}" ] && error "Docker image name is missing."
+  # Argument
+  [ -z "$1" ] && image_name=${CI_CD_IMAGE_NAME} || image_name=$1
 
-  # Get source tag
-  sha_tag=$(get_git_commit_sha)
-  exist_tag_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}" || error "It was not possible to find the test image."
+  # Image name
+  debug "Image name: ${image_name}"
+  [ -z "${image_name}" ] && error "Docker image name is missing."
 
-  # Get version
-  # NOTE: Implement check new version is newer that the old version by using tag from production branch
-  version=$(get_new_version)
-  check_semver_scheme "${version}" || error "It was not possible to detect the version."
+  # Test image name
+  test_image_name="${TEST_IMAGE_GROUP}/${image_name}"
+  debug "Test image name: ${test_image_name}"
+
+  info "Validate version."
+  # NOTE: Implement check new version is newer that the old version by using latest tag from production branch
+  version=$(get_version_gitlab)
+  check_version_scheme "${version}" || error "It was not possible to detect the version.${GUIDE_TEXT}"
   version=$(normalize_version "${version}")
-  exist_tag_gitlab "${CI_CD_IMAGE_NAME}" "${version}" && error "Version '${version}' already exists."
+  exist_image_tag_gitlab "${image_name}" "${version}" && error "Version '${version}' already exists."
 
-  # Pull image
-  pull_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}"
+  info "Pull test image."
+  sha_tag=$(get_git_commit_sha 1)
+  exist_image_tag_gitlab "${test_image_name}" "${sha_tag}" || error "It was not possible to find the test image."
+  pull_image_gitlab "${test_image_name}:${sha_tag}"
 
-  # Create new tags
-  new_tags="${version} latest" # {major}.{minor}.{patch} and latest
-  is_release_version "${version}" && new_tags="${new_tags} ${version%.*}" # add {major}.{minor}
+  info "Create new tags and push to registry."
+  #  {major}.{minor}.{patch}.{prerel}.{build}
+  #  {major}.{minor}.{prerel}.{build}
+  #  {major}.{prerel}.{build}
+  #  latest
+  new_tags="${version} $(format_version "${version}" "major.minor.prerel.build") \
+            $(format_version "${version}" "major.prerel.build") latest"
+  debug "New tags: ${new_tags}"
 
   for new_tag in ${new_tags}; do
-    tag_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}" "${new_tag}"
-    push_image_gitlab "${CI_CD_IMAGE_NAME}" "${new_tag}"
+    debug "New tag: ${new_tag}"
+    tag_image_gitlab "${test_image_name}:${sha_tag}" "${image_name}:${new_tag}"
+    push_image_gitlab "${image_name}:${new_tag}"
   done
 
-  # remove test image
-  remove_image_gitlab "${CI_CD_IMAGE_NAME}" "${sha_tag}"
-
-  # Add version as git tag
+  info "Add version to git as tag."
   add_git_tag "v${version}" "${sha_tag}"
   push_git_tag
 }
 
 
+
 function command_test {
-  case $1 in
-    create) create_test_image;;
-    remove) remove_test_image;;
-    *) usage_help;;
-  esac
+  debug "Argument <image_name>: \"$1\""
+  debug "Argument <docker_file>: \"$2\""
+  debug "Argument <build_path>: \"$3\""
+  create_test_image "$1" "$2" "$3"
 }
 
 function command_production {
-  create_production_image
+  debug "Argument <image_name>: \"$1\""
+  create_production_image "$1"
 }
 
 function command_version {
-  check_version_scheme
+  debug "Argument <version>: \"$1\""
+  validate_version_scheme "$1"
 }
 
-case $# in
-  0) echo "Unknown command: $*"; echo -e "$USAGE" >&2; exit 1;;
-esac
+# Handle options arguments
+for arg in "$@"; do
+  shift
+  # shellcheck disable=SC2034
+  case $arg in
+    --help|-h) usage_help;;
+    -v|--debug) DEBUG=1;;
+    (*) set -- "$@" "$arg";;
+  esac
+done
+
+# Handle command arguments
+[ "$#" == 0 ] && echo "No command found:" && unknown_help
 
 case $1 in
-  --help|-h) usage_help;;
   test) shift; command_test "$@";;
   production) shift; command_production "$@";;
   version) shift; command_version "$@";;
-  *) echo "Unknown arguments: $*"; echo -e "$USAGE" >&2; exit 1;;
+  *) echo "Unknown command: $1"; unknown_help;;
 esac
+
+info "The job was run successfully."

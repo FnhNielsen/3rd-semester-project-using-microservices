@@ -5,69 +5,86 @@ stages:
   - deliver
   - finish
 
+variables:
+  CI_CD_PRODUCTION_BRANCH: main
+  CI_CD_DEVELOPMENT_BRANCH: dev
+  CI_CD_RELEASE_BRANCH: release
+  CI_CD_HOTFIX_BRANCH: hotfix
+  CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide
+  CI_CD_TEST_IMAGE_GROUP: test-image
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:1.0.27
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:1.0.47
+  CI_CD_TOOL_DEBUG: "true"
+
 # Standard job image
-image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
+image: $CI_CD_BASE_IMAGE
 
 ### Rules ###
 # Trigger rules
 .default:
+  allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
       when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
       when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
-.merge_request_production_branch:
+.merge_request_production:
+  allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .merge_production:
+  allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
-.always:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
-      when: always
-
 .always_except_merge_production:
-  rules:1
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+  allow_failure: false
+  rules:
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
+      when: always
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
-.on_failure:
+.failure:
+  allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
       when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
       when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_failure
 
 # Jobs rules
@@ -75,25 +92,21 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
   stage: build
   extends: .default
 
-.build_production:
-  stage: build
-  extends: .merge_request_production_branch
-
 .unit:
   stage: test
   extends: .default
 
 .acceptance:
   stage: test
-  extends: .merge_request_production_branch
+  extends: .merge_request_production
 
 .integration:
   stage: test
-  extends: .merge_request_production_branch
+  extends: .merge_request_production
 
 .performance:
   stage: test
-  extends: .merge_request_production_branch
+  extends: .merge_request_production
 
 .deliver:
   stage: deliver
@@ -101,7 +114,7 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
 
 .finish:
   stage: finish
-  extends: .always_merge_production
+  extends: .always_except_merge_production
 
 ### Methods ###
 .test_image:
@@ -114,11 +127,12 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
   # CI_CD_FILE_NAME: (string)
   #   Default: Dockerfile
   #
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
+  image: $CI_CD_DOCKER_IMAGE
   services:
     - docker:dind
   script:
-    - ci_cd_tool test create
+    - ci_cd_tool test
+  resource_group: docker_image
 
 .remove_test_image:
   # Variable
@@ -126,11 +140,12 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
   # CI_CD_IMAGE_NAME: (string)
   #   Required
   #
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
+  image: $CI_CD_DOCKER_IMAGE
   services:
     - docker:dind
   script:
-    - ci_cd_tool test remove
+    - ci_cd_tool
+  resource_group: docker_image
 
 .production_image:
   # Variable
@@ -138,34 +153,33 @@ image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.2
   # CI_CD_IMAGE_NAME: (string)
   #   Required
   #
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.3
+  image: $CI_CD_DOCKER_IMAGE
   services:
     - docker:dind
   script:
     - ci_cd_tool production
+  resource_group: docker_image
 
 .artifact:
   artifacts:
-    expose_as: "Artifact"
-    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
+    name: branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
-      - ${CI_BUILDS_DIR}
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
     expire_in: 3 hrs
 
 ### Jobs ###
 build:check_request_title:
   extends:
     - .build
-    - .merge_request_production_branch
+    - .merge_request_production
   script:
     - ci_cd_tool version
 
 finish:failure:
   extends:
-    .finish
-    .on_failure
-    .artifact
+    - .finish
+    - .failure
+    - .artifact
   script: echo "Create artifact"
   artifacts:
-    expose_as: "Failure Artifact"
     expire_in: 8 hrs
