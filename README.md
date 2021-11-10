@@ -63,6 +63,12 @@ To make sure no faulty code goes to main, maintainer does the following:
 
 Go to Settings -> General -> Merge Requests -> Merge checks, and check the box with "Pipelines must succeed".
 
+### Always use merge commit for merging requests
+
+In order for the merge request title to be used to specify a new release version, all merge requests to the production branch must always use the method merge commit.
+
+Go to Settings -> General -> Merge Requests -> Merge method, and check the box with "Merge commit".
+
 ### The CI file
 
 For this project, we have decided that the setup for CI in your project is mainly described in our repository. This means that all we ask of you is to insert a simple file in the root of your repository on EVERY SINGLE BRANCH. Sidenote: We can technically do this ourselves as each of us has been given "developer" role in the groups' repositories that we are working with, but to be transparent and as a guide to ourselves, here is what to do:
