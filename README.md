@@ -63,6 +63,12 @@ To make sure no faulty code goes to main, maintainer does the following:
 
 Go to Settings -> General -> Merge Requests -> Merge checks, and check the box with "Pipelines must succeed".
 
+### Always use merge commit for merging requests
+
+In order for the merge request title to be used to specify a new release version, all merge requests to the production branch must always use the method merge commit.
+
+Go to Settings -> General -> Merge Requests -> Merge method, and check the box with "Merge commit".
+
 ### The CI file
 
 For this project, we have decided that the setup for CI in your project is mainly described in our repository. This means that all we ask of you is to insert a simple file in the root of your repository on EVERY SINGLE BRANCH. Sidenote: We can technically do this ourselves as each of us has been given "developer" role in the groups' repositories that we are working with, but to be transparent and as a guide to ourselves, here is what to do:
@@ -110,10 +116,39 @@ We apologize for the premature setup of the settings causing this setup to be ne
 ## Semantic versioning
 Use [semantic versioning 2.0.0](https://semver.org/).
 
-Version 1.2.3:
+### Version 1.2.3
 1. MAJOR version when you make incompatible API changes,
 2. MINOR version when you add functionality in a backwards compatible manner, and
-3. PATCH version when you make backwards compatible bug fixes.
+3. PATCH version when you make backwards compatible bug fixes. 
+
+Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+
+### Add Label for Pre-release
+Pre-release version may be denoted by a hyphen and only contain ASCII alphanumerics and hyphens [0-9A-Za-z-]. A numeric identifiers can not have leading zeroes.
+
+Examples:
+
+    1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7
+
+(!) Pre-release version has lower priority than the normal version MAJOR.MINOR.PATCH.
+
+Example:
+
+    1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta < 1.0.0-beta.2 < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0
+
+### Add Build Metadata
+Metadata may be denoted by a plus sign and only contain ASCII alphanumerics and hyphens [0-9A-Za-z-].
+
+Example:
+
+    1.0.0-alpha+mockup
+
+(!) The metadata is always ignored by version prioritization.
+
+Example:
+
+    1.0.0-alpha+mockup = 1.0.0-alpha+mockup-101230 = 1.0.0-alpha+mockup.1
+
 
 ## How to use and understand CI in your project
 
