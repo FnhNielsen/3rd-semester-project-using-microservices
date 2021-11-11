@@ -1,1 +1,117 @@
+##############################
+########## Settings ##########
+##############################
 
+variables:
+  CI_CD_PRODUCTION_BRANCH: "main"
+  CI_CD_DEVELOPMENT_BRANCH: "devBranch"
+  CI_CD_RELEASE_BRANCH: "release"
+  CI_CD_HOTFIX_BRANCH: "hotfix"
+  CI_CD_STATI_IMAGE_NAME: "test_image"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: main
+    file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+#Check if tags exist
+build:check_database_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: database
+
+build:check_api_tag:
+  extends:
+    - .build_production
+    - .check_for_tag
+  variables:
+    CI_CD_IMAGE_NAME: api
+
+#Build images
+build:database_image:
+  extends:
+    - .build_production
+    - .push_image
+  needs:
+    - build:check_database_tag
+    - build:check_api_tag
+  variables:
+    CI_CD_IMAGE_NAME: database
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: Cassandra
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+build:api_image:
+  extends:
+    - .build_production
+    - .push_image
+  needs:
+    - build:check_database_tag
+    - build:check_api_tag
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: NodeJS
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+#Run unit tests
+test:unit:
+  image: node:latest
+  extends: .unit
+  script:
+    - echo "Unit tests will be run here"
+
+# test:acceptance:
+#   extends: .acceptance
+#   needs:
+#     - test:unit
+#   script:
+#     - echo "run acceptance test cmds or script"
+#     - echo "run acceptance test cmds or script"
+
+# test:integration:
+#   extends: .integration
+#   needs:
+#     - test:acceptance
+#   script:
+#     - echo "run integration test cmds or script"
+#     - echo "run integration test cmds or script"
+
+# test:performance:
+#   extends: .performance
+#   needs:
+#     - test:integration
+#   script:
+#     - echo "run performance test cmds or script"
+#     - echo "run performance test cmds or script"
+
+#retag the images to production
+deliver:retag_database_image:
+  extends:
+    - .deliver
+    - .tag_production_image
+  variables:
+    CI_CD_IMAGE_NAME: database
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: Cassandra
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+deliver:retag_api_image:
+  extends:
+    - .deliver
+    - .tag_production_image
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_DOCKER_FILE: Dockerfile
+    CI_CD_DOCKER_FILE_PATH: NodeJS
+    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
