@@ -61,6 +61,8 @@ function exist_image_tag_gitlab {
 
 function pull_image_gitlab {
   # $1: Image name (string)
+  registry_login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+
   pull_image "${CI_REGISTRY_IMAGE}/$1"
 }
 
