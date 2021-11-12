@@ -24,3 +24,12 @@ function push_git_tag {
   debug "push tags to \"${branch}\" branch"
   git push "${branch}" --tags
 }
+
+function exist_git_tag {
+  # $1: Tag (string)
+  tag=$(git describe --tags --abbrev=0)
+  debug "compare $1 with ${tag}"
+
+  [ "$1" == "${tag}" ]
+}
+
