@@ -15,6 +15,12 @@ variables:
   CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:1.0.34
   CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:1.0.54
   CI_CD_TOOL_DEBUG: "true"
+  # All variables below come from Ahmad
+  # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: /certs
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: $DOCKER_TLS_CERTDIR/client
 
 # Standard job image
 image: $CI_CD_BASE_IMAGE
