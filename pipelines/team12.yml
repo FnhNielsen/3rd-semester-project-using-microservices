@@ -19,7 +19,7 @@ build:compile:
     - echo "compiling"
     - echo "compiling"
 
-build:image:
+build:api_image:
   extends:
     - .build
     - .test_image
@@ -38,11 +38,31 @@ build:image:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_PATH: api
 
+build:database_image:
+  extends:
+    - .build
+    - .test_image
+  needs:
+    - build:compile
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    # CI_CD_DOCKER_PATH: (string)
+    #   Default: .
+    # CI_CD_FILE_NAME: (string)
+    #   Default: Dockerfile
+    #
+    CI_CD_IMAGE_NAME: database
+    CI_CD_DOCKER_PATH: database
+
 ### Test ###
 test:unit:
   extends: .unit
   needs:
-    - build:image
+    - build:api_image
+    - build:database_image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -72,7 +92,7 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Deliver ###
-deliver:production_image:
+deliver:production_api_image:
   extends:
     - .deliver
     - .production_image
@@ -83,3 +103,16 @@ deliver:production_image:
     #   Required
     #
     CI_CD_IMAGE_NAME: api
+
+deliver:production_database_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    #
+    CI_CD_IMAGE_NAME: database
+
