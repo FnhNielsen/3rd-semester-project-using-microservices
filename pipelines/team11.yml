@@ -3,10 +3,7 @@
 ##############################
 
 variables:
-  CI_CD_PRODUCTION_BRANCH: "main"
   CI_CD_DEVELOPMENT_BRANCH: "devBranch"
-  CI_CD_RELEASE_BRANCH: "release"
-  CI_CD_HOTFIX_BRANCH: "hotfix"
   CI_CD_STATI_IMAGE_NAME: "test_image"
 
 ##############################
