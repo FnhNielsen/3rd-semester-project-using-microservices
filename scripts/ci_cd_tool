@@ -144,8 +144,8 @@ function create_production_image {
   #  {major}.{minor}-{prerel}
   #  {major}-{prerel}
   #  latest
-  new_tags="${version} $(format_version "${version}" "major.minor.prerel") \
-            $(format_version "${version}" "major.prerel") latest"
+  new_tags="${version} $(format_version "${version}" "major minor prerel") \
+            $(format_version "${version}" "major prerel") latest"
   debug "New tags: ${new_tags}"
 
   for new_tag in ${new_tags}; do

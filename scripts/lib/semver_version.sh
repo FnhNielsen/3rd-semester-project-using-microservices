@@ -7,36 +7,33 @@ source "${LIB_DIR}/tools.sh"
 function format_version {
   # $1: Version (string)
   # $2: Format (string)
-  #     Format values (major|minor|patch|release|prerel|build) separated by .
-  #     Eg. major.minor.prerel
+  #     Format values (major|minor|patch|release|prerel|build) separated by space
+  #     Eg. major minor prerel
   #     See https://github.com/fsaintjacques/semver-tool
-  debug "Version: \"$1\""
-  debug "Format: \"$2\""
+  f_ver=""
 
-  version=""
-  IFS='.'
+  echo "Input Version: \"$1\"" >&2
+  echo "Format: \"$2\"" >&2
 
   for part in $2; do
     case ${part} in
       prerel)
         p=$(semver get prerel "$1")
-        [ -z "$p" ] && version+=${p:+-$p}
+        [ -n "$p" ] && f_ver="${f_ver}${p:+-$p}"
       ;;
       build)
         p=$(semver get build "$1")
-        [ -z "$p" ] && version+=${p:++$p}
+        [ -n "$p" ] && f_ver="${f_ver}${p:++$p}"
       ;;
       *)
         p=$(semver get "${part}" "$1")
-        [ -z "$p" ] && version+=${p:+.$p}
+        [ -n "$p" ] && f_ver="${f_ver}${p:+.$p}"
       ;;
     esac
   done
 
-  unset IFS
-
-  debug "Formatted version: \"${version:1}\""
-  echo "${version:1}"
+  echo "Formatted version: \"${f_ver:1}\"" >&2
+  echo "${f_ver:1}"
 }
 
 function check_version_scheme {
