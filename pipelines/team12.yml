@@ -30,13 +30,13 @@ build:image:
     #
     # CI_CD_IMAGE_NAME: (string)
     #   Required
-    # CI_CD_PATH: (string)
+    # CI_CD_DOCKER_PATH: (string)
     #   Default: .
     # CI_CD_FILE_NAME: (string)
     #   Default: Dockerfile
     #
     CI_CD_IMAGE_NAME: api
-    CI_CD_PATH: api
+    CI_CD_DOCKER_PATH: api
 
 ### Test ###
 test:unit:
