@@ -14,6 +14,8 @@ Now how do you actually use what we (team 12) have developed, that'll be explain
 	* [Only merge when pipeline succeeds](#only-merge-when-pipeline-succeeds)
 	* [The CI file](#the-ci-file)
 * [Semantic versioning](#semantic-versioning)
+    * [Version](#version)
+    * [Add Label for Pre-release](#add-label-for-pre-release)
 * [How to use and understand CI in your project](#how-to-use-and-understand-ci-in-your-project)
     * [Inspecting pipelines](#inspecting-pipelines)
 	* [Additional tips](#additional-tips)
@@ -116,12 +118,12 @@ We apologize for the premature setup of the settings causing this setup to be ne
 ## Semantic versioning
 Use [semantic versioning 2.0.0](https://semver.org/).
 
-### Version 1.2.3
+### Version
 1. MAJOR version when you make incompatible API changes,
 2. MINOR version when you add functionality in a backwards compatible manner, and
 3. PATCH version when you make backwards compatible bug fixes. 
 
-Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+Additional label for pre-release are available as extensions to the MAJOR.MINOR.PATCH format.
 
 ### Add Label for Pre-release
 Pre-release version may be denoted by a hyphen and only contain ASCII alphanumerics and hyphens [0-9A-Za-z-]. A numeric identifiers can not have leading zeroes.
@@ -135,20 +137,6 @@ Examples:
 Example:
 
     1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta < 1.0.0-beta.2 < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0
-
-### Add Build Metadata
-Metadata may be denoted by a plus sign and only contain ASCII alphanumerics and hyphens [0-9A-Za-z-].
-
-Example:
-
-    1.0.0-alpha+mockup
-
-(!) The metadata is always ignored by version prioritization.
-
-Example:
-
-    1.0.0-alpha+mockup = 1.0.0-alpha+mockup-101230 = 1.0.0-alpha+mockup.1
-
 
 ## How to use and understand CI in your project
 

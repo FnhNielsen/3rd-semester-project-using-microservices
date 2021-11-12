@@ -140,12 +140,12 @@ function create_production_image {
   pull_image_gitlab "${test_image_name}:${sha_tag}"
 
   info "Create new tags and push to registry."
-  #  {major}.{minor}.{patch}.{prerel}.{build}
-  #  {major}.{minor}.{prerel}.{build}
-  #  {major}.{prerel}.{build}
+  #  {major}.{minor}.{patch}-{prerel}
+  #  {major}.{minor}-{prerel}
+  #  {major}-{prerel}
   #  latest
-  new_tags="${version} $(format_version "${version}" "major.minor.prerel.build") \
-            $(format_version "${version}" "major.prerel.build") latest"
+  new_tags="${version} $(format_version "${version}" "major.minor.prerel") \
+            $(format_version "${version}" "major.prerel") latest"
   debug "New tags: ${new_tags}"
 
   for new_tag in ${new_tags}; do

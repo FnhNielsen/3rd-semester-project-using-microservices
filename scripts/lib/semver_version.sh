@@ -53,14 +53,11 @@ function normalize_version {
   prerel=$(semver get prerel "$1")
   debug "Prerel: ${prerel}"
 
-  build=$(semver get build "$1")
-  debug "Build: ${build}"
-
   release=$(semver get release "$1")
   debug "Release: ${release}"
 
-  debug "Normalize version: ${release}${prerel:+-$prerel}${build:++$build}"
-  echo "${release}${prerel:+-$prerel}${build:++$build}"
+  debug "Normalize version: ${release}${prerel:+-$prerel}"
+  echo "${release}${prerel:+-$prerel}"
 }
 
 function is_newer_version {
