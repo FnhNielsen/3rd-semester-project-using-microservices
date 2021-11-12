@@ -36,6 +36,7 @@ build:image:
     #   Default: Dockerfile
     #
     CI_CD_IMAGE_NAME: api
+    CI_CD_PATH: api
 
 ### Test ###
 test:unit:
