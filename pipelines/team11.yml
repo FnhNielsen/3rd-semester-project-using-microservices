@@ -4,7 +4,7 @@
 
 variables:
   CI_CD_DEVELOPMENT_BRANCH: "devBranch"
-  CI_CD_STATI_IMAGE_NAME: "test_image"
+  CI_CD_TOOL_DEBUG: "true"
 
 ##############################
 ######## DON'T TOUCH #########
@@ -19,47 +19,22 @@ include:
 ############ JOBS ############
 ##############################
 
-#Check if tags exist
-build:check_database_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: database
-
-build:check_api_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: api
-
 #Build images
-build:database_image:
-  extends:
-    - .build_production
-    - .push_image
-  needs:
-    - build:check_database_tag
-    - build:check_api_tag
-  variables:
-    CI_CD_IMAGE_NAME: database
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: Cassandra
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
 build:api_image:
   extends:
     - .build_production
     - .push_image
-  needs:
-    - build:check_database_tag
-    - build:check_api_tag
   variables:
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: NodeJS
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+    CI_CD_DOCKER_PATH: NodeJS
+
+build:database_image:
+  extends:
+    - .build_production
+    - .push_image
+  variables:
+    CI_CD_IMAGE_NAME: database
+    CI_CD_DOCKER_PATH: Cassandra
 
 #Run unit tests
 test:unit:
@@ -92,23 +67,27 @@ test:unit:
 #     - echo "run performance test cmds or script"
 #     - echo "run performance test cmds or script"
 
-#retag the images to production
-deliver:retag_database_image:
+### Deliver ###
+deliver:production_api_image:
   extends:
     - .deliver
-    - .tag_production_image
+    - .production_image
   variables:
-    CI_CD_IMAGE_NAME: database
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: Cassandra
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
-deliver:retag_api_image:
-  extends:
-    - .deliver
-    - .tag_production_image
-  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    #
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: NodeJS
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+
+deliver:production_database_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    #
+    CI_CD_IMAGE_NAME: database
