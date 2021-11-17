@@ -22,16 +22,16 @@ include:
 #Build images
 build:api_image:
   extends:
-    - .build_production
-    - .push_image
+    - .build
+    - .test_image
   variables:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_PATH: NodeJS
 
 build:database_image:
   extends:
-    - .build_production
-    - .push_image
+    - .build
+    - .test_image
   variables:
     CI_CD_IMAGE_NAME: database
     CI_CD_DOCKER_PATH: Cassandra
