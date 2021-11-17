@@ -41,7 +41,9 @@ test:unit:
   image: node:latest
   extends: .unit
   script:
-    - echo "Unit tests will be run here"
+    - cd ./NodeJS/app
+    - npm i
+    - npm test
 
 # test:acceptance:
 #   extends: .acceptance
