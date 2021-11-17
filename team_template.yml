@@ -1,6 +1,6 @@
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    # Add branch name (main|dev)
-    ref: <branch>
-    # Add team name eg. team12
+    # Add ref (main|dev|commit SHA)
+    ref: <ref>
+    # Add team name e.g. team12
     file: 'pipelines/<team>.yml'
