@@ -37,13 +37,13 @@ build:database_image:
     CI_CD_DOCKER_PATH: Cassandra
 
 #Run unit tests
-test:unit:
-  image: node:latest
-  extends: .unit
-  script:
-    - cd ./NodeJS/app
-    - npm i
-    - npm test
+#test:unit:
+#  image: node:latest
+#  extends: .unit
+#  script:
+#    - cd ./NodeJS/app
+#    - npm i
+#    - npm test
 
 # test:acceptance:
 #   extends: .acceptance
