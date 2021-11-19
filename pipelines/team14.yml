@@ -7,8 +7,7 @@ include:
 
 # Haven't used ".build" as I don't want to build the images at every single commit/push
 build:aam:
-  stage:
-    - build
+  stage: build
   extends:
     - .merge_request_production
     - .test_image
@@ -17,8 +16,7 @@ build:aam:
     CI_CD_DOCKER_PATH:  AAM_Service/api
 
 build:ads:
-  stage:
-    - build
+  stage: build
   extends:
     - .merge_request_production
     - .test_image
@@ -27,8 +25,7 @@ build:ads:
     CI_CD_DOCKER_PATH: Ads_Service/api
 
 build:audience_targeting:
-  stage:
-    - build
+  stage: build
   extends:
     - .merge_request_production
     - .test_image
@@ -37,8 +34,7 @@ build:audience_targeting:
     CI_CD_DOCKER_PATH: Audience_Targeting_Service/api
 
 build:billing:
-  stage:
-    - build
+  stage: build
   extends:
     - .merge_request_production
     - .test_image
