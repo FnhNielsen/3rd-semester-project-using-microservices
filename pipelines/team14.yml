@@ -1,11 +1,72 @@
-stages:
-  - build
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: main
+    file: base_pipeline.yml
 
-temporary_job:
+### Build ###
+
+# Haven't used ".build" as I don't want to build the images at every single commit/push
+build:aam:
   stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "main"'
-      when: on_success
+  extends:
+    - .merge_request_production
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: aam
+    CI_CD_DOCKER_PATH:  AAM_Service/api
+
+build:ads:
+  stage: build
+  extends:
+    - .merge_request_production
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: ads
+    CI_CD_DOCKER_PATH: Ads_Service/api
+
+build:audience_targeting:
+  stage: build
+  extends:
+    - .merge_request_production
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: audience_targeting
+    CI_CD_DOCKER_PATH: Audience_Targeting_Service/api
+
+build:billing:
+  stage: build
+  extends:
+    - .merge_request_production
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: billing
+    CI_CD_DOCKER_PATH: Billing_Service/api
+
+### Deliver ###
+deliver:production_aam_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    CI_CD_IMAGE_NAME: aam
+
+deliver:production_ads_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    CI_CD_IMAGE_NAME: ads
+
+deliver:production_audience_targeting_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    CI_CD_IMAGE_NAME: audience_targeting
+
+deliver:production_billing_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    CI_CD_IMAGE_NAME: billing
