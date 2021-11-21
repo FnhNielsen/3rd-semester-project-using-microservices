@@ -224,7 +224,7 @@ image: $CI_CD_BASE_IMAGE
   #
   image: $CI_CD_KUBE_IMAGE
   variables:
-    CI_CD_CONTAINER_IMAGES: []
+    CI_CD_CONTAINER_IMAGES: "[]"
   script:
     -|
       if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
