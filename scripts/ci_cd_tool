@@ -2,7 +2,6 @@
 
 ##### Begin Setup #####
 
-TEST_IMAGE_GROUP="test-image"
 GUIDE_TEXT=""
 DEBUG=0
 
