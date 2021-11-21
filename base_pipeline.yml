@@ -183,14 +183,12 @@ image: $CI_CD_BASE_IMAGE
     CI_CD_FILE_NAME: Dockerfile
     CI_CD_PATH: .
   script:
-    -|
-      if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         CI_CD_TAG=$(ci_cd_tool version get);
       else
         CI_CD_TAG=${CI_JOB_ID};
       fi
-    -|
-      result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
+    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
@@ -205,8 +203,7 @@ image: $CI_CD_BASE_IMAGE
   services:
     - docker:dind
   script:
-    -|
-      result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
+    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
       [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1;
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - ci_cd_tool registry remove ${CI_CD_IMAGE_NAME} ${CI_JOB_ID}
@@ -226,8 +223,7 @@ image: $CI_CD_BASE_IMAGE
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
   script:
-    -|
-      if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         CI_CD_KUBE_CONFIG=${CI_CD_PRODUCTION_KUBECONFIG};
         CI_CD_TAG=$(ci_cd_tool version get);
 
@@ -236,8 +232,7 @@ image: $CI_CD_BASE_IMAGE
         CI_CD_KUBE_CONFIG=${CI_CD_STAGING_KUBECONFIG};
         CI_CD_TAG=${CI_JOB_ID};
       fi
-    -|
-      for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
+    - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
         ci_cd_tool kube image ${CI_CD_KUBE_FILE} $(_jq ".container") ${CI_REGISTRY_IMAGE}/$(_jq ".image"):${CI_CD_TAG};
       done
