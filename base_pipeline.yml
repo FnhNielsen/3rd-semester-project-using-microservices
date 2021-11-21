@@ -273,5 +273,7 @@ finish:failure:
   extends:
     - .failure
     - .artifact
+  script:
+    - echo "Create artifact"
   artifacts:
     expire_in: 8 hrs
