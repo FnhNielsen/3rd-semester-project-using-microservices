@@ -253,7 +253,7 @@ build:check_request_title:
     - ci_cd_tool version validate
 
 deploy:init_state:
-  stage: .post
+  stage: .pre
   extends:
     - .merge_request_production
   script:
