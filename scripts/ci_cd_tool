@@ -49,15 +49,15 @@ if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
 fi
 
 source "${LIB_DIR}/tools.sh"
-source "${LIB_DIR}/docker.sh"
 source "${LIB_DIR}/semver_version.sh"
 source "${LIB_DIR}/git.sh"
 source "${LIB_DIR}/gitlab.sh"
+source "${LIB_DIR}/docker.sh"
+source "${LIB_DIR}/kube.sh"
 
 if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:upper:]' '[:lower:]')" == "true" ]; then
   DEBUG=1
 fi
-[ -n "${CI_CD_TEST_IMAGE_GROUP}" ] && TEST_IMAGE_GROUP=${CI_CD_TEST_IMAGE_GROUP}
 [ -n "${CI_CD_GUIDE_URL}" ] && GUIDE_TEXT=" See ${CI_CD_GUIDE_URL}."
 
 function usage_help() {
@@ -71,114 +71,195 @@ function unknown_help() {
 }
 
 
+# Docker
+function command_login {
+  # $1: user (string) [Required]
+  # $2: password (string) [Required]
+  # $3: registry (string) [Required]
+  info "Log in to the Docker registry."
 
-function create_test_image {
-  # $1 | ${CI_CD_IMAGE_NAME}: Image name (string)
-  # $2 | ${CI_CD_DOCKER_FILE}: Docker file name (string) [Optional]
-  # $3 | ${CI_CD_DOCKER_PATH}: Build path (string) [Optional]
+  is_empty "$1" || debug "User: \"specified\""
+  is_empty "$2" || debug "Password: \"specified\""
+  debug "Registry: \"$3\""
 
-  # Arguments
-  [ -z "$1" ] && image_name="${TEST_IMAGE_GROUP}/${CI_CD_IMAGE_NAME}" || image_name="${TEST_IMAGE_GROUP}/$1"
-  [ -z "$2" ] && docker_file=${CI_CD_DOCKER_FILE} || docker_file=$2
-  [ -z "$3" ] && docker_path=${CI_CD_DOCKER_PATH} || docker_path=$3
+  is_empty "$1" && error "User name is empty."
+  is_empty "$2" && error "Password is empty."
+  is_empty "$3" && error "Registry is empty."
 
-  # Image name
-  debug "Image name: ${image_name}"
-  [ -z "${image_name}" ] && error "Docker image name is missing."
+  docker_registry_login "$1" "$2" "$3"
+}
 
-  # Get test tag
-  sha_tag=$(get_git_commit_sha)
+function command_create_image {
+  # $1: Image (string) [Required]
+  # $2: Docker file name (string) [Optional]
+  # $3: Build path (string) [Optional]
+  info "Build image."
 
-  info "Check if Docker image and tag exist."
-  if exist_image_tag_gitlab "${image_name}" "${sha_tag}"; then
-    info "Docker image already exist."
-    finish
-  fi
+  debug "Image: \"$1\""
+  is_empty "$1" && error "Docker image name is empty."
 
-  info "Build test image."
-  build_image_gitlab "${image_name}:${sha_tag}" "${docker_file}" "${docker_path}"
+  docker_build_image "$1" "$3" "$4"
+}
 
+function command_push_image {
+  # $1: Image (string) [Required]
   info "Push test image."
-  push_image_gitlab "${image_name}:${sha_tag}"
+
+  debug "Image: \"$1\""
+  is_empty "$1" && error "Docker image name is empty."
+
+  docker_push_image "$1"
 }
 
-function validate_version_scheme {
-  # $1: Version (string) [Optional]
+# registry
+function command_exist_image {
+  # $1: Image (string) [Required]
+  # $2: Tag (string) [Required]
+  debug "Check if Docker image name and tag exist."
 
-  # Argument
-  [ -z "$1" ] && version=$(get_version_gitlab) || version=$1
+  debug "Image: \"$1\""
+  debug "Tag: \"$2\""
+  is_empty "$1" && error "Docker image name is empty."
+  is_empty "$2" && error "Tag is empty."
 
-  info "Validate version scheme."
-  check_version_scheme "${version}" \
-    || error "Version \"${version}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
+  if exist_image_tag_gitlab "$1" "$2"; then
+    info "Docker image already exist."
+  else
+    info "Docker image does not exist."
+  fi
 }
 
-function create_production_image {
-  # $1 | ${CI_CD_IMAGE_NAME}: Image name (string)
+function command_remove_image {
+  # $1: Image name (string) [Required]
+  # $2: Tag (string) [Required]
+  info "Remove image from gitlab container registry."
 
-  # Argument
-  [ -z "$1" ] && image_name=${CI_CD_IMAGE_NAME} || image_name=$1
+  debug "Image name: \"$1\""
+  debug "Tag: \"$2\""
+  is_empty "$1" && error "No Docker image name specified."
+  is_empty "$2" && error "No tag specified."
 
-  # Image name
-  debug "Image name: ${image_name}"
-  [ -z "${image_name}" ] && error "Docker image name is missing."
+  remove_registry_image_gitlab "$1" "$2"
+}
 
-  # Test image name
-  test_image_name="${TEST_IMAGE_GROUP}/${image_name}"
-  debug "Test image name: ${test_image_name}"
+# Kube
+function command_kube_image {
+  # $1: file set as file path (string) [Required]
+  # $2: container name (string) [Required]
+  # $3: container image (string) [Required]
+  info "Set container image."
 
+  debug "File: \"$1\""
+  debug "Container name: \"$2\""
+  debug "Container image: \"$3\""
+  is_empty "$1" && error "No deployment file specified."
+  is_empty "$2" && error "No container name specified."
+  is_empty "$3" && error "No container image specified."
+
+  kube_set_image "$1" "$2" "$3"
+}
+
+function command_kube_apply {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Applying to kube."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kube_apply "$1" "$2"
+}
+
+function command_kube_delete {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Remove from kube."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kube_delete "$1" "$2"
+}
+
+# Version
+function command_get_version {
+  debug "Get version."
+
+  var=$(get_version_gitlab)
+
+  check_version_scheme "${var}" \
+    || error "Version \"${var}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
+
+  normalize_version "${var}"
+}
+
+function command_validate_version {
   info "Validate version."
-  # NOTE: Implement check new version is newer that the old version by using latest tag from production branch
-  version=$(get_version_gitlab)
-  check_version_scheme "${version}" || error "It was not possible to detect the version.${GUIDE_TEXT}"
-  version=$(normalize_version "${version}")
-  exist_image_tag_gitlab "${image_name}" "${version}" && error "Version '${version}' already exists."
 
-  info "Pull test image."
-  sha_tag=$(get_git_commit_sha)
-  exist_image_tag_gitlab "${test_image_name}" "${sha_tag}" || error "It was not possible to find the test image."
-  pull_image_gitlab "${test_image_name}:${sha_tag}"
+  var=$(get_version_gitlab)
+  check_version_scheme "${var}" \
+    || error "Version \"${var}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
+}
 
-  info "Create new tags and push to registry."
-  #  {major}.{minor}.{patch}-{prerel}
-  #  {major}.{minor}-{prerel}
-  #  {major}-{prerel}
-  #  latest
-  new_tags="${version} $(format_version "${version}" "major minor prerel") \
-            $(format_version "${version}" "major prerel") latest"
-  debug "New tags: ${new_tags}"
+# Git
+function command_set_git_tag {
+  # $1: tag (string) [Required]
+  info "Set git tag."
 
-  for new_tag in ${new_tags}; do
-    debug "New tag: ${new_tag}"
-    tag_image_gitlab "${test_image_name}:${sha_tag}" "${image_name}:${new_tag}"
-    push_image_gitlab "${image_name}:${new_tag}"
-  done
+  debug "Tag: $1"
+  is_empty "$1" && error "Tag is empty."
 
-  info "Add version to git as tag."
-  add_git_tag "v${version}" "${sha_tag}"
+  add_git_tag "$1" "$(get_git_commit_sha)"
   push_git_tag
 }
 
 
-
-function command_test {
-  debug "Argument <image_name>: \"$1\""
-  debug "Argument <docker_file>: \"$2\""
-  debug "Argument <build_path>: \"$3\""
-  create_test_image "$1" "$2" "$3"
+# Handle options arguments
+function command_docker {
+  case $1 in
+    login) shift; command_login "$@";;
+    create) shift; command_create_image "$@";;
+    push) shift; command_push_image "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
 }
 
-function command_production {
-  debug "Argument <image_name>: \"$1\""
-  create_production_image "$1"
+function command_registry {
+  case $1 in
+    exist) shift; command_exist_image "$@";;
+    remove) shift; command_remove_image "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+function command_kube {
+  case $1 in
+    image) shift; command_kube_image "$@";;
+    apply) shift; command_kube_apply "$@";;
+    delete) shift; command_kube_delete "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
 }
 
 function command_version {
-  debug "Argument <version>: \"$1\""
-  validate_version_scheme "$1"
+  case $1 in
+    get) shift; command_get_version "$@";;
+    validate) shift; command_validate_version "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
 }
 
-# Handle options arguments
+function command_git {
+  case $1 in
+    tag) shift; command_set_git_tag "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
 for arg in "$@"; do
   shift
   # shellcheck disable=SC2034
@@ -193,8 +274,10 @@ done
 [ "$#" == 0 ] && echo "No command found:" && unknown_help
 
 case $1 in
-  test) shift; command_test "$@";;
-  production) shift; command_production "$@";;
+  docker) shift; command_docker "$@";;
+  registry) shift; command_registry "$@";;
+  kube) shift; command_kube "$@";;
+  git) shift; command_git "$@";;
   version) shift; command_version "$@";;
   *) echo "Unknown command: $1"; unknown_help;;
 esac
