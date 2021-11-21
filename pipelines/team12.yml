@@ -22,7 +22,7 @@ build:compile:
 build:api_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
   needs:
     - build:compile
   variables:
@@ -40,7 +40,7 @@ build:api_image:
 build:database_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
   variables:
     # Variables
     #
