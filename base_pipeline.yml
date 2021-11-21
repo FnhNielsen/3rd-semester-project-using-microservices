@@ -86,6 +86,30 @@ image: $CI_CD_BASE_IMAGE
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
+.always_merge_request_production:
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: always
+
+.always_except_merge_production:
+  allow_failure: false
+  rules:
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
+      when: always
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
+      when: always
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
+      when: always
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: always
+
 .failure:
   allow_failure: false
   rules:
@@ -133,7 +157,7 @@ image: $CI_CD_BASE_IMAGE
 
 .delete_test_image:
   stage: .post
-  extends: .except_merge_production
+  extends: .always_except_merge_production
 
 ### Methods ###
 .artifact:
@@ -238,7 +262,7 @@ deploy:init_state:
 finish:takedown_state:
   stage: .post
   extends:
-    - .merge_request_production
+    - .always_merge_request_production
   script:
     - echo "takedown_state"
 
