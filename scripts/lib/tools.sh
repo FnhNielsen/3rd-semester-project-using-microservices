@@ -1,12 +1,15 @@
 #!/bin/bash
 function is_empty {
-  # $1: String (string)
-  [ -z "$(echo -e "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ] && true
-  false
+  # $1: String (string) [Required]
+  if [ -z "$(echo -e "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ]; then
+    true
+  else
+    false
+  fi
 }
 
 function get_content {
-  # $1: URL (string)
+  # $1: URL (string) [Required]
   # $2: Alternative arguments (array) [Optional]
   #     Eg. (--header "PRIVATE-TOKEN: <token>")
   debug "URL: \"$1\""
@@ -23,22 +26,17 @@ function get_content {
 }
 
 function info {
-  # $1: Message (string)
+  # $1: Message (string) [Required]
   echo -e "INFO (${FUNCNAME[1]}): $1"
 }
 
 function debug {
-  # $1: Message (string)
+  # $1: Message (string) [Required]
   [ "${DEBUG}" == "1" ] && echo -e "DEBUG (${FUNCNAME[1]}): $1" >&2
 }
 
 function error {
-  # $1: Message (string)
+  # $1: Message (string) [Required]
   echo -e "ERROR (${FUNCNAME[1]}): $1" >&2
   exit 1
-}
-
-function finish {
-  echo "The job was run successfully."
-  exit 0
 }
