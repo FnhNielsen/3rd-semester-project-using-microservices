@@ -89,7 +89,7 @@ deploy:kube_database:
     #     ]
     #
     CI_CD_KUBE_FILE: database.yaml
-    CI_CD_CONTAINER_IMAGES: [{"container": "t12-database", "image": "database"}]
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-database", "image": "database"}]'
 
 deploy:kube_api:
   extends:
@@ -109,7 +109,7 @@ deploy:kube_api:
     #     ]
     #
     CI_CD_KUBE_FILE: api.yaml
-    CI_CD_CONTAINER_IMAGES: [{"container": "t12-api", "image": "api"}]
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
 
 ### Test ###
 test:unit_api:
