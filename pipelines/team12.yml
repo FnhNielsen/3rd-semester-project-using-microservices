@@ -76,7 +76,6 @@ deploy:kube_database:
     - .deploy
     - .kube
   needs:
-    - build:database_image
     - deploy:kube_common
   variables:
     # Variable
@@ -97,7 +96,6 @@ deploy:kube_api:
     - .deploy
     - .kube
   needs:
-    - build:api_image
     - deploy:kube_database
   variables:
     # Variable
@@ -117,8 +115,6 @@ deploy:kube_api:
 test:unit_api:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/api:${CI_JOB_ID}
-  needs:
-    - build:api_image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -126,8 +122,6 @@ test:unit_api:
 test:unit_database:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/database:${CI_JOB_ID}
-  needs:
-    - build:database_image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -143,8 +137,6 @@ test:acceptance:
 
 test:integration:
   extends: .integration
-  needs:
-    - deploy:init_state
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
@@ -153,7 +145,6 @@ test:performance:
   extends: .performance
   needs:
     - test:integration
-    - deploy:init_state
   script:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"

@@ -263,6 +263,8 @@ finish:takedown_state:
   stage: .post
   extends:
     - .always_merge_request_production
+  needs:
+    - build:init_state
   script:
     - echo "takedown_state"
 
