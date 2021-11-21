@@ -252,7 +252,7 @@ build:check_request_title:
   script:
     - ci_cd_tool version validate
 
-deploy:init_state:
+pre:init_state:
   stage: .pre
   extends:
     - .merge_request_production
@@ -264,7 +264,7 @@ finish:takedown_state:
   extends:
     - .always_merge_request_production
   needs:
-    - build:init_state
+    - pre:init_state
   script:
     - echo "takedown_state"
 
