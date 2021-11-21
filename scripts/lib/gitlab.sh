@@ -1,9 +1,6 @@
 #!/bin/bash
 
-LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-
-source "${LIB_DIR}/tools.sh"
-source "${LIB_DIR}/docker.sh"
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/tools.sh"
 
 function get_version_gitlab {
   debug "CI_COMMIT_DESCRIPTION: \"${CI_COMMIT_DESCRIPTION}\""
@@ -19,8 +16,8 @@ function get_version_gitlab {
 }
 
 function exist_image_tag_gitlab {
-  # $1: Image name (string)
-  # $2: Tag (string) [optional]
+  # $1: Image name (string) [Required]
+  # $2: Tag (string) [Required]
   url="https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories"
   header=(--header "PRIVATE-TOKEN: ${CI_CD_PROJECT_TOKEN}")
 
@@ -41,10 +38,6 @@ function exist_image_tag_gitlab {
   # there can not be a tag without an image
   if [ -z "${image_id}" ]; then
     false
-  # Return true, if we have a image id
-  # and we do not need to check tag
-  elif [ -z "$2" ]; then
-    true
   else
     # Lookup tags
     content=$(get_content "${url}/${image_id}/tags" "${header[@]}")
@@ -59,42 +52,9 @@ function exist_image_tag_gitlab {
   fi
 }
 
-function pull_image_gitlab {
-  # $1: Image name (string)
-  registry_login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
-
-  pull_image "${CI_REGISTRY_IMAGE}/$1"
-}
-
-function build_image_gitlab {
-  # $1: Image name (string)
-  # $2: Docker file name (string)
-  # $3: Build directory (string)
-  labels=(--label "org.opencontainers.image.title=${CI_PROJECT_TITLE}" \
-          --label "org.opencontainers.image.url=${CI_PROJECT_URL}" \
-          --label "org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-          --label "org.opencontainers.image.revision=${CI_COMMIT_SHA}" \
-          --label "org.opencontainers.image.source=${CI_PROJECT_URL}/-/tree/${CI_CD_PRODUCTION_BRANCH}")
-
-  build_image "${CI_REGISTRY_IMAGE}/$1" "$2" "$3" "${labels[@]}"
-}
-
-function tag_image_gitlab {
-  # $1: Source image name (string)
-  # $2: Target image name (string)
-  tag_image "${CI_REGISTRY_IMAGE}/$1" "${CI_REGISTRY_IMAGE}/$2"
-}
-
-function push_image_gitlab {
-  # $1: Image name (string)
-  registry_login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
-
-  push_image "${CI_REGISTRY_IMAGE}/$1"
-}
-
-function remove_image_gitlab {
-  # $1: Image name (string)
-  # $2: Tag (string)
+function remove_registry_image_gitlab {
+  # $1: Image name (string) [Required]
+  # $2: Tag (string) [Required]
 
   # Remove images from container registry:
   # https://gitlab.com/gitlab-org/gitlab-foss/-/issues/40096
