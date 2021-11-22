@@ -114,14 +114,14 @@ deploy:kube_api:
 ### Test ###
 test:unit_api:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/api:${CI_JOB_ID}
+  image: ${CI_REGISTRY_IMAGE}/api:${CI_PIPELINE_ID}
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
 
 test:unit_database:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/database:${CI_JOB_ID}
+  image: ${CI_REGISTRY_IMAGE}/database:${CI_PIPELINE_ID}
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
