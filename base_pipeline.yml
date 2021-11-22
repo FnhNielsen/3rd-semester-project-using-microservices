@@ -1,8 +1,10 @@
 ### Default ###
 stages:
+  - .pre
   - build
   - deploy
   - test
+  - .post
 
 variables:
   CI_CD_PRODUCTION_BRANCH: main
