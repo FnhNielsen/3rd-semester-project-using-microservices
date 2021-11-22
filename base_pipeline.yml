@@ -87,28 +87,28 @@ image: $CI_CD_BASE_IMAGE
       when: on_success
 
 .always_merge_request_production:
-  allow_failure: false
+  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: always
+      when: on_success
 
 .always_except_merge_production:
-  allow_failure: false
+  allow_failure: true
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: always
+      when: on_success
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: always
+      when: on_success
     # release
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
-      when: always
+      when: on_success
     # hotfix
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
-      when: always
+      when: on_success
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: always
+      when: on_success
 
 .failure:
   allow_failure: false
