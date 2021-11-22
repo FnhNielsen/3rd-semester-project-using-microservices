@@ -203,7 +203,7 @@ image: $CI_CD_BASE_IMAGE
   services:
     - docker:dind
   script:
-    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
+    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_JOB_ID});
       [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1;
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - ci_cd_tool registry remove ${CI_CD_IMAGE_NAME} ${CI_JOB_ID}
