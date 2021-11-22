@@ -188,7 +188,7 @@ image: $CI_CD_BASE_IMAGE
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         CI_CD_TAG=$(ci_cd_tool version get);
       else
-        CI_CD_TAG=${CI_JOB_ID};
+        CI_CD_TAG=${CI_PIPELINE_ID};
       fi
     - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
@@ -205,10 +205,10 @@ image: $CI_CD_BASE_IMAGE
   services:
     - docker:dind
   script:
-    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_JOB_ID});
+    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_PIPELINE_ID});
       [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1;
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - ci_cd_tool registry remove ${CI_CD_IMAGE_NAME} ${CI_JOB_ID}
+    - ci_cd_tool registry remove ${CI_CD_IMAGE_NAME} ${CI_PIPELINE_ID}
 
 .kube:
   # Variable
@@ -232,7 +232,7 @@ image: $CI_CD_BASE_IMAGE
         ci_cd_tool git tag ${CI_CD_TAG};
       else
         CI_CD_KUBE_CONFIG=${CI_CD_STAGING_KUBECONFIG};
-        CI_CD_TAG=${CI_JOB_ID};
+        CI_CD_TAG=${CI_PIPELINE_ID};
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
