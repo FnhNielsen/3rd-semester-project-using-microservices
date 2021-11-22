@@ -11,9 +11,9 @@ variables:
   CI_CD_HOTFIX_BRANCH: hotfix
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide
   CI_CD_TEST_IMAGE_GROUP: test-image
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:1.0.37
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:1.0.57
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.1
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:1.0.38
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:1.0.58
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.2
   CI_CD_TOOL_DEBUG: "true"
   # All variables below come from Ahmad
   # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
