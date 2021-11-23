@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# After 60 seconds the loop will exit
+timeout=60
+
+echo "Waiting for the file /certs/client/ca.pem to become available."
+if [ ! -f "/certs/client/ca.pem" ]; then
+  while [ ! -f "/certs/client/ca.pem" ]; do
+    if [ "$timeout" == 0 ]; then
+      printf "\nERROR: Timeout while waiting for the file /certs/client/ca.pem.\n"
+      exit 1
+    fi
+
+    printf "."
+    sleep 1
+
+    # Decrease the timeout of one
+    ((timeout--))
+  done
+
+  printf "\n"
+fi
+echo "/certs/client/ca.pem is ready."
+
+docker-entrypoint.sh "$@"
