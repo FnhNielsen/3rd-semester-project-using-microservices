@@ -157,7 +157,7 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Post ###
-finish:api_image:
+cleanup:api_image:
   extends:
     - .delete_test_image
     - .remove_test_image
@@ -170,7 +170,7 @@ finish:api_image:
     #
     CI_CD_IMAGE_NAME: api
 
-finish:database_image:
+cleanup:database_image:
   extends:
     - .delete_test_image
     - .remove_test_image
