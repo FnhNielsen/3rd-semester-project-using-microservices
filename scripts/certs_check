@@ -2,21 +2,19 @@
 # After 60 seconds the loop will exit
 timeout=60
 
-echo "Waiting for the file /certs/client/ca.pem to become available."
-if [ ! -f "/certs/client/ca.pem" ]; then
-  while [ ! -f "/certs/client/ca.pem" ]; do
-    if [ "$timeout" == 0 ]; then
-      printf "\nERROR: Timeout while waiting for the file /certs/client/ca.pem.\n"
-      exit 1
-    fi
+while [ ! -f "/certs/client/ca.pem" ]; do
+  if ((timeout % 10 == 0)); then
+    echo "Waiting for the file /certs/client/ca.pem to become available."
+  fi
 
-    printf "."
-    sleep 1
+  if [ "$timeout" == 0 ]; then
+    echo "ERROR: Timeout while waiting for the file /certs/client/ca.pem."
+    exit 1
+  fi
 
-    # Decrease the timeout of one
-    ((timeout--))
-  done
+  sleep 1
 
-  printf "\n"
-fi
+  # Decrease the timeout of one
+  ((timeout--))
+done
 echo "/certs/client/ca.pem is ready."
