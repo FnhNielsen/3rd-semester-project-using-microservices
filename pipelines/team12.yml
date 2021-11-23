@@ -96,7 +96,7 @@ deploy:kube_api:
     - .deploy
     - .kube
   needs:
-    - deploy:kube_database
+    - deploy:kube_common
   variables:
     # Variable
     #
@@ -141,6 +141,9 @@ test:acceptance:
 
 test:integration:
   extends: .integration
+  needs:
+    - deploy:kube_database
+    - deploy:kube_database
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
