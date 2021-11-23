@@ -51,7 +51,7 @@ build:database_image:
     #   Default: .
     #
     CI_CD_IMAGE_NAME: database
-    CI_CD_PATH: database
+    CI_CD_PATH: database2
 
 ### Deploy ###
 deploy:kube_common:
