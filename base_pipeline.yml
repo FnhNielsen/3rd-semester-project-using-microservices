@@ -119,62 +119,67 @@ image: $CI_CD_BASE_IMAGE
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
-.failure:
-  allow_failure: false
-  rules:
-    # development
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: on_failure
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: on_failure
-    # release
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
-      when: on_failure
-    # hotfix
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
-      when: on_failure
-    # production
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_failure
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_failure
-
-# Jobs rules
+# Job rules
 .build:
   stage: build
-  extends: .default
+  extends:
+    - .default
+    - .on_failure_artifact
 
 .unit:
   stage: test
-  extends: .default
+  extends:
+    - .default
+    - .on_failure_artifact
 
 .acceptance:
   stage: test
-  extends: .merge_request_production
+  extends:
+    - .merge_request_production
+    - .on_failure_artifact
 
 .integration:
   stage: test
-  extends: .merge_request_production
+  extends:
+    - .merge_request_production
+    - .on_failure_artifact
 
 .performance:
   stage: test
-  extends: .merge_request_production
+  extends:
+    - .merge_request_production
+    - .on_failure_artifact
 
 .deploy:
   stage: deploy
-  extends: .production
+  extends:
+    - .production
+    - .on_failure_artifact
 
 .delete_test_image:
   stage: .post
-  extends: .always_except_merge_production
+  extends:
+    - .always_except_merge_production
+    - .on_failure_artifact
 
 ### Methods ###
 .artifact:
   artifacts:
-    name: branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}
+    name: job-${CI_JOB_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
       - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
     expire_in: 3 hrs
+
+.on_failure_artifact:
+  artifacts:
+    name: job-${CI_JOB_NAME}-failed-commit-${CI_COMMIT_SHORT_SHA}
+    paths:
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
+    exclude:
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/.git
+    untracked: false
+    when: on_failure
+    expire_in: 8 hrs
 
 .build_image:
   # Variables
@@ -275,13 +280,3 @@ finish:takedown_state:
     - pre:init_state
   script:
     - echo "takedown_state"
-
-finish:failure:
-  stage: .post
-  extends:
-    - .failure
-    - .artifact
-  script:
-    - echo "Create artifact"
-  artifacts:
-    expire_in: 8 hrs
