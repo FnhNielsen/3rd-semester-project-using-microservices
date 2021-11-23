@@ -58,6 +58,11 @@ deploy:kube_common:
   extends:
     - .deploy
     - .kube
+  needs:
+    - job: setup:state
+      optional: true
+    - build:api_image
+    - build:database_image
   variables:
     # Variable
     #
@@ -143,7 +148,7 @@ test:integration:
   extends: .integration
   needs:
     - deploy:kube_database
-    - deploy:kube_database
+    - deploy:kube_api
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
@@ -161,7 +166,7 @@ cleanup:api_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  needs:
+  dependencies:
     - build:api_image
   variables:
     # Variables
@@ -174,7 +179,7 @@ cleanup:database_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  needs:
+  dependencies:
     - build:database_image
   variables:
     # Variables
