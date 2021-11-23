@@ -168,6 +168,7 @@ image: $CI_CD_BASE_IMAGE
     name: job-${CI_JOB_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
       - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
+    untracked: true
     expire_in: 3 hrs
 
 .on_failure_artifact:
