@@ -278,6 +278,6 @@ cleanup:state:
   extends:
     - .always_merge_request_production
   needs:
-    - pre:init_state
+    - setup:state
   script:
     - echo "takedown_state"
