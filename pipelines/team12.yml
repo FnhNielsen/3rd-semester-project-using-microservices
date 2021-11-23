@@ -96,7 +96,7 @@ deploy:kube_api:
     - .deploy
     - .kube
   needs:
-    - deploy:kube_database
+    - deploy:api_image
   variables:
     # Variable
     #
@@ -115,6 +115,8 @@ deploy:kube_api:
 test:unit_api:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/api:${CI_PIPELINE_ID}
+  needs:
+    - build:api_image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -122,6 +124,8 @@ test:unit_api:
 test:unit_database:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/database:${CI_PIPELINE_ID}
+  needs:
+    - build:api_database
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"

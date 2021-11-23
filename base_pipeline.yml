@@ -49,6 +49,27 @@ image: $CI_CD_BASE_IMAGE
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
+.production:
+  allow_failure: false
+  rules:
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+
+.merge_request_production:
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+
+.merge_production:
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+
 .except_merge_production:
   allow_failure: false
   rules:
@@ -73,18 +94,6 @@ image: $CI_CD_BASE_IMAGE
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
-
-.merge_request_production:
-  allow_failure: false
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
-
-.merge_production:
-  allow_failure: false
-  rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
@@ -155,7 +164,7 @@ image: $CI_CD_BASE_IMAGE
 
 .deploy:
   stage: deploy
-  extends: .merge_production
+  extends: .production
 
 .delete_test_image:
   stage: .post
