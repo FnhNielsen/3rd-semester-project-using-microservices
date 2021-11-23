@@ -20,5 +20,3 @@ if [ ! -f "/certs/client/ca.pem" ]; then
   printf "\n"
 fi
 echo "/certs/client/ca.pem is ready."
-
-docker-entrypoint.sh "$@"

@@ -17,5 +17,3 @@ COPY "../../scripts/ci_cd_tool" "/usr/local/bin/ci_cd_tool"
 COPY "../../scripts/certs_check" "/usr/local/bin/certs_check"
 
 RUN chmod a+x "/usr/local/bin/ci_cd_tool" && chmod a+x "/usr/local/bin/certs_check"
-
-ENTRYPOINT ["certs_check"]

@@ -12,7 +12,7 @@ variables:
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide
   CI_CD_TEST_IMAGE_GROUP: test-image
   CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.0
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.1
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.2
   CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.3
   CI_CD_TOOL_DEBUG: "true"
   # All variables below come from Ahmad
@@ -191,6 +191,8 @@ image: $CI_CD_BASE_IMAGE
   variables:
     CI_CD_FILE_NAME: Dockerfile
     CI_CD_PATH: .
+  before_script:
+    - certs_check
   script:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         CI_CD_TAG=$(ci_cd_tool version get);
@@ -211,6 +213,8 @@ image: $CI_CD_BASE_IMAGE
   image: $CI_CD_DOCKER_IMAGE
   services:
     - docker:dind
+  before_script:
+    - certs_check
   script:
     - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_PIPELINE_ID});
       [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1;
