@@ -125,7 +125,7 @@ test:unit_database:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/database:${CI_PIPELINE_ID}
   needs:
-    - build:api_database
+    - build:database_image
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
