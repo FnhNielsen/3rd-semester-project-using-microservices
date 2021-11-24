@@ -12,8 +12,7 @@ RUN apk --no-cache add curl jq git bash && \
     chmod a+x "/usr/local/bin/kubectl" && \
     curl -fSL "https://github.com/mikefarah/yq/releases/download/v4.15.1/yq_linux_amd64" -o "/usr/local/bin/yq" && \
     if [ "$(echo "507d872f6775ccad72a5ef15f785d269e498b1e2b3774786e9ac1b5e2c9d6c3f /usr/local/bin/yq" | sha256sum -c -)" == "/usr/local/bin/yq: OK" ]; then echo "ERROR: semver has wrong check sum"; exit 1; fi && \
-    chmod a+x "/usr/local/bin/yq" && \
-    apk --no-cache del curl
+    chmod a+x "/usr/local/bin/yq"
 
 # Setup CI CD tool
 COPY "../../scripts/lib" "/usr/local/lib/ci_cd_lib"
