@@ -20,6 +20,9 @@ function get_content {
   fi
 
   result=$(curl -s "${opts[@]}" "$1")
+  if $?; then
+    error "An unknown error occurred."
+  fi
 
   debug "Output\n${result:='No content'}"
   echo "${result}"
