@@ -26,7 +26,7 @@ build:api_image:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_PATH: NodeJS
+    CI_CD_PATH: NodeJS
 
 build:database_image:
   extends:
@@ -34,7 +34,7 @@ build:database_image:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: database
-    CI_CD_DOCKER_PATH: Cassandra
+    CI_CD_PATH: Cassandra
 
 #Run unit tests
 #test:unit:
