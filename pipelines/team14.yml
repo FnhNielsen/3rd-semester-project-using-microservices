@@ -62,6 +62,7 @@ deploy:status:
     - deploy:kube_aam
   variables:
     CI_CD_DEPLOYMENT_NAMES: "t14-database t14-aam"
+  timeout: 2 minutes
 
 ### Post ###
 cleanup:aam_image:
