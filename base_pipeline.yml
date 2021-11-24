@@ -112,7 +112,7 @@ default:
       when: on_success
 
 .always_except_merge_production:
-  allow_failure: false
+  allow_failure: true
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
@@ -200,7 +200,7 @@ default:
     - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
     - ci_cd_tool docker push ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}
 
-.remove_test_image:
+.remove_test_image_if_exist:
   # Variable
   #
   # CI_CD_IMAGE_NAME: (string) [Required]
@@ -212,7 +212,7 @@ default:
     - certs_check
   script:
     - result=$(ci_cd_tool registry exist ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG})
-      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1
+      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 0
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - ci_cd_tool registry remove ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG}
 
