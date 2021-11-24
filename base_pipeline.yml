@@ -191,11 +191,9 @@ default:
   before_script:
     - certs_check
   script:
-    - if [ -z "${CI_CD_VERSION}" ]; then
-        for v in ${CI_COMMIT_DESCRIPTION}; do break; done
-        CI_CD_VERSION=$(ci_cd_tool version normalize ${v});
-
-        CI_CD_TAG=${CI_CD_VERSION};
+    - if [ ${CI_PIPELINE_SOURCE} == "push" ] && [ ${CI_BUILD_REF_NAME} == ${CI_CD_PRODUCTION_BRANCH} ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done
+        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
       fi
     - result=$(ci_cd_tool registry exist ${IMAGE} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
@@ -234,13 +232,11 @@ default:
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
   script:
-    - if [ -z "${CI_CD_VERSION}" ]; then
-        for v in ${CI_COMMIT_DESCRIPTION}; do break; done
-        CI_CD_VERSION=$(ci_cd_tool version normalize ${v});
+    - if [ ${CI_PIPELINE_SOURCE} == "push" ] && [ ${CI_BUILD_REF_NAME} == ${CI_CD_PRODUCTION_BRANCH} ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done
+        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
-        ci_cd_tool git tag ${CI_CD_VERSION};
-
-        CI_CD_TAG=${CI_CD_VERSION};
+        ci_cd_tool git tag ${CI_CD_TAG};
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
