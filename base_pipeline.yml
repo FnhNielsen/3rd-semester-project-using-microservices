@@ -206,7 +206,7 @@ default:
   script:
     - result=$(ci_cd_tool registry exist "${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}")
       [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 0
-    - ci_cd_tool docker login "${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - ci_cd_tool registry remove "${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
 .kube:
