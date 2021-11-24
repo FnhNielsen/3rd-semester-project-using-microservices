@@ -209,10 +209,10 @@ default:
     - ci_cd_tool registry remove "${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
 .rollout_status:
-    image: $CI_CD_BASE_IMAGE
+    image: $CI_CD_KUBE_IMAGE
     stage: deploy
     script:
-      - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name}; done
+      - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
 
 .kube:
   # Variable
