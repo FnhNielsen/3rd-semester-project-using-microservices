@@ -168,8 +168,6 @@ cleanup:api_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  needs:
-    - build:api_image
   variables:
     # Variables
     #
