@@ -123,7 +123,8 @@ test:unit_api:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}api:${CI_CD_TAG}
   needs:
-    - build:api_image
+    - job: build:api_image
+      optional: true
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -132,7 +133,8 @@ test:unit_database:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}database:${CI_CD_TAG}
   needs:
-    - build:database_image
+    - job: build:database_image
+      optional: true
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
