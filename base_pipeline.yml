@@ -100,25 +100,25 @@ default:
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
+      when: always
 
 .always_except_merge_production:
   allow_failure: true
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: on_success
+      when: always
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      when: on_success
+      when: always
     # release
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
-      when: on_success
+      when: always
     # hotfix
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
-      when: on_success
+      when: always
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
+      when: always
 
 # Job rules
 .build:
@@ -256,7 +256,5 @@ cleanup:state:
   stage: .post
   extends:
     - .always_merge_request_production
-  needs:
-    - setup:state
   script:
     - echo "takedown_state"
