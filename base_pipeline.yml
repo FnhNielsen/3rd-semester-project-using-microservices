@@ -57,15 +57,6 @@ default:
 
 ### Rules ###
 # Trigger rules
-.production:
-  allow_failure: false
-  rules:
-    # production
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_success
-
 .merge_request_production:
   allow_failure: false
   rules:
@@ -156,7 +147,7 @@ default:
 .deploy:
   stage: deploy
   extends:
-    - .production
+    - .except_development
 
 .delete_test_image:
   stage: .post
