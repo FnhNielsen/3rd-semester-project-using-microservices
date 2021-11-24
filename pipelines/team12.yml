@@ -127,6 +127,7 @@ deploy:status:
     - deploy:kube_database
   variables:
     CI_CD_DEPLOYMENT_NAMES: "t12-api t12-database"
+  timeout: 2 minutes
 
 ### Test ###
 test:unit_api:
