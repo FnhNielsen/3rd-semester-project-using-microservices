@@ -118,6 +118,16 @@ deploy:kube_api:
     CI_CD_KUBE_FILE: kube/api.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
 
+deploy:status:
+  extends:
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_api
+    - deploy:kube_database
+  variables:
+    CI_CD_DEPLOYMENT_NAMES: "t12-api t12-database"
+
 ### Test ###
 test:unit_api:
   extends: .unit
