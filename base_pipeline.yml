@@ -112,7 +112,7 @@ default:
       when: on_success
 
 .always_except_merge_production:
-  allow_failure: true
+  allow_failure: false
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
