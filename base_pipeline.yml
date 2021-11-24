@@ -15,9 +15,6 @@ variables:
   CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.4
   CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.3
   CI_CD_TOOL_DEBUG: "true"
-  CI_CD_TAG: ""
-  CI_CD_VERSION: ""
-  CI_CD_KUBE_CONFIG: ""
   # All variables below come from Ahmad
   # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
   DOCKER_HOST: tcp://docker:2376
@@ -30,28 +27,14 @@ workflow:
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      variables:
-        CI_CD_TAG: $CI_PIPELINE_ID
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
-      variables:
-        CI_CD_TAG: $CI_PIPELINE_ID
     # release
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
-      variables:
-        CI_CD_TAG: $CI_PIPELINE_ID
     # hotfix
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
-      variables:
-        CI_CD_TAG: $CI_PIPELINE_ID
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      variables:
-        CI_CD_TAG: $CI_PIPELINE_ID
-        CI_CD_VERSION: $CI_MERGE_REQUEST_TITLE
-        CI_CD_KUBE_CONFIG: $CI_CD_STAGING_KUBECONFIG
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
-      variables:
-        CI_CD_KUBE_CONFIG: $CI_CD_PRODUCTION_KUBECONFIG
 
 default:
   image: $CI_CD_BASE_IMAGE
@@ -199,9 +182,11 @@ default:
   before_script:
     - certs_check
   script:
-    - if [ -z "${CI_CD_TAG}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+      else
+        CI_CD_TAG=${CI_PIPELINE_ID};
       fi
     - result=$(ci_cd_tool registry exist ${IMAGE} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
@@ -240,11 +225,17 @@ default:
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
   script:
-    - if [ -z "${CI_CD_TAG}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
         ci_cd_tool git tag ${CI_CD_TAG};
+
+        CI_CD_KUBE_CONFIG=${CI_CD_PRODUCTION_KUBECONFIG};
+      else
+        CI_CD_TAG=${CI_PIPELINE_ID};
+
+        CI_CD_KUBE_CONFIG=${CI_CD_STAGING_KUBECONFIG};
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
@@ -260,7 +251,7 @@ test:check_request_title:
     - .merge_request_production
   needs: []
   script:
-    - ci_cd_tool version validate ${CI_CD_VERSION}
+    - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
 
 setup:state:
   stage: .pre
