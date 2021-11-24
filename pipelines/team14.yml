@@ -7,66 +7,50 @@ include:
 
 # Haven't used ".build" as I don't want to build the images at every single commit/push
 build:aam:
-  stage: build
   extends:
-    - .merge_request_production
-    - .test_image
+    - .build
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: aam
     CI_CD_DOCKER_PATH:  AAM_Service/api
 
 build:ads:
-  stage: build
   extends:
-    - .merge_request_production
-    - .test_image
+    - .build
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: ads
     CI_CD_DOCKER_PATH: Ads_Service/api
 
 build:audience_targeting:
-  stage: build
   extends:
-    - .merge_request_production
-    - .test_image
+    - .build
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: audience_targeting
     CI_CD_DOCKER_PATH: Audience_Targeting_Service/api
 
 build:billing:
-  stage: build
   extends:
-    - .merge_request_production
-    - .test_image
+    - .build
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: billing
     CI_CD_DOCKER_PATH: Billing_Service/api
 
 ### Deliver ###
-deliver:production_aam_image:
-  extends:
-    - .deliver
-    - .production_image
-  variables:
-    CI_CD_IMAGE_NAME: aam
+deploy:kube_mongo:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: mongo_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database"}]'
 
-deliver:production_ads_image:
-  extends:
-    - .deliver
-    - .production_image
-  variables:
-    CI_CD_IMAGE_NAME: ads
-
-deliver:production_audience_targeting_image:
-  extends:
-    - .deliver
-    - .production_image
-  variables:
-    CI_CD_IMAGE_NAME: audience_targeting
-
-deliver:production_billing_image:
-  extends:
-    - .deliver
-    - .production_image
-  variables:
-    CI_CD_IMAGE_NAME: billing
+deploy:kube_aam:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: aam_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service"}]'
