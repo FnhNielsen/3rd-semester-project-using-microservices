@@ -4,8 +4,6 @@ include:
     file: base_pipeline.yml
 
 ### Build ###
-
-# Haven't used ".build" as I don't want to build the images at every single commit/push
 build:aam:
   extends:
     - .build
@@ -54,3 +52,42 @@ deploy:kube_aam:
     variables:
         CI_CD_KUBE_FILE: aam_deployment.yml
         CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service"}]'
+
+deploy:status:
+  extends:
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_mongo
+    - deploy:kube_aam
+  variables:
+    CI_CD_DEPLOYMENT_NAMES: "t14-database t14-aam"
+
+### Post ###
+cleanup:aam_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: aam
+
+cleanup:ads_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: ads
+
+cleanup:audience_targeting_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: audience_targeting
+
+cleanup:billing_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: billing
