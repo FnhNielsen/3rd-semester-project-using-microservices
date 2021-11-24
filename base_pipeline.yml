@@ -38,8 +38,8 @@ workflow:
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       variables:
-        CI_CD_VERSION: $CI_MERGE_REQUEST_TITLE
         CI_CD_KUBE_CONFIG: $CI_CD_STAGING_KUBECONFIG
+        CI_CD_VERSION: $CI_MERGE_REQUEST_TITLE
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       variables:
         CI_CD_KUBE_CONFIG: $CI_CD_PRODUCTION_KUBECONFIG
@@ -52,7 +52,6 @@ default:
       - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
     exclude:
       - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/.git
-    untracked: false
     when: on_failure
     expire_in: 8 hrs
 
@@ -248,9 +247,9 @@ default:
 test:check_request_title:
   # NOTE: Implement check new version is newer that the old version by using git tag from production branch
   stage: test
-  needs: []
   extends:
     - .merge_request_production
+  needs: []
   script:
     - ci_cd_tool version validate ${CI_CD_VERSION}
 
@@ -258,6 +257,7 @@ setup:state:
   stage: .pre
   extends:
     - .merge_request_production
+  needs: []
   script:
     - echo "init_state"
 
