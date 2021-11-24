@@ -274,5 +274,3 @@ case $1 in
   version) shift; command_version "$@";;
   *) echo "Unknown command: $1"; unknown_help;;
 esac
-
-finish
