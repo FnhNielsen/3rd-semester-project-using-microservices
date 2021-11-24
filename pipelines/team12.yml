@@ -181,8 +181,6 @@ cleanup:database_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  needs:
-    - build:database_image
   variables:
     # Variables
     #
