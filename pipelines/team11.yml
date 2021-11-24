@@ -78,10 +78,33 @@ deploy:kube_api:
     CI_CD_KUBE_FILE: NodeJS/deployment.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
 
-deploy:kube_api:
+deploy:kube_database:
   extends:
     - .deploy
     - .kube
   variables:
     CI_CD_KUBE_FILE: Cassandra/deployment.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
+
+### Post ###
+cleanup:api_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: api
+
+cleanup:database_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: database
