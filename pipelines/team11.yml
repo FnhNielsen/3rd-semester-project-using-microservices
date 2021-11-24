@@ -74,7 +74,7 @@ deploy:kube_api:
   extends:
     - .deploy
     - .kube
-  need:
+  needs:
     - build:api_image
   variables:
     CI_CD_KUBE_FILE: NodeJS/deployment.yaml
