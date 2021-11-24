@@ -43,6 +43,10 @@ function remove_registry_image_gitlab {
   # $1: Image name (string) [Required]
   # $2: Tag (string) [Required]
 
+  debug "Registry: \"${CI_REGISTRY}\""
+  debug "User: \"${CI_REGISTRY_USER}\""
+  debug "Remove: \"${CI_PROJECT_PATH}/$1:$2\""
+
   # Remove images from container registry:
   # https://gitlab.com/gitlab-org/gitlab-foss/-/issues/40096
   url="https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/$1:delete&service=container_registry"
@@ -50,8 +54,18 @@ function remove_registry_image_gitlab {
 
   content=$(get_content "${url}" "${user[@]}")
 
-  debug "Registry: \"${CI_REGISTRY}\""
-  debug "User: \"${CI_REGISTRY_USER}\""
-  debug "Remove: \"${CI_PROJECT_PATH}/$1:$2\""
   reg -d -r "${CI_REGISTRY}" -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" rm "${CI_PROJECT_PATH}/$1:$2"
+}
+
+function add_git_tag_gitlab {
+  # $1: Tag (string) [Required]
+  # $2: Commit SHA (string) [Required]
+
+  debug "Tag: \"$1\""
+  debug "Commit SHA: \"$2\""
+
+  url="https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/repository/tags?tag_name=$1&ref=$2"
+  header=(--header "PRIVATE-TOKEN: ${CI_CD_PROJECT_TOKEN}")
+
+  content=$(get_content "${url}" "${header[@]}")
 }

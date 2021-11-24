@@ -199,15 +199,14 @@ function command_validate_version {
 }
 
 # Git
-function command_set_git_tag {
+function command_add_git_tag {
   # $1: tag (string) [Required]
   info "Set git tag."
 
   debug "Tag: $1"
   is_empty "$1" && error "Tag is empty."
 
-  add_git_tag "$1" "$(get_git_commit_sha)"
-  push_git_tag
+  add_git_tag_gitlab "$1" "$(get_git_commit_sha)"
 }
 
 
@@ -248,7 +247,7 @@ function command_version {
 
 function command_git {
   case $1 in
-    tag) shift; command_set_git_tag "$@";;
+    tag) shift; command_add_git_tag "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
