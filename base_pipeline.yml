@@ -232,7 +232,6 @@ default:
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
         ci_cd_tool kube image ${CI_CD_KUBE_FILE} $(_jq ".container") ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}$(_jq ".image"):${CI_CD_TAG};
       done
-    - echo ci_cd_tool kube apply ${CI_CD_KUBE_FILE} ${CI_CD_KUBE_CONFIG}
     - ci_cd_tool kube apply ${CI_CD_KUBE_FILE} ${CI_CD_KUBE_CONFIG}
 
 ### Static Jobs ###
