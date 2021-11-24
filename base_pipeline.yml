@@ -189,6 +189,7 @@ default:
     - result=$(ci_cd_tool registry exist "${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - echo ci_cd_tool docker create "${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_CD_FILE_NAME}" "${CI_CD_PATH}"
     - ci_cd_tool docker create "${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_CD_FILE_NAME}" "${CI_CD_PATH}"
     - ci_cd_tool docker push "${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
