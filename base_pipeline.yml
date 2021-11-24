@@ -210,6 +210,7 @@ default:
 
 .rollout_status:
     image: $CI_CD_BASE_IMAGE
+    stage: deploy
     script:
       - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name}; done
 
