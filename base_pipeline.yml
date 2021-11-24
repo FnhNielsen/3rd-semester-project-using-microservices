@@ -190,8 +190,8 @@ default:
   before_script:
     - certs_check
   script:
-    - if [ ${CI_PIPELINE_SOURCE} == "push" ] && [ ${CI_BUILD_REF_NAME} == ${CI_CD_PRODUCTION_BRANCH} ]; then
-        for version in ${CI_COMMIT_DESCRIPTION}; do break; done
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
       fi
     - result=$(ci_cd_tool registry exist ${IMAGE} ${CI_CD_TAG});
@@ -231,8 +231,8 @@ default:
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
   script:
-    - if [ ${CI_PIPELINE_SOURCE} == "push" ] && [ ${CI_BUILD_REF_NAME} == ${CI_CD_PRODUCTION_BRANCH} ]; then
-        for version in ${CI_COMMIT_DESCRIPTION}; do break; done
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
         ci_cd_tool git tag ${CI_CD_TAG};
