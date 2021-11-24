@@ -15,6 +15,8 @@ variables:
   CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.4
   CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.3
   CI_CD_TOOL_DEBUG: "true"
+  CI_CD_TAG: $CI_PIPELINE_ID
+  CI_CD_KUBE_CONFIG: ""
   # All variables below come from Ahmad
   # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
   DOCKER_HOST: tcp://docker:2376
@@ -34,7 +36,11 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      variables:
+        CI_CD_KUBE_CONFIG: $CI_CD_STAGING_KUBECONFIG
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+      variables:
+        CI_CD_KUBE_CONFIG: $CI_CD_PRODUCTION_KUBECONFIG
 
 default:
   image: $CI_CD_BASE_IMAGE
@@ -185,14 +191,12 @@ default:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
-      else
-        CI_CD_TAG=${CI_PIPELINE_ID};
       fi
-    - result=$(ci_cd_tool registry exist ${IMAGE} ${CI_CD_TAG});
+    - result=$(ci_cd_tool registry exist ${CI_CD_FILE_NAME} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${IMAGE}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
-    - ci_cd_tool docker push ${CI_REGISTRY_IMAGE}/${IMAGE}:${CI_CD_TAG}
+    - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${CI_CD_FILE_NAME}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
+    - ci_cd_tool docker push ${CI_REGISTRY_IMAGE}/${CI_CD_FILE_NAME}:${CI_CD_TAG}
 
 .remove_test_image:
   # Variable
@@ -230,12 +234,6 @@ default:
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
         ci_cd_tool git tag ${CI_CD_TAG};
-
-        CI_CD_KUBE_CONFIG=${CI_CD_PRODUCTION_KUBECONFIG};
-      else
-        CI_CD_TAG=${CI_PIPELINE_ID};
-
-        CI_CD_KUBE_CONFIG=${CI_CD_STAGING_KUBECONFIG};
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
