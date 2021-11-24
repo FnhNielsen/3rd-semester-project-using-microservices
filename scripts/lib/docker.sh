@@ -21,17 +21,17 @@ function docker_build_image {
   [ -z "$2" ] && file='Dockerfile' || file=$2
   [ -z "$3" ] && path='.' || path=$3
 
+  debug "Image: \"$1\""
+  debug "Docker file: \"${file}\""
+  debug "Path: \"$(pwd)/${path}\""
+
   # Go to the build dir
-  debug "cd to \"$(pwd)/${path}\""
   cd "./${path}" || error "Cannot cd to '$(pwd)/${path}': No such directory."
 
   # Do we have a docker file?
-  debug "Docker file: \"${file}\""
   [ ! -f "${file}" ] && error "Cannot locate docker file '${file}' in directory '$(pwd)/${path}'."
 
   # Build image
-  debug "Image: \"$1\""
-
   labels=("${@:4}")
   if [ ${#labels[@]} -gt 0 ]; then
     debug "Labels: ${labels[*]}"
