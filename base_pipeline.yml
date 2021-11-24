@@ -127,7 +127,8 @@ default:
 
 .unit:
   stage: test
-  allow_failure: false
+  extends:
+    - .except_merge_production
 
 .acceptance:
   stage: test
