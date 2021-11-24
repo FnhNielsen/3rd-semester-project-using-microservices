@@ -246,6 +246,7 @@ default:
 test:check_request_title:
   # NOTE: Implement check new version is newer that the old version by using git tag from production branch
   stage: test
+  needs: []
   extends:
     - .merge_request_production
   script:

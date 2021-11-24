@@ -15,6 +15,7 @@ build:compile:
   extends:
     - .build
     - .artifact
+  needs: []
   script:
     - echo "compiling"
     - echo "compiling"
@@ -41,6 +42,7 @@ build:database_image:
   extends:
     - .build
     - .build_image
+  needs: []
   variables:
     # Variables
     #
@@ -166,7 +168,7 @@ cleanup:api_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  dependencies:
+  needs:
     - build:api_image
   variables:
     # Variables
@@ -179,7 +181,7 @@ cleanup:database_image:
   extends:
     - .delete_test_image
     - .remove_test_image
-  dependencies:
+  needs:
     - build:database_image
   variables:
     # Variables
