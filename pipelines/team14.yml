@@ -1,6 +1,6 @@
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v1.0.0
+    ref: main
     file: base_pipeline.yml
 
 ### Build ###
