@@ -23,7 +23,7 @@ include:
 build:api_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: api
     CI_CD_DOCKER_PATH: NodeJS
@@ -31,7 +31,7 @@ build:api_image:
 build:database_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
   variables:
     CI_CD_IMAGE_NAME: database
     CI_CD_DOCKER_PATH: Cassandra
@@ -70,26 +70,18 @@ build:database_image:
 #     - echo "run performance test cmds or script"
 
 ### Deliver ###
-deliver:production_api_image:
+deploy:kube_api:
   extends:
-    - .deliver
-    - .production_image
+    - .deploy
+    - .kube
   variables:
-    # Variable
-    #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
-    #
-    CI_CD_IMAGE_NAME: api
+    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
 
-deliver:production_database_image:
+deploy:kube_api:
   extends:
-    - .deliver
-    - .production_image
+    - .deploy
+    - .kube
   variables:
-    # Variable
-    #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
-    #
-    CI_CD_IMAGE_NAME: database
+    CI_CD_KUBE_FILE: Cassandra/deployment.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
