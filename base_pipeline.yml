@@ -39,7 +39,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       variables:
         CI_CD_KUBE_CONFIG: "$CI_PROJECT_DIR.tmp/CI_CD_STAGING_KUBECONFIG"
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       variables:
         CI_CD_KUBE_CONFIG: "$CI_PROJECT_DIR.tmp/CI_CD_PRODUCTION_KUBECONFIG"
         CI_CD_TEST_IMAGE_PRE: ""
@@ -66,7 +66,7 @@ default:
 .merge_production:
   allow_failure: false
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .except_merge_production:
@@ -93,7 +93,7 @@ default:
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .always_merge_request_production:
@@ -181,7 +181,7 @@ default:
   before_script:
     - certs_check
   script:
-    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
       fi
@@ -222,7 +222,7 @@ default:
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
   script:
-    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
