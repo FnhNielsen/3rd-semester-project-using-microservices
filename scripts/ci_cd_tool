@@ -185,23 +185,17 @@ function command_kube_delete {
 }
 
 # Version
-function command_get_version {
+function command_normalize_version {
   debug "Get version."
 
-  var=$(get_version_gitlab)
-
-  check_version_scheme "${var}" \
-    || error "Version \"${var}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
-
-  normalize_version "${var}"
+  normalize_version "$1"
 }
 
 function command_validate_version {
   info "Validate version."
 
-  var=$(get_version_gitlab)
-  check_version_scheme "${var}" \
-    || error "Version \"${var}\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
+  check_version_scheme "$1" \
+    || error "Version \"$1\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
 }
 
 # Git
@@ -246,7 +240,7 @@ function command_kube {
 
 function command_version {
   case $1 in
-    get) shift; command_get_version "$@";;
+    normalize) shift; command_normalize_version "$@";;
     validate) shift; command_validate_version "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac

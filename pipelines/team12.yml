@@ -119,7 +119,7 @@ deploy:kube_api:
 ### Test ###
 test:unit_api:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/api:${CI_PIPELINE_ID}
+  image: ${CI_REGISTRY_IMAGE}/api:${CI_CD_TAG}
   needs:
     - build:api_image
   script:
@@ -128,7 +128,7 @@ test:unit_api:
 
 test:unit_database:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/database:${CI_PIPELINE_ID}
+  image: ${CI_REGISTRY_IMAGE}/database:${CI_CD_TAG}
   needs:
     - build:database_image
   script:

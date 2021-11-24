@@ -2,19 +2,6 @@
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/tools.sh"
 
-function get_version_gitlab {
-  debug "CI_COMMIT_DESCRIPTION: \"${CI_COMMIT_DESCRIPTION}\""
-  debug "CI_MERGE_REQUEST_TITLE: \"${CI_MERGE_REQUEST_TITLE}\""
-  if [ -z "${CI_MERGE_REQUEST_TITLE}" ]; then
-    for version in ${CI_COMMIT_DESCRIPTION}; do break; done
-  else
-    version="${CI_MERGE_REQUEST_TITLE}"
-  fi
-
-  debug "Version: \"${version}\""
-  echo "${version}"
-}
-
 function exist_image_tag_gitlab {
   # $1: Image name (string) [Required]
   # $2: Tag (string) [Required]
