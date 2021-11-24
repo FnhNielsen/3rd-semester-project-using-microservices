@@ -17,6 +17,7 @@ variables:
   CI_CD_TOOL_DEBUG: "true"
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
+  CI_CD_TEST_IMAGE_PRE: "test-image/"
   # All variables below come from Ahmad
   # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
   DOCKER_HOST: tcp://docker:2376
@@ -191,12 +192,14 @@ default:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+
+        CI_CD_TEST_IMAGE_PRE=;
       fi
-    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
-      [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1;
+    - result=$(ci_cd_tool registry exist ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
+      [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
-    - ci_cd_tool docker push ${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}
+    - ci_cd_tool docker create ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG} ${CI_CD_FILE_NAME} ${CI_CD_PATH}
+    - ci_cd_tool docker push ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}
 
 .remove_test_image:
   # Variable
@@ -209,10 +212,10 @@ default:
   before_script:
     - certs_check
   script:
-    - result=$(ci_cd_tool registry exist ${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
-      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1;
+    - result=$(ci_cd_tool registry exist ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG})
+      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 1
     - ci_cd_tool docker login ${CI_REGISTRY_USER} ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - ci_cd_tool registry remove ${CI_CD_IMAGE_NAME} ${CI_CD_TAG}
+    - ci_cd_tool registry remove ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG}
 
 .kube:
   # Variable
@@ -234,10 +237,12 @@ default:
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
         ci_cd_tool git tag ${CI_CD_TAG};
+
+        CI_CD_TEST_IMAGE_PRE=;
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
-        ci_cd_tool kube image ${CI_CD_KUBE_FILE} $(_jq ".container") ${CI_REGISTRY_IMAGE}/$(_jq ".image"):${CI_CD_TAG};
+        ci_cd_tool kube image ${CI_CD_KUBE_FILE} $(_jq ".container") ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}$(_jq ".image"):${CI_CD_TAG};
       done
     - ci_cd_tool kube apply ${CI_CD_KUBE_FILE} ${CI_CD_KUBE_CONFIG}
 
