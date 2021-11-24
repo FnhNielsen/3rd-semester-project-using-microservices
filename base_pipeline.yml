@@ -42,6 +42,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       variables:
         CI_CD_KUBE_CONFIG: $CI_CD_PRODUCTION_KUBECONFIG
+        CI_CD_TEST_IMAGE_PRE: ""
 
 default:
   image: $CI_CD_BASE_IMAGE
@@ -192,8 +193,6 @@ default:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_BUILD_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
-
-        CI_CD_TEST_IMAGE_PRE=;
       fi
     - result=$(ci_cd_tool registry exist ${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME} ${CI_CD_TAG});
       [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
@@ -237,8 +236,6 @@ default:
         CI_CD_TAG=$(ci_cd_tool version normalize ${version});
 
         ci_cd_tool git tag ${CI_CD_TAG};
-
-        CI_CD_TEST_IMAGE_PRE=;
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
