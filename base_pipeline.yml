@@ -46,7 +46,6 @@ workflow:
 
 default:
   image: $CI_CD_BASE_IMAGE
-  allow_failure: false
   artifacts:
     name: job-${CI_JOB_NAME}-failed-commit-${CI_COMMIT_SHORT_SHA}
     paths:
@@ -129,32 +128,39 @@ default:
 # Job rules
 .build:
   stage: build
+  allow_failure: false
 
 .unit:
   stage: test
+  allow_failure: false
 
 .acceptance:
   stage: test
+  allow_failure: false
   extends:
     - .merge_request_production
 
 .integration:
   stage: test
+  allow_failure: false
   extends:
     - .merge_request_production
 
 .performance:
   stage: test
+  allow_failure: false
   extends:
     - .merge_request_production
 
 .deploy:
   stage: deploy
+  allow_failure: false
   extends:
     - .production
 
 .delete_test_image:
   stage: .post
+  allow_failure: false
   extends:
     - .always_except_merge_production
 
