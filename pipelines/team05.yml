@@ -59,7 +59,7 @@ deploy:mongo:
     - .deploy
     - .kube
   needs:
-    - build:elasticsearch_statefulset
+    - deploy:elasticsearch_statefulset
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
 
@@ -68,7 +68,7 @@ deploy:kibana:
     - .deploy
     - .kube
   needs:
-    - build:mongo
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
 
@@ -77,7 +77,7 @@ deploy:fluentd_config:
     - .deploy
     - .kube
   needs:
-    - build:kibana
+    - deploy:kibana
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
 
@@ -86,8 +86,8 @@ deploy:fluentd:
     - .deploy
     - .kube
   needs:
-    - build:fluentd_config
-    - build:fluent_image
+    - build:fluent
+    - deploy:fluentd_config
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
@@ -97,8 +97,8 @@ deploy:api:
     - .deploy
     - .kube
   needs:
-    - build:fluentd
-    - build:api_image
+    - build:api
+    - deploy:fluentd
   variables:
     CI_CD_KUBE_FILE: kubernetes/api.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-api", "image": "api"}]'
@@ -108,8 +108,8 @@ deploy:visualisation:
     - .deploy
     - .kube
   needs:
-    - build:api
-    - build:visualization_image
+    - build:visualization
+    - deploy:api
   variables:
     CI_CD_KUBE_FILE: kubernetes/visualization.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-visualization", "image": "visualization"}]'
@@ -119,8 +119,8 @@ deploy:home:
     - .deploy
     - .kube
   needs:
-    - build:visualisation
-    - build:home_image
+    - build:home
+    - deploy:visualisation
   variables:
     CI_CD_KUBE_FILE: kubernetes/home.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-home", "image": "home"}]'
