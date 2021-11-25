@@ -138,7 +138,7 @@ deploy:status:
 ### Test ###
 test:unit_api:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}api:${CI_CD_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}api:${CI_CD_TAG}
   needs:
     - job: build:api_image
       optional: true
@@ -148,7 +148,7 @@ test:unit_api:
 
 test:unit_database:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}database:${CI_CD_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
   needs:
     - job: build:database_image
       optional: true
