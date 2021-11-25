@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: dev
+    ref: v2.0.1
     file: base_pipeline.yml
 
 ##############################
