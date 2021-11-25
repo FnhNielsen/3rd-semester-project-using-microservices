@@ -7,6 +7,9 @@ include:
     ref: dev
     file: base_pipeline.yml
 
+variables:
+  CI_CD_PRODUCTION_IMAGE_PRE: "production/"
+
 ##############################
 ############ Jobs ############
 ##############################
