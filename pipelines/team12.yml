@@ -66,7 +66,7 @@ deploy:kube_common:
     - build:api_image
     - build:database_image
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -85,7 +85,7 @@ deploy:kube_database:
   needs:
     - deploy:kube_common
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -105,7 +105,7 @@ deploy:kube_api:
   needs:
     - deploy:kube_common
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -188,7 +188,7 @@ cleanup:api_image:
     - .delete_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
+    # Variable
     #
     # CI_CD_IMAGE_NAME: (string) [Required]
     #
@@ -199,7 +199,7 @@ cleanup:database_image:
     - .delete_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
+    # Variable
     #
     # CI_CD_IMAGE_NAME: (string) [Required]
     #

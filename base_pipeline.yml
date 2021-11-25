@@ -221,7 +221,7 @@ default:
       - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
 
 .kube:
-  # Variable
+  # Variables
   #
   # CI_CD_KUBE_FILE: (string) [Required]
   # CI_CD_CONTAINER_IMAGES: (json) [Optional]
