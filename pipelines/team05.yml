@@ -142,3 +142,32 @@ test:integration:
     - deploy:status
   script:
     - echo "run integration test cmds or script"
+
+### Post ###
+cleanup:fluent:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: fluent
+
+cleanup:api:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: api
+
+cleanup:visualization:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: visualization
+
+cleanup:home:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: home
