@@ -120,6 +120,7 @@ deploy:kube_api:
 
 deploy:status:
   extends:
+    - .deploy
     - .rollout_status
     - .merge_request_production
   needs:
@@ -133,7 +134,6 @@ deploy:status:
     #     t12-common t12-api t12-database
     #
     CI_CD_DEPLOYMENT_NAMES: "t12-api t12-database"
-  timeout: 2 minutes
 
 ### Test ###
 test:unit_api:

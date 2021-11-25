@@ -216,7 +216,7 @@ default:
     #     t12-common t12-api t12-database
     #
     image: $CI_CD_KUBE_IMAGE
-    stage: deploy
+    timeout: 2 minutes
     script:
       - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
 
