@@ -126,6 +126,12 @@ deploy:status:
     - deploy:kube_api
     - deploy:kube_database
   variables:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
     CI_CD_DEPLOYMENT_NAMES: "t12-api t12-database"
   timeout: 2 minutes
 

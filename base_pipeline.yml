@@ -209,6 +209,12 @@ default:
     - ci_cd_tool registry remove "${CI_CD_TEST_IMAGE_PRE}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
 .rollout_status:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
     image: $CI_CD_KUBE_IMAGE
     stage: deploy
     script:
