@@ -18,7 +18,7 @@ build:ads:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: ads
-    CI_CD_DOCKER_PATH: Ads_Service/api/
+    CI_CD_PATH: Ads_Service/api/
 
 build:audience_targeting:
   extends:
@@ -26,7 +26,7 @@ build:audience_targeting:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: audience_targeting
-    CI_CD_DOCKER_PATH: Audience_Targeting_Service/api/
+    CI_CD_PATH: Audience_Targeting_Service/api/
 
 build:billing:
   extends:
@@ -34,7 +34,7 @@ build:billing:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: billing
-    CI_CD_DOCKER_PATH: Billing_Service/api/
+    CI_CD_PATH: Billing_Service/api/
 
 build:client:
   extends:
@@ -42,7 +42,7 @@ build:client:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: client
-    CI_CD_DOCKER_PATH: AAM_Service/client/
+    CI_CD_PATH: AAM_Service/client/
 
 build:database:
   extends:
@@ -50,7 +50,7 @@ build:database:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: billing
-    CI_CD_DOCKER_PATH: database/
+    CI_CD_PATH: database/
 
 ### Deliver ###
 deploy:kube_mongo:
