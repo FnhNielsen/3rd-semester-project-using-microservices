@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v2.0.2
+    ref: v3.0
     file: base_pipeline.yml
 
 variables:
@@ -140,7 +140,28 @@ deploy:status:
   needs:
     - deploy:home
   variables:
-    CI_CD_DEPLOYMENT_NAMES: "t05-kibana t05-fluentd t05-api t05-visualization t05-home"
+    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-kibana"},
+     {"type": "deployment", "name": "t05-fluentd"},
+     {"type": "deployment", "name": "t05-api"},
+     {"type": "deployment", "name": "t05-visualization"},
+     {"type": "deployment", "name": "t05-home"}]'
+
+deploy:describe:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "kubernetes/elasticsearch_statefulset.yml
+      kubernetes/mongo.yml
+      kubernetes/kibana.yml
+      kubernetes/fluentd-config.yml
+      kubernetes/fluentd-deployment.yml
+      kubernetes/api.yml
+      kubernetes/visualization.yml
+      kubernetes/home.yml"
 
 ### Test ###
 test:integration:
