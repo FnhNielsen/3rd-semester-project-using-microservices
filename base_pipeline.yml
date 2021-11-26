@@ -230,7 +230,7 @@ default:
   #     ]
   #
   image: $CI_CD_KUBE_IMAGE
-  timeout: 2 minutes
+  timeout: 5 minutes
   script:
   - for row in $(echo "${CI_CD_CHECK_STATUS}" | jq -r ".[] | @base64"); do
       _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
@@ -246,7 +246,10 @@ default:
   #
   image: $CI_CD_KUBE_IMAGE
   script:
-    - for deployment_name in ${CI_CD_DEPLOYMENT_FILES}; do kubectl describe -f ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
+    - for deployment_file in ${CI_CD_DEPLOYMENT_FILES}; do
+        echo "==== describe ${deployment_file} ===="
+        kubectl describe -f ${deployment_file} --kubeconfig=${CI_CD_KUBE_CONFIG};
+      done
 
 .kube:
   # Variables
