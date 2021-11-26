@@ -140,7 +140,7 @@ deploy:status:
   needs:
     - deploy:home
   variables:
-    CI_CD_DEPLOYMENT_NAMES: "t05-es-cluster t05-mongodb t05-kibana t05-fluentd-config t05-fluentd t05-api t05-visualization t05-home"
+    CI_CD_DEPLOYMENT_NAMES: "t05-kibana t05-fluentd t05-api t05-visualization t05-home"
 
 ### Test ###
 test:integration:
