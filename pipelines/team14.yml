@@ -10,7 +10,7 @@ build:aam:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: aam
-    CI_CD_DOCKER_PATH:  AAM_Service/api/
+    CI_CD_PATH:  AAM_Service/api/
 
 build:ads:
   extends:
@@ -18,7 +18,7 @@ build:ads:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: ads
-    CI_CD_DOCKER_PATH: Ads_Service/api/
+    CI_CD_PATH: Ads_Service/api/
 
 build:audience_targeting:
   extends:
@@ -26,7 +26,7 @@ build:audience_targeting:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: audience_targeting
-    CI_CD_DOCKER_PATH: Audience_Targeting_Service/api/
+    CI_CD_PATH: Audience_Targeting_Service/api/
 
 build:billing:
   extends:
@@ -34,7 +34,7 @@ build:billing:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: billing
-    CI_CD_DOCKER_PATH: Billing_Service/api/
+    CI_CD_PATH: Billing_Service/api/
 
 build:client:
   extends:
@@ -42,15 +42,15 @@ build:client:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: client
-    CI_CD_DOCKER_PATH: AAM_Service/client/
+    CI_CD_PATH: AAM_Service/client/
 
 build:database:
   extends:
     - .build
     - .build_image
   variables:
-    CI_CD_IMAGE_NAME: billing
-    CI_CD_DOCKER_PATH: database/
+    CI_CD_IMAGE_NAME: database
+    CI_CD_PATH: database/
 
 ### Deliver ###
 deploy:kube_mongo:
@@ -59,63 +59,79 @@ deploy:kube_mongo:
       - .kube
     variables:
         CI_CD_KUBE_FILE: mongo_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database", "image": "database"}]'
 
 deploy:kube_aam:
     extends:
       - .deploy
       - .kube
+    needs:
+      - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: aam_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service", "image": "aam"}]'
 
 deploy:kube_ads:
     extends:
       - .deploy
       - .kube
+    needs:
+      - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: ads_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads", "image": "ads"}]'
 
 deploy:kube_audience_targeting:
     extends:
       - .deploy
       - .kube
+    needs:
+      - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: at_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at", "image": "audience_targeting"}]'
+
+deploy:kube_billing:
+    extends:
+      - .deploy
+      - .kube
+    needs:
+      - deploy:kube_mongo
+    variables:
+        CI_CD_KUBE_FILE: billing_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing", "image": "billing"}]'
 
 deploy:kube_client:
     extends:
       - .deploy
       - .kube
+    needs:
+      - deploy:kube_mongo
+      - deploy:kube_audience_targeting
+      - deploy:kube_ads
+      - deploy:kube_aam
+      - deploy:kube_mongo
+      - deploy:kube_billing
     variables:
         CI_CD_KUBE_FILE: client_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client"}]'
-        
-deploy:kube_billing:
-    extends:
-      - .deploy
-      - .kube
-    variables:
-        CI_CD_KUBE_FILE: billing_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client", "image": "client"}]'
 
 deploy:status:
   extends:
+    - .deploy
     - .rollout_status
     - .merge_request_production
   needs:
     - deploy:kube_mongo
     - deploy:kube_aam
   variables:
-    CI_CD_DEPLOYMENT_NAMES: '[
-        {"type": "deployment"}, {"name": "t14-database"},
-        {"type": "deployment"}, {"name": "t14-aam"},
-        {"type": "deployment"}, {"name": "t14-at"},
-        {"type": "deployment"}, {"name": "t14-client"},
-        {"type": "deployment"}, {"name": "t14-billing"},
-        {"type": "deployment"}, {"name": "t14-ads"}]'
+    CI_CD_CHECK_STATUS: '[
+        {"type": "deployment", "name": "t14-database"},
+        {"type": "deployment", "name": "t14-aam"},
+        {"type": "deployment", "name": "t14-at"},
+        {"type": "deployment", "name": "t14-client"},
+        {"type": "deployment", "name": "t14-billing"},
+        {"type": "deployment", "name": "t14-ads"}]'
 
 deploy:failure:
   extends:
