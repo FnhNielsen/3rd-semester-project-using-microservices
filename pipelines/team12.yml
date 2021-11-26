@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: dev
+    ref: v3.0
     file: base_pipeline.yml
 
 ##############################
@@ -66,7 +66,7 @@ deploy:kube_common:
     - build:api_image
     - build:database_image
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -85,7 +85,7 @@ deploy:kube_database:
   needs:
     - deploy:kube_common
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -105,7 +105,7 @@ deploy:kube_api:
   needs:
     - deploy:kube_common
   variables:
-    # Variable
+    # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
     # CI_CD_CONTAINER_IMAGES: (json) [Required]
@@ -118,10 +118,41 @@ deploy:kube_api:
     CI_CD_KUBE_FILE: kube/api.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
 
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_api
+    - deploy:kube_database
+  timeout: 5 minutes
+  variables:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
+    CI_CD_CHECK_STATUS: '[ 
+        {"type": "deployment", "name": "t12-api"},
+        {"type": "persistentvolumeclaim", "name": "t12-mysql-pv-claim"},
+        {"type": "deployment", "name": "t12-database"}]'
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "kube/api.yaml kube/common.yaml kube/database.yaml"
+
 ### Test ###
 test:unit_api:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}api:${CI_CD_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}api:${CI_CD_TAG}
   needs:
     - job: build:api_image
       optional: true
@@ -131,7 +162,7 @@ test:unit_api:
 
 test:unit_database:
   extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/${CI_CD_TEST_IMAGE_PRE}database:${CI_CD_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
   needs:
     - job: build:database_image
       optional: true
@@ -168,10 +199,10 @@ test:performance:
 ### Post ###
 cleanup:api_image:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
+    # Variable
     #
     # CI_CD_IMAGE_NAME: (string) [Required]
     #
@@ -179,10 +210,10 @@ cleanup:api_image:
 
 cleanup:database_image:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
+    # Variable
     #
     # CI_CD_IMAGE_NAME: (string) [Required]
     #

@@ -1,11 +1,201 @@
-stages:
-  - build
+##############################
+######## DON'T TOUCH #########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v3.0
+    file: base_pipeline.yml
+
+variables:
+  CI_CD_PRODUCTION_IMAGE_PRE: "production/"
+
+##############################
+############ Jobs ############
+##############################
+### Build ###
+build:fluent:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: fluent
+    CI_CD_PATH: Docker/fluent
+
+build:api:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_PATH: Docker/api
+
+build:visualization:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: visualization
+    CI_CD_PATH: Docker/visualization
+
+build:home:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: home
+    CI_CD_PATH: Docker/home
+
+### Deploy ###
+deploy:elasticsearch_statefulset:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - job: setup:state
+      optional: true
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/elasticsearch_statefulset.yml
+
+deploy:mongo:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:elasticsearch_statefulset
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/mongo.yml
+
+deploy:kibana:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/kibana.yml
+
+deploy:fluentd_config:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kibana
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
+
+deploy:fluentd:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:fluent
+    - deploy:fluentd_config
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
+
+deploy:api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:api
+    - deploy:fluentd
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/api.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-api", "image": "api"}]'
+
+deploy:visualisation:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:visualization
+    - deploy:api
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/visualization.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-visualization", "image": "visualization"}]'
+
+deploy:home:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:home
+    - deploy:visualisation
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/home.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-home", "image": "home"}]'
+
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:home
+  variables:
+    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-kibana"},
+     {"type": "deployment", "name": "t05-fluentd"},
+     {"type": "deployment", "name": "t05-api"},
+     {"type": "deployment", "name": "t05-visualization"},
+     {"type": "deployment", "name": "t05-home"}]'
+
+deploy:describe:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "kubernetes/elasticsearch_statefulset.yml
+      kubernetes/mongo.yml
+      kubernetes/kibana.yml
+      kubernetes/fluentd-config.yml
+      kubernetes/fluentd-deployment.yml
+      kubernetes/api.yml
+      kubernetes/visualization.yml
+      kubernetes/home.yml"
+
+### Test ###
+test:integration:
+  extends: .integration
+  needs:
+    - deploy:status
   script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == main'
-      when: on_success
+    - echo "run integration test cmds or script"
+
+### Post ###
+cleanup:fluent:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: fluent
+
+cleanup:api:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: api
+
+cleanup:visualization:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: visualization
+
+cleanup:home:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: home
