@@ -103,6 +103,7 @@ deploy:kube_billing:
 
 deploy:status:
   extends:
+    - .deploy
     - .rollout_status
     - .merge_request_production
   needs:
