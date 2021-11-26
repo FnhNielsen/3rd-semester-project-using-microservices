@@ -48,7 +48,7 @@ build:home:
   needs: []
   variables:
     CI_CD_IMAGE_NAME: home
-    CI_CD_PATH: Docker/alt/home
+    CI_CD_PATH: Docker/home
 
 ### Deploy ###
 deploy:elasticsearch_statefulset:
