@@ -12,7 +12,7 @@ variables:
 
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: dev
+    ref: v3.0
     file: 'base_pipeline.yml'
 
 ##############################
@@ -24,6 +24,7 @@ build:api_image:
   extends:
     - .build
     - .build_image
+  needs: []
   variables:
     CI_CD_IMAGE_NAME: api
     CI_CD_PATH: NodeJS
@@ -32,6 +33,7 @@ build:database_image:
   extends:
     - .build
     - .build_image
+  needs: []
   variables:
     CI_CD_IMAGE_NAME: database
     CI_CD_PATH: Cassandra
@@ -89,6 +91,26 @@ deploy:kube_database:
   variables:
     CI_CD_KUBE_FILE:  cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t11-cassandra", "image": "database"}]'
+
+deploy:status:
+  extends: 
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_api
+  variables:
+    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t11-api"}'
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+    - deploy:kube_database
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "cass.yaml node.yaml"
 
 ### Post ###
 cleanup:api_image:
