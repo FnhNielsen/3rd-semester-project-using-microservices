@@ -137,6 +137,7 @@ deploy:status:
     - .deploy
     - .rollout_status
     - .merge_request_production
+  timeout: 10 minutes
   needs:
     - deploy:home
   variables:
