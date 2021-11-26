@@ -126,6 +126,7 @@ deploy:status:
   needs:
     - deploy:kube_api
     - deploy:kube_database
+  timeout: 5 minutes
   variables:
     # Variable
     #
