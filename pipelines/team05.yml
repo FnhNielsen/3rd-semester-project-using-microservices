@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: dev
+    ref: v2.0.2
     file: base_pipeline.yml
 
 variables:
@@ -153,28 +153,28 @@ test:integration:
 ### Post ###
 cleanup:fluent:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: fluent
 
 cleanup:api:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: api
 
 cleanup:visualization:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: visualization
 
 cleanup:home:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: home
