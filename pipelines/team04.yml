@@ -1,104 +1,72 @@
-##############################
-########## Settings ##########
-##############################
-
 variables:
-  CI_CD_PRODUCTION_BRANCH: "main"
-  CI_CD_DEVELOPMENT_BRANCH: "devBranch"
-  CI_CD_RELEASE_BRANCH: "release"
-  CI_CD_HOTFIX_BRANCH: "hotfix"
-  CI_CD_STATI_IMAGE_NAME: "test_image"
+  CI_CD_DEVELOPMENT_BRANCH: "dev"
+  CI_CD_TOOL_DEBUG: "true"
 
 ##############################
 ######## DON'T TOUCH #########
 ##############################
 
 include:
-  -project: 'semester-project-e2021/team-12/ci-cd'
-  ref: main
+- project: 'semester-project-e2021/team-12/ci-cd'
+  ref: v2.0.2
   file: 'base_pipeline.yml'
 
 ##############################
 ############ JOBS ############
 ##############################
 
-#validates if mailService tag exist
-build:check_mailService_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: mailService
 
-#validates if subscriptionService tag exist
-build:check_subscriptionService_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: subscriptionService
+
+#Builds mailService image
+build:mailService:
+    extends: 
+      - .build 
+      - .build_image
+    variables: 
+      - CI_CD_IMAGE_NAME: mailService 
+      - CI_CD_PATH: 'dockerfiles/mailserviceDocker'
+
+
+#Builds subscriptionService image
+build:subscriptionService:
+    extends: 
+      - .build 
+      - .build_image
+    variables: 
+      - CI_CD_IMAGE_NAME: subscriptionService
+      - CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
+
 
 #Run unit tests
 test:unit:
-  image: 
-    - gradle:7.2.0-jdk17
+  image:
     - openjdk:17
+    - gradle:7.2.0-jdk17
   extends: .unit
   script:
     - gradle test
 
-#Builds mailService iamge
-build:mailService_image:
-    extends: 
-      - .build 
-      - .push_image
-    needs:
-      - build:check_mailService_tag
-      - build:check_subscriptionService_tag
-    variables: 
-      - CI_CD_IMAGE_NAME: mailService
-      - CI_CD_DOCKERFILE: Dockerfile 
-      - CI_CD_DOCKERFILE_PATH: ''
-      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+# deploy
+deploy:mailService:
+  extends:
+    - .deploy
+    - .kube
+  variables:
+    CI_CD_KUBE_FILE: /manifest.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mailService"}]'
 
-  #Builds mailService iamge
-build:subscriptionService_image:
-    extends: 
-      - .build 
-      - .push_image
-    needs:
-      - build:check_mailService_tag
-      - build:check_subscriptionService_tag
-    variables: 
-      - CI_CD_IMAGE_NAME: subscriptionService
-      - CI_CD_DOCKERFILE: Dockerfile 
-      - CI_CD_DOCKERFILE_PATH: ''
-      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
-deliver:retag_mailService_image:
-    extends: 
-      - .deliver 
-      - .tag_production_image
-    variables: 
-      - CI_CD_IMAGE_NAME: mailService
-      - CI_CD_DOCKERFILE: Dockerfile 
-      - CI_CD_DOCKERFILE_PATH: ''
-      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
-deliver:retag_subscriptionService_image:
-    extends: 
-      - .deliver 
-      - .tag_production_image
-    variables: 
-      - CI_CD_IMAGE_NAME: subscriptionService
-      - CI_CD_DOCKERFILE: Dockerfile 
-      - CI_CD_DOCKERFILE_PATH: ''
-      - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+deploy:subscriptionService:
+  extends:
+    - .deploy
+    - .kube
+  variables:
+    CI_CD_KUBE_FILE: /manifest.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]
 
 ### Post ###
-cleanup:mailService_image:
+cleanup:mailService:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     # Variables
@@ -107,9 +75,9 @@ cleanup:mailService_image:
     #
     CI_CD_IMAGE_NAME: mailService
 
-cleanup:subscriptionService_image:
+cleanup:subscriptionService:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     # Variables
@@ -117,4 +85,4 @@ cleanup:subscriptionService_image:
     # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: subscriptionService
-
+    
