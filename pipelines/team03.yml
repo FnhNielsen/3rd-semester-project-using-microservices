@@ -7,9 +7,14 @@ include:
     ref: v2.0.2
     file: base_pipeline.yml
 
+
 ##############################
 ############ Jobs ############
 ##############################
+variables:
+  CI_CD_DEVELOPMENT_BRANCH: "development"
+  CI_CD_TOOL_DEBUG: "true"
+
 
 
 build:server:
