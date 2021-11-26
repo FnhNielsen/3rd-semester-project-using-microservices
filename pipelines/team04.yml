@@ -11,10 +11,6 @@ variables:
 ######## DON'T TOUCH #########
 ##############################
 
-include:
-  - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: dev
-    file: 'base_pipeline.yml'
 
 ##############################
 ############ JOBS ############
