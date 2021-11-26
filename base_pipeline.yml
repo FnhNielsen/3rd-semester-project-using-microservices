@@ -247,7 +247,7 @@ default:
   image: $CI_CD_KUBE_IMAGE
   script:
     - for deployment_file in ${CI_CD_DEPLOYMENT_FILES}; do
-        echo "==== describe ${deployment_file} ===="
+        echo "==== describe ${deployment_file} ====";
         kubectl describe -f ${deployment_file} --kubeconfig=${CI_CD_KUBE_CONFIG};
       done
 
