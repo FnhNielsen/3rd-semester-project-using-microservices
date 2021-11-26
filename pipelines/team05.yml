@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v4.0
     file: base_pipeline.yml
 
 variables:
@@ -98,7 +98,7 @@ deploy:data_pull:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/data-puller.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-data-puller", "image": "data_pull"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-data-puller", "image": "data_pull"}]'
 
 deploy:fluentd_config:
   extends:
@@ -119,7 +119,7 @@ deploy:fluentd:
     - deploy:fluentd_config
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-fluentd", "image": "fluentd"}]'
 
 deploy:api:
   extends:
@@ -131,7 +131,7 @@ deploy:api:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/api.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-api", "image": "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-api", "image": "api"}]'
 
 deploy:visualisation:
   extends:
@@ -143,7 +143,7 @@ deploy:visualisation:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/visualization.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-visualization", "image": "visualization"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-visualization", "image": "visualization"}]'
 
 deploy:home:
   extends:
@@ -155,14 +155,11 @@ deploy:home:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/home.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-home", "image": "home"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-home", "image": "home"}]'
 
-deploy:status:
-  extends:
-    - .deploy
-    - .rollout_status
-    - .merge_request_production
-  timeout: 10 minutes
+### Test ###
+test:integration:
+  extends: .integration
   needs:
     - deploy:kibana
     - deploy:data_pull
@@ -170,36 +167,6 @@ deploy:status:
     - deploy:api
     - deploy:visualisation
     - deploy:home
-  variables:
-    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-data-puller"},
-      {"type": "deployment", "name": "t05-kibana"},
-     {"type": "deployment", "name": "t05-fluentd"},
-     {"type": "deployment", "name": "t05-api"},
-     {"type": "deployment", "name": "t05-visualization"},
-     {"type": "deployment", "name": "t05-home"}]'
-
-deploy:describe_on_failure:
-  extends:
-    - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
-  needs:
-    - deploy:status
-  variables:
-    CI_CD_DEPLOYMENT_FILES: "kubernetes/elasticsearch_statefulset.yml
-      kubernetes/mongo.yml
-      kubernetes/kibana.yml
-      kubernetes/fluentd-config.yml
-      kubernetes/fluentd-deployment.yml
-      kubernetes/api.yml
-      kubernetes/visualization.yml
-      kubernetes/home.yml"
-
-### Test ###
-test:integration:
-  extends: .integration
-  needs:
-    - deploy:status
   script:
     - echo "run integration test cmds or script"
 
