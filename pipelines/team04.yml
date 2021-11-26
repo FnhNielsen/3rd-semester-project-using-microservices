@@ -3,20 +3,18 @@
 ##############################
 
 variables:
-  CI_CD_PRODUCTION_BRANCH: "main"
   CI_CD_DEVELOPMENT_BRANCH: "devBranch"
-  CI_CD_RELEASE_BRANCH: "release"
-  CI_CD_HOTFIX_BRANCH: "hotfix"
-  CI_CD_STATI_IMAGE_NAME: "test_image"
+  CI_CD_TOOL_DEBUG: "true
+
 
 ##############################
 ######## DON'T TOUCH #########
 ##############################
 
 include:
-  -project: 'semester-project-e2021/team-12/ci-cd'
-  ref: main
-  file: 'base_pipeline.yml'
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: dev
+    file: 'base_pipeline.yml'
 
 ##############################
 ############ JOBS ############
@@ -119,18 +117,3 @@ cleanup:subscriptionService_image:
     # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: subscriptionService
-
-
-
-stages:
-  - build
-
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == main'
-      when: on_success
-
