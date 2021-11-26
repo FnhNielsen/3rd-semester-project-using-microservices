@@ -100,7 +100,7 @@ deploy:status:
   needs:
     - deploy:kube_api
   variables:
-    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t11-api"}'
+    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t11-api"}]'
 
 deploy:failure:
   extends:
