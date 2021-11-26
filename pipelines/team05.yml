@@ -117,8 +117,6 @@ deploy:fluentd:
   needs:
     - build:fluent
     - deploy:fluentd_config
-    - deploy:elasticsearch_statefulset
-    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
@@ -166,6 +164,11 @@ deploy:status:
     - .merge_request_production
   timeout: 10 minutes
   needs:
+    - deploy:kibana
+    - deploy:data_pull
+    - deploy:fluentd
+    - deploy:api
+    - deploy:visualisation
     - deploy:home
   variables:
     CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-data-puller"},
