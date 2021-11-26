@@ -47,7 +47,7 @@ build:djangoService:
 #     - gradle test
 
 # deploy
-deploy:mailService:
+deploy:mySQL:
   extends:
     - .deploy
     - .kube
@@ -55,12 +55,12 @@ deploy:mailService:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "", "image": ""}]'
 
-deploy:subscriptionService:
+deploy:djangoService:
   extends:
     - .deploy
     - .kube
   variables:
-    CI_CD_KUBE_FILE: /manifest.yml
+    CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "", "image": ""}]'
 
 ### Post ###
