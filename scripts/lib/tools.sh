@@ -20,7 +20,8 @@ function get_content {
   fi
 
   result=$(curl -s "${opts[@]}" "$1")
-  if $?; then
+  retVal=$?
+  if [ $retVal -ne 1 ]; then
     error "An unknown error occurred."
   fi
 
