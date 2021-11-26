@@ -1,11 +1,88 @@
-stages:
-  - build
+variables:
+  CI_CD_DEVELOPMENT_BRANCH: "dev"
+  CI_CD_TOOL_DEBUG: "true"
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+- project: 'semester-project-e2021/team-12/ci-cd'
+  ref: v2
+  file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+
+
+#Builds mailService image
+build:mailService:
+    extends: 
+      - .build 
+      - .build_image
+    variables: 
+      - CI_CD_IMAGE_NAME: mailService 
+      - CI_CD_PATH: 'dockerfiles/mailserviceDocker'
+
+
+#Builds subscriptionService image
+build:subscriptionService:
+    extends: 
+      - .build 
+      - .build_image
+    variables: 
+      - CI_CD_IMAGE_NAME: subscriptionService
+      - CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
+
+
+#Run unit tests
+test:unit:
+  image:
+    - openjdk:17
+    - gradle:7.2.0-jdk17
+  extends: .unit
   script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == main'
-      when: on_success
+    - gradle test
+
+# deploy
+deploy:mailService:
+  extends:
+    - .deploy
+    - .kube
+  variables:
+    CI_CD_KUBE_FILE: /manifest.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mailService"}]'
+
+deploy:subscriptionService:
+  extends:
+    - .deploy
+    - .kube
+  variables:
+    CI_CD_KUBE_FILE: /manifest.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]'
+
+### Post ###
+cleanup:mailService:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: mailService
+
+cleanup:subscriptionService:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: subscriptionService
+    
