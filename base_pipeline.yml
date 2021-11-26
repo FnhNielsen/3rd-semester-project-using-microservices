@@ -123,6 +123,13 @@ default:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
+.on_failure_request_production:
+  allow_failure: false
+  rules:
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_failure
+
 # Job rules
 .build:
   stage: build
@@ -213,16 +220,33 @@ default:
     - ci_cd_tool registry remove "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
 .rollout_status:
-    # Variable
-    #
-    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
-    #   E.g.
-    #     t12-common t12-api t12-database
-    #
-    image: $CI_CD_KUBE_IMAGE
-    timeout: 2 minutes
-    script:
-      - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
+  # Variable
+  #
+  # CI_CD_CHECK_STATUS: (string) [Required]
+  #   E.g.
+  #     [
+  #       {"type": "deployment", "name": "t12-api"},
+  #       {"type": "deployment", "name": "t12-database"},
+  #     ]
+  #
+  image: $CI_CD_KUBE_IMAGE
+  timeout: 2 minutes
+  script:
+  - for row in $(echo "${CI_CD_CHECK_STATUS}" | jq -r ".[] | @base64"); do
+      _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
+      kubectl rollout status "$(_jq '.type')" "$(_jq '.name')" --kubeconfig=${CI_CD_KUBE_CONFIG};
+    done
+
+.rollout_fail:
+  # Variable
+  #
+  # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+  #   E.g.
+  #     common.yaml api.yaml database.yaml
+  #
+  image: $CI_CD_KUBE_IMAGE
+  script:
+    - for deployment_name in ${CI_CD_DEPLOYMENT_FILES}; do kubectl describe -f ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
 
 .kube:
   # Variables
