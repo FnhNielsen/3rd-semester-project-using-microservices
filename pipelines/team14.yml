@@ -49,7 +49,7 @@ build:database:
     - .build
     - .build_image
   variables:
-    CI_CD_IMAGE_NAME: billing
+    CI_CD_IMAGE_NAME: database
     CI_CD_PATH: database/
 
 ### Deliver ###
@@ -59,7 +59,7 @@ deploy:kube_mongo:
       - .kube
     variables:
         CI_CD_KUBE_FILE: mongo_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database", "image": "database"}]'
 
 deploy:kube_aam:
     extends:
@@ -67,7 +67,7 @@ deploy:kube_aam:
       - .kube
     variables:
         CI_CD_KUBE_FILE: aam_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service", "image": "aam"}]'
 
 deploy:kube_ads:
     extends:
@@ -75,7 +75,7 @@ deploy:kube_ads:
       - .kube
     variables:
         CI_CD_KUBE_FILE: ads_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads", "image": "ads"}]'
 
 deploy:kube_audience_targeting:
     extends:
@@ -83,7 +83,7 @@ deploy:kube_audience_targeting:
       - .kube
     variables:
         CI_CD_KUBE_FILE: at_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at", "image": "audience_targetig"}]'
 
 deploy:kube_client:
     extends:
@@ -91,7 +91,7 @@ deploy:kube_client:
       - .kube
     variables:
         CI_CD_KUBE_FILE: client_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client", "image": "client"}]'
         
 deploy:kube_billing:
     extends:
@@ -99,7 +99,7 @@ deploy:kube_billing:
       - .kube
     variables:
         CI_CD_KUBE_FILE: billing_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing", "image": "billing"}]'
 
 deploy:status:
   extends:
