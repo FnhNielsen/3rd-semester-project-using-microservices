@@ -133,7 +133,23 @@ deploy:status:
     #   E.g.
     #     t12-common t12-api t12-database
     #
-    CI_CD_DEPLOYMENT_NAMES: "t12-common t12-api t12-database"
+    CI_CD_CHECK_STATUS: [
+        {"type": "service", "name": "service09"}, 
+        {"type": "deployment", "name": "t12-api"}, 
+        {"type": "ConfigMap", "name": "t12-config"},
+        {"type": "service", "name": "t12-database"},
+        {"type": "persistentvolumeclaim", "name": "t12-mysql-pv-claim"},
+        {"type": "deployment", "name": "t12-database"}]
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "kube/api.yaml kube/common.yaml kube/database.yaml"
 
 ### Test ###
 test:unit_api:
