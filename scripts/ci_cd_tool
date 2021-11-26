@@ -1,0 +1,275 @@
+#!/bin/bash
+
+##### Begin Setup #####
+
+GUIDE_TEXT=""
+DEBUG=0
+
+##### End setup #####
+
+PROG="ci_cd_tool"
+
+USAGE="\
+Usage:
+  ${PROG} test [--debug] <image_name> [<docker_file>] [<build_path>]
+  ${PROG} production [--debug] <image_name>
+  ${PROG} version [--debug] [<version>]
+  ${PROG} --help
+
+Options:
+  -v, --debug  Print more info.
+  -h, --help   Print this help message.
+
+Arguments:
+  All arguments can be replaced with system variables.
+  - See commands section.
+
+Commands:
+  test        Use 'create' to build and push test image or 'remove' to remove a test image.
+              Argument:
+                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
+
+              Optional:
+                <docker_file>, CI_CD_DOCKER_FILE  - Specify Docker file name and possibly path
+                <build_path>, CI_CD_DOCKER_PATH   - Specify the build folder for files to be
+                                                    included in the Docker image
+
+  production  This command will create new tag from a test image and push it to the production.
+              Argument:
+                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
+
+  version     Check that the new release version is valid with Semantic Versioning.
+              Optional:
+                <version>  - Alternatively, you can specify a version to validate."
+
+LIB_DIR="/usr/local/lib/ci_cd_lib"
+if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
+  LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/lib"
+fi
+
+source "${LIB_DIR}/tools.sh"
+source "${LIB_DIR}/semver_version.sh"
+source "${LIB_DIR}/git.sh"
+source "${LIB_DIR}/gitlab.sh"
+source "${LIB_DIR}/docker.sh"
+source "${LIB_DIR}/kube.sh"
+
+if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:upper:]' '[:lower:]')" == "true" ]; then
+  DEBUG=1
+fi
+[ -n "${CI_CD_GUIDE_URL}" ] && GUIDE_TEXT=" See ${CI_CD_GUIDE_URL}."
+
+function usage_help() {
+    echo -e "${USAGE}"
+    exit 0
+}
+
+function unknown_help() {
+    echo -e "${USAGE}" >&2;
+    exit 1
+}
+
+
+# Docker
+function command_login {
+  # $1: user (string) [Required]
+  # $2: password (string) [Required]
+  # $3: registry (string) [Required]
+  info "Log in to the Docker registry."
+
+  is_empty "$1" || debug "User: \"specified\""
+  is_empty "$2" || debug "Password: \"specified\""
+  debug "Registry: \"$3\""
+
+  is_empty "$1" && error "User name is empty."
+  is_empty "$2" && error "Password is empty."
+  is_empty "$3" && error "Registry is empty."
+
+  docker_registry_login "$1" "$2" "$3"
+}
+
+function command_create_image {
+  # $1: Image (string) [Required]
+  # $2: Docker file name (string) [Optional]
+  # $3: Build path (string) [Optional]
+  info "Build image."
+
+  debug "Image: \"$1\""
+  is_empty "$1" && error "Docker image name is empty."
+
+  docker_build_image "$1" "$2" "$3"
+}
+
+function command_push_image {
+  # $1: Image (string) [Required]
+  info "Push image."
+
+  debug "Image: \"$1\""
+  is_empty "$1" && error "Docker image name is empty."
+
+  docker_push_image "$1"
+}
+
+# registry
+function command_exist_image {
+  # $1: Image (string) [Required]
+  # $2: Tag (string) [Required]
+  debug "Check if Docker image name and tag exist."
+
+  debug "Image: \"$1\""
+  debug "Tag: \"$2\""
+  is_empty "$1" && error "Docker image name is empty."
+  is_empty "$2" && error "Tag is empty."
+
+  if exist_image_tag_gitlab "$1" "$2"; then
+    info "Docker image already exist."
+  else
+    info "Docker image does not exist."
+  fi
+}
+
+function command_remove_image {
+  # $1: Image name (string) [Required]
+  # $2: Tag (string) [Required]
+  info "Remove image from gitlab container registry."
+
+  debug "Image name: \"$1\""
+  debug "Tag: \"$2\""
+  is_empty "$1" && error "No Docker image name specified."
+  is_empty "$2" && error "No tag specified."
+
+  remove_registry_image_gitlab "$1" "$2"
+}
+
+# Kube
+function command_kube_image {
+  # $1: file set as file path (string) [Required]
+  # $2: container name (string) [Required]
+  # $3: container image (string) [Required]
+  info "Set container image."
+
+  debug "File: \"$1\""
+  debug "Container name: \"$2\""
+  debug "Container image: \"$3\""
+  is_empty "$1" && error "No deployment file specified."
+  is_empty "$2" && error "No container name specified."
+  is_empty "$3" && error "No container image specified."
+
+  kube_set_image "$1" "$2" "$3"
+}
+
+function command_kube_apply {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Applying to kube."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kube_apply "$1" "$2"
+}
+
+function command_kube_delete {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Remove from kube."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kube_delete "$1" "$2"
+}
+
+# Version
+function command_normalize_version {
+  debug "Get version."
+
+  normalize_version "$1"
+}
+
+function command_validate_version {
+  info "Validate version."
+
+  check_version_scheme "$1" \
+    || error "Version \"$1\" does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'.${GUIDE_TEXT}"
+}
+
+# Git
+function command_add_git_tag {
+  # $1: tag (string) [Required]
+  info "Set git tag."
+
+  debug "Tag: $1"
+  is_empty "$1" && error "Tag is empty."
+
+  add_git_tag_gitlab "$1" "$(get_git_commit_sha)"
+}
+
+
+# Handle options arguments
+function command_docker {
+  case $1 in
+    login) shift; command_login "$@";;
+    create) shift; command_create_image "$@";;
+    push) shift; command_push_image "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+function command_registry {
+  case $1 in
+    exist) shift; command_exist_image "$@";;
+    remove) shift; command_remove_image "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+function command_kube {
+  case $1 in
+    image) shift; command_kube_image "$@";;
+    apply) shift; command_kube_apply "$@";;
+    delete) shift; command_kube_delete "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+function command_version {
+  case $1 in
+    normalize) shift; command_normalize_version "$@";;
+    validate) shift; command_validate_version "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+function command_git {
+  case $1 in
+    tag) shift; command_add_git_tag "$@";;
+    *) echo "Unknown command: $1"; unknown_help;;
+  esac
+}
+
+for arg in "$@"; do
+  shift
+  # shellcheck disable=SC2034
+  case $arg in
+    --help|-h) usage_help;;
+    -v|--debug) DEBUG=1;;
+    (*) set -- "$@" "$arg";;
+  esac
+done
+
+# Handle command arguments
+[ "$#" == 0 ] && echo "No command found:" && unknown_help
+
+case $1 in
+  docker) shift; command_docker "$@";;
+  registry) shift; command_registry "$@";;
+  kube) shift; command_kube "$@";;
+  git) shift; command_git "$@";;
+  version) shift; command_version "$@";;
+  *) echo "Unknown command: $1"; unknown_help;;
+esac

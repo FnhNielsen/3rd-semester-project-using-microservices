@@ -1,164 +1,278 @@
 ### Default ###
 stages:
   - build
+  - deploy
   - test
-  - deliver
-  - finish
 
-image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:0.0.1
+variables:
+  CI_CD_PRODUCTION_BRANCH: main
+  CI_CD_DEVELOPMENT_BRANCH: dev
+  CI_CD_RELEASE_BRANCH: release
+  CI_CD_HOTFIX_BRANCH: hotfix
+  CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
+  CI_CD_TEST_IMAGE_GROUP: test-image
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.7
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.10
+  CI_CD_TOOL_DEBUG: "true"
+  CI_CD_TAG: $CI_PIPELINE_ID
+  CI_CD_KUBE_CONFIG: ""
+  CI_CD_TEST_IMAGE_PRE: "test-image/"
+  CI_CD_PRODUCTION_IMAGE_PRE: ""
+  CI_CD_PRE_IMAGE_NAME: $CI_CD_TEST_IMAGE_PRE
+  # All variables below come from Ahmad
+  # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: /certs
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: $DOCKER_TLS_CERTDIR/client
+
+# Default
+workflow:
+  rules:
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      variables:
+        CI_CD_KUBE_CONFIG: "$CI_PROJECT_DIR.tmp/CI_CD_STAGING_KUBECONFIG"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+      variables:
+        CI_CD_KUBE_CONFIG: "$CI_PROJECT_DIR.tmp/CI_CD_PRODUCTION_KUBECONFIG"
+        CI_CD_TEST_IMAGE_PRE: ""
+        CI_CD_PRE_IMAGE_NAME: $CI_CD_PRODUCTION_IMAGE_PRE
+
+default:
+  image: $CI_CD_BASE_IMAGE
+  artifacts:
+    name: job-${CI_JOB_NAME}-failed-commit-${CI_COMMIT_SHORT_SHA}
+    paths:
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
+    exclude:
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/.git
+    when: on_failure
+    expire_in: 8 hrs
 
 ### Rules ###
-.default:
+# Trigger rules
+.merge_request_production:
+  allow_failure: false
   rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-#      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
-      when: on_success
-
-.merge_request_production_branch:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .merge_production:
+  allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_BUILD_REF_NAME == $CI_CD_PRODUCTION_BRANCH'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
-.always:
+.except_merge_production:
+  allow_failure: false
   rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-#      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
+      when: on_success
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
+      when: on_success
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
+      when: on_success
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
+      when: on_success
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+
+.except_development:
+  allow_failure: false
+  rules:
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
+      when: on_success
+
+.always_merge_request_production:
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
-.always_except_production:
+.always_except_merge_production:
+  allow_failure: false
   rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-#      when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
+    # development
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
+    # release
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/
+      when: always
+    # hotfix
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/
+      when: always
+    # production
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
-.on_failure:
-  rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-#      when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_DEVELOPMENT_BRANCH'
-      when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_RELEASE_BRANCH/'
-      when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /^$CI_CD_HOTFIX_BRANCH/'
-      when: on_failure
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH'
-      when: on_failure
-
+# Job rules
 .build:
   stage: build
-  extends: .default
-
-.build_production:
-  stage: build
-  extends: .merge_request_production_branch
+  allow_failure: false
 
 .unit:
   stage: test
-  extends: .default
+  extends:
+    - .except_merge_production
 
 .acceptance:
   stage: test
-  extends: .merge_request_production_branch
+  extends:
+    - .merge_request_production
 
 .integration:
   stage: test
-  extends: .merge_request_production_branch
+  extends:
+    - .merge_request_production
 
 .performance:
   stage: test
-  extends: .merge_request_production_branch
+  extends:
+    - .merge_request_production
 
-.deliver:
-  stage: deliver
-  extends: .merge_production
+.deploy:
+  stage: deploy
+  extends:
+    - .except_development
 
-### Methods ¤¤¤
-.push_image:
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  services:
-    - docker:dind
-  before_script:
-    - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
-    - if [ ! -z "${CI_CD_DOCKER_FILE_PATH}" ]; then cd ${CI_CD_DOCKER_FILE_PATH}; fi
-  script:
-    - docker build -t "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" -f "${CI_CD_DOCKER_FILE}" .
-  after_script:
-    - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
+.cleanup_test_image:
+  stage: .post
+  extends:
+    - .always_except_merge_production
+  allow_failure: true
 
-.tag_production_image:
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  services:
-    - docker:dind
-  before_script:
-    - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
-  script:
-    - apk add grep
-    - CI_CD_VERSION_NUMBER=`echo ${CI_COMMIT_DESCRIPTION} | grep -o '^[0-9.]\+'`
-    - docker pull "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
-    - docker tag "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
-    - docker push "${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:${CI_CD_VERSION_NUMBER}"
-
-
-.remove_image:
-  # Docker registry v2: https://gitlab.com/gitlab-org/gitlab-foss/-/issues/40096
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  services:
-    - docker:dind
-  before_script:
-    - echo ${CI_REGISTRY_PASSWORD} | docker login -u "${CI_REGISTRY_USER}" --password-stdin ${CI_REGISTRY}
-  script:
-    - curl -u "${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}" "https://gitlab.com/jwt/auth?account=${CI_REGISTRY_USER}&scope=repository:${CI_REGISTRY_IMAGE}/${CI_CD_IMAGE_NAME}:delete&service=container_registry"
-    - reg -d -r ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} rm "${CI_PROJECT_PATH}/${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
-
-.check_for_tag:
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  script:
-    - apk add jq
-    - 'if [[ ! ${CI_MERGE_REQUEST_TITLE} =~ [0-9]+\.[0-9]+\.[0-9]+ ]] && [ "${CI_MERGE_REQUEST_TITLE}" != "mockup" ]; then echo "ERROR: Wrong version number format. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
-    - 'IMAGE_ID=$(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/" | jq ".[] | select(.name == \"${CI_CD_IMAGE_NAME}\") | .id")'
-    - if [ -z "${IMAGE_ID}" ]; then exit 0; fi
-    - 'if [ $(curl --header "PRIVATE-TOKEN: ${PROJECT_TOKEN}" "https://gitlab.sdu.dk/api/v4/projects/${CI_PROJECT_ID}/registry/repositories/${IMAGE_ID}/tags" | jq ". | map(.name==\"${CI_MERGE_REQUEST_TITLE}\") | any") == "true" ]; then echo "ERROR: Version number already exist. - See https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/wikis/Guide" ; exit 1; fi'
-
+### Methods ###
 .artifact:
   artifacts:
-    expose_as: "Artifact"
-    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
+    name: job-${CI_JOB_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
-      - "/builds"
+      - ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
+    untracked: true
     expire_in: 3 hrs
 
-### Jobs ###
-finish:failure:
-  stage: finish
-  extends: .on_failure
-  script: echo "Create artifact"
-  artifacts:
-    expose_as: "Failure Artifact"
-    name: "branch-${CI_COMMIT_REF_NAME}-commit-${CI_COMMIT_SHORT_SHA}"
-    paths:
-      - "/builds"
-    expire_in: 8 hrs
+.build_image:
+  # Variables
+  #
+  # CI_CD_IMAGE_NAME: (string) [Required]
+  # CI_CD_FILE_NAME: (string) [Optional]
+  #   Default: Dockerfile
+  # CI_CD_PATH: (string) [Optional]
+  #   Default: .
+  #
+  image: $CI_CD_DOCKER_IMAGE
+  services:
+    - docker:dind
+  variables:
+    CI_CD_FILE_NAME: Dockerfile
+    CI_CD_PATH: .
+  before_script:
+    - certs_check
+  script:
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
+        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+      fi
+    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
+      [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
+    - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - ci_cd_tool docker create "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_CD_FILE_NAME}" "${CI_CD_PATH}"
+    - ci_cd_tool docker push "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
+
+.remove_test_image_if_exist:
+  # Variable
+  #
+  # CI_CD_IMAGE_NAME: (string) [Required]
+  #
+  image: $CI_CD_DOCKER_IMAGE
+  services:
+    - docker:dind
+  before_script:
+    - certs_check
+  script:
+    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}")
+      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 0
+    - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - ci_cd_tool registry remove "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
+
+.rollout_status:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
+    image: $CI_CD_KUBE_IMAGE
+    timeout: 2 minutes
+    script:
+      - for deployment_name in ${CI_CD_DEPLOYMENT_NAMES}; do kubectl rollout status deployment ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
+
+.kube:
+  # Variables
+  #
+  # CI_CD_KUBE_FILE: (string) [Required]
+  # CI_CD_CONTAINER_IMAGES: (json) [Optional]
+  #   E.g.
+  #     [
+  #       {"container": "t12-api", "image": "api"},
+  #       {"container": "t12-database", "image": "database"}
+  #     ]
+  #
+  image: $CI_CD_KUBE_IMAGE
+  variables:
+    CI_CD_CONTAINER_IMAGES: "[]"
+  script:
+    - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
+        for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
+        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+
+        ci_cd_tool git tag ${CI_CD_TAG};
+      fi
+    - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
+        _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
+        ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
+      done
+    - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
+
+### Static Jobs ###
+test:check_request_title:
+  # NOTE: Implement check new version is newer that the old version by using git tag from production branch
+  stage: test
+  extends:
+    - .merge_request_production
+  needs: []
+  script:
+    - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
+
+setup:state:
+  stage: .pre
+  extends:
+    - .merge_request_production
+  needs: []
+  script:
+    - echo "init_state"
+
+cleanup:state:
+  allow_failure: true
+  stage: .post
+  extends:
+    - .always_merge_request_production
+  script:
+    - echo "takedown_state"

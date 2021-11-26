@@ -1,83 +1,166 @@
 ##############################
-########## Settings ##########
-##############################
-
-variables:
-  CI_CD_PRODUCTION_BRANCH: "main"
-  CI_CD_DEVELOPMENT_BRANCH: "dev"
-  CI_CD_RELEASE_BRANCH: "release"
-  CI_CD_HOTFIX_BRANCH: "hotfix"
-  CI_CD_STATIC_IMAGE_NAME: "test_image"
-
-##############################
 ######## DON'T TOUCH #########
 ##############################
 
 include:
-  - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: dev
-    file: 'base_pipeline.yml'
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v2.0.2
+    file: base_pipeline.yml
 
 ##############################
-############ JOBS ############
+############ Jobs ############
 ##############################
-
-build:check_for_tag:
-  extends:
-    - .build_production
-    - .check_for_tag
-  variables:
-    CI_CD_IMAGE_NAME: api
-
+### Build ###
 build:compile:
-  needs:
-    - job: build:check_for_tag
-      optional: true
   extends:
     - .build
     - .artifact
+  needs: []
   script:
     - echo "compiling"
     - echo "compiling"
 
-build:image:
+build:api_image:
   extends:
     - .build
-    - .push_image
+    - .build_image
   needs:
     - build:compile
   variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: api
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+    CI_CD_PATH: api
 
-# IF another image(sql), then add:
-#build:image:
-#  extends:
-#    - .build
-#    - .push_image
-#  needs:
-#    - build:compile
-#  variables:
-#    CI_CD_IMAGE_NAME: sql
-#    CI_CD_DOCKER_FILE: Dockerfile
-#    CI_CD_DOCKER_FILE_PATH: sql
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+build:database_image:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: database
+    CI_CD_PATH: database
 
-test:unit:
-  extends: .unit
+### Deploy ###
+deploy:kube_common:
+  extends:
+    - .deploy
+    - .kube
   needs:
-    - build:image
+    - job: setup:state
+      optional: true
+    - build:api_image
+    - build:database_image
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/common.yaml
+
+deploy:kube_database:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kube_common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/database.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-database", "image": "database"}]'
+
+deploy:kube_api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kube_common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/api.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
+
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_api
+    - deploy:kube_database
+  variables:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
+    CI_CD_DEPLOYMENT_NAMES: "t12-common t12-api t12-database"
+
+### Test ###
+test:unit_api:
+  extends: .unit
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}api:${CI_CD_TAG}
+  needs:
+    - job: build:api_image
+      optional: true
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
-    - printenv
+
+test:unit_database:
+  extends: .unit
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
+  needs:
+    - job: build:database_image
+      optional: true
+  script:
+    - echo "run unit test cmds or script"
+    - echo "run unit test cmds or script"
 
 test:acceptance:
   extends: .acceptance
   needs:
-    - test:unit
+    - test:unit_api
+    - test:unit_database
   script:
     - echo "run acceptance test cmds or script"
     - echo "run acceptance test cmds or script"
@@ -85,7 +168,8 @@ test:acceptance:
 test:integration:
   extends: .integration
   needs:
-    - test:acceptance
+    - deploy:kube_database
+    - deploy:kube_api
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
@@ -98,21 +182,25 @@ test:performance:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
 
-deliver:retag_image:
+### Post ###
+cleanup:api_image:
   extends:
-    - .deliver
-    - .tag_production_image
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
   variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_FILE: Dockerfile
-    CI_CD_DOCKER_FILE_PATH: api
-    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
-#finish:remove_image:
-#  stage: finish
-#  extends:
-#    - .always_except_production
-#    - .remove_image
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-#    CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
+cleanup:database_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: database

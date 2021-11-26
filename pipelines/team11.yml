@@ -1,11 +1,95 @@
-stages:
-  - build
+##############################
+########## Settings ##########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "main"'
-      when: on_success
+variables:
+  CI_CD_DEVELOPMENT_BRANCH: "devBranch"
+  CI_CD_TOOL_DEBUG: "true"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: v1.0.0
+    file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+#Build images
+build:api_image:
+  extends:
+    - .build
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_DOCKER_PATH: NodeJS
+
+build:database_image:
+  extends:
+    - .build
+    - .test_image
+  variables:
+    CI_CD_IMAGE_NAME: database
+    CI_CD_DOCKER_PATH: Cassandra
+
+#Run unit tests
+#test:unit:
+#  image: node:latest
+#  extends: .unit
+#  script:
+#    - cd ./NodeJS/app
+#    - npm i
+#    - npm test
+
+# test:acceptance:
+#   extends: .acceptance
+#   needs:
+#     - test:unit
+#   script:
+#     - echo "run acceptance test cmds or script"
+#     - echo "run acceptance test cmds or script"
+
+# test:integration:
+#   extends: .integration
+#   needs:
+#     - test:acceptance
+#   script:
+#     - echo "run integration test cmds or script"
+#     - echo "run integration test cmds or script"
+
+# test:performance:
+#   extends: .performance
+#   needs:
+#     - test:integration
+#   script:
+#     - echo "run performance test cmds or script"
+#     - echo "run performance test cmds or script"
+
+### Deliver ###
+deliver:production_api_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    #
+    CI_CD_IMAGE_NAME: api
+
+deliver:production_database_image:
+  extends:
+    - .deliver
+    - .production_image
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string)
+    #   Required
+    #
+    CI_CD_IMAGE_NAME: database

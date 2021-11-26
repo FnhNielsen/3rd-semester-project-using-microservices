@@ -1,11 +1,155 @@
-stages:
-  - build
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v2
+    file: base_pipeline.yml
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:0.0.1
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "main"'
-      when: on_success
+### Build ###
+build:aam:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: aam
+    CI_CD_DOCKER_PATH:  AAM_Service/api/
+
+build:ads:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: ads
+    CI_CD_DOCKER_PATH: Ads_Service/api/
+
+build:audience_targeting:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: audience_targeting
+    CI_CD_DOCKER_PATH: Audience_Targeting_Service/api/
+
+build:billing:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: billing
+    CI_CD_DOCKER_PATH: Billing_Service/api/
+
+build:client:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: client
+    CI_CD_DOCKER_PATH: AAM_Service/client/
+
+build:database:
+  extends:
+    - .build
+    - .build_image
+  variables:
+    CI_CD_IMAGE_NAME: billing
+    CI_CD_DOCKER_PATH: database/
+
+### Deliver ###
+deploy:kube_mongo:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: mongo_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database"}]'
+
+deploy:kube_aam:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: aam_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service"}]'
+
+deploy:kube_ads:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: ads_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads"}]'
+
+deploy:kube_audience_targeting:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: at_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at"}]'
+
+deploy:kube_client:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: client_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client"}]'
+        
+deploy:kube_billing:
+    extends:
+      - .deploy
+      - .kube
+    variables:
+        CI_CD_KUBE_FILE: billing_deployment.yml
+        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing"}]'
+
+deploy:status:
+  extends:
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_mongo
+    - deploy:kube_aam
+  variables:
+    CI_CD_DEPLOYMENT_NAMES: "t14-database t14-aam t14-at t14-client t14-billing t14-ads"
+
+### Post ###
+cleanup:aam_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: aam
+
+cleanup:ads_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: ads
+
+cleanup:audience_targeting_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: audience_targeting
+
+cleanup:billing_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: billing
+
+cleanup:database_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: database
+
+cleanup:client_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: client

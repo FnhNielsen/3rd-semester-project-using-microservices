@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# After 60 seconds the loop will exit
+timeout=60
+
+while [ ! -f "/certs/client/ca.pem" ]; do
+  if ((timeout % 10 == 0)); then
+    echo "Waiting for the file /certs/client/ca.pem to become available."
+  fi
+
+  if [ "$timeout" == 0 ]; then
+    echo "ERROR: Timeout while waiting for the file /certs/client/ca.pem."
+    exit 1
+  fi
+
+  sleep 1
+
+  # Decrease the timeout of one
+  ((timeout--))
+done
+echo "/certs/client/ca.pem is ready."
