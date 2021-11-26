@@ -61,7 +61,7 @@ deploy:subscriptionService:
     - .kube
   variables:
     CI_CD_KUBE_FILE: /manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]'
 
 ### Post ###
 cleanup:mailService:
