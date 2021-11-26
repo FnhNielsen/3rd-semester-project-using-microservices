@@ -3,14 +3,20 @@
 ##############################
 
 variables:
+  CI_CD_PRODUCTION_BRANCH: "main"
   CI_CD_DEVELOPMENT_BRANCH: "devBranch"
-  CI_CD_TOOL_DEBUG: "true
-
+  CI_CD_RELEASE_BRANCH: "release"
+  CI_CD_HOTFIX_BRANCH: "hotfix"
+  CI_CD_STATI_IMAGE_NAME: "test_image"
 
 ##############################
 ######## DON'T TOUCH #########
 ##############################
 
+include:
+  -project: 'semester-project-e2021/team-12/ci-cd'
+  ref: main
+  file: 'base_pipeline.yml'
 
 ##############################
 ############ JOBS ############
@@ -39,7 +45,7 @@ test:unit:
     - openjdk:17
   extends: .unit
   script:
-    - gradle test
+    -echo "this test should run"
 
 #Builds mailService iamge
 build:mailService_image:
@@ -88,26 +94,3 @@ deliver:retag_subscriptionService_image:
       - CI_CD_DOCKERFILE: Dockerfile 
       - CI_CD_DOCKERFILE_PATH: ''
       - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
-
-### Post ###
-cleanup:mailService_image:
-  extends:
-    - .delete_test_image
-    - .remove_test_image_if_exist
-  variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
-    CI_CD_IMAGE_NAME: mailService
-
-cleanup:subscriptionService_image:
-  extends:
-    - .delete_test_image
-    - .remove_test_image_if_exist
-  variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
-    CI_CD_IMAGE_NAME: subscriptionService
