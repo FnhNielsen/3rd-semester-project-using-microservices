@@ -93,8 +93,6 @@ deliver:retag_subscriptionService_image:
       - CI_CD_DOCKERFILE_PATH: ''
       - CI_CD_TAG: ${CI_CD_STATIC_IMAGE_NAME}
 
-
-
 ### Post ###
 cleanup:mailService_image:
   extends:
