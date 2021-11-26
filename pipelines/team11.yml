@@ -77,7 +77,7 @@ deploy:kube_api:
   needs:
     - build:api_image
   variables:
-    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
+    CI_CD_KUBE_FILE: node.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
 
 deploy:kube_database:
@@ -87,7 +87,7 @@ deploy:kube_database:
   needs:
     - build:database_image
   variables:
-    CI_CD_KUBE_FILE: Cassandra/deployment.yml
+    CI_CD_KUBE_FILE:  cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t11-cassandra", "image": "database"}]'
 
 ### Post ###
