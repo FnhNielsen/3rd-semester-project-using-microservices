@@ -39,7 +39,7 @@ build:visualization:
   needs: []
   variables:
     CI_CD_IMAGE_NAME: visualization
-    CI_CD_PATH: Docker/kibana_visualization
+    CI_CD_PATH: Docker/visualization
 
 build:home:
   extends:
@@ -48,7 +48,7 @@ build:home:
   needs: []
   variables:
     CI_CD_IMAGE_NAME: home
-    CI_CD_PATH: Docker/home
+    CI_CD_PATH: Docker/alt/home
 
 ### Deploy ###
 deploy:elasticsearch_statefulset:
