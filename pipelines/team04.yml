@@ -97,6 +97,31 @@ deliver:retag_subscriptionService_image:
 
 
 
+### Post ###
+cleanup:mailService_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: mailService
+
+cleanup:subscriptionService_image:
+  extends:
+    - .delete_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: subscriptionService
+
+
+
 stages:
   - build
 
