@@ -14,6 +14,15 @@ variables:
 ############ Jobs ############
 ##############################
 ### Build ###
+build:data_pull:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: data_pull
+    CI_CD_PATH: Docker/Data_pull
+
 build:fluent:
   extends:
     - .build
@@ -66,7 +75,7 @@ deploy:mongo:
     - .deploy
     - .kube
   needs:
-    - deploy:elasticsearch_statefulset
+    - job: setup:state
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
 
@@ -75,16 +84,29 @@ deploy:kibana:
     - .deploy
     - .kube
   needs:
+    - deploy:elasticsearch_statefulset
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
+
+deploy:data_pull:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/data-puller.yml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-data-puller", "image": "data_pull"}]'
 
 deploy:fluentd_config:
   extends:
     - .deploy
     - .kube
   needs:
-    - deploy:kibana
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
 
@@ -95,6 +117,8 @@ deploy:fluentd:
   needs:
     - build:fluent
     - deploy:fluentd_config
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
@@ -105,7 +129,8 @@ deploy:api:
     - .kube
   needs:
     - build:api
-    - deploy:fluentd
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/api.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-api", "image": "api"}]'
@@ -116,7 +141,8 @@ deploy:visualisation:
     - .kube
   needs:
     - build:visualization
-    - deploy:api
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/visualization.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-visualization", "image": "visualization"}]'
@@ -127,7 +153,8 @@ deploy:home:
     - .kube
   needs:
     - build:home
-    - deploy:visualisation
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/home.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t05-home", "image": "home"}]'
@@ -141,13 +168,14 @@ deploy:status:
   needs:
     - deploy:home
   variables:
-    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-kibana"},
+    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-data-puller"},
+      {"type": "deployment", "name": "t05-kibana"},
      {"type": "deployment", "name": "t05-fluentd"},
      {"type": "deployment", "name": "t05-api"},
      {"type": "deployment", "name": "t05-visualization"},
      {"type": "deployment", "name": "t05-home"}]'
 
-deploy:describe:
+deploy:describe_on_failure:
   extends:
     - .deploy
     - .rollout_fail
