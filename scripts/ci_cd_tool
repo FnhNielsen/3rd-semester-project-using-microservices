@@ -187,6 +187,34 @@ function command_kube_delete {
   kube_delete "$1" "$2"
 }
 
+function command_kube_describe {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Describe kube deploy."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kube_describe "$1" "$2"
+}
+
+function command_kube_status {
+  # $1: kind (string) [Required]
+  # $2: name (string) [Required]
+  # $3: config file set as file path (string) [Required]
+  # $4: timeout (string) [Optional]
+  debug "Kind: \"$1\""
+  debug "Name: \"$2\""
+  debug "Config file: \"$3\""
+  is_empty "$1" && error "No kind file specified."
+  is_empty "$2" && error "No name specified."
+  is_empty "$3" && error "No config file specified."
+
+  kube_status "$1" "$2" "$3" "$4"
+}
+
 # Version
 function command_normalize_version {
   debug "Get version."
@@ -236,6 +264,8 @@ function command_kube {
     image) shift; command_kube_image "$@";;
     apply) shift; command_kube_apply "$@";;
     delete) shift; command_kube_delete "$@";;
+    status) shift; command_kube_status "$@";;
+    describe) shift; command_kube_describe "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
