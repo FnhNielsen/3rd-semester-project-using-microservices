@@ -1,11 +1,77 @@
-stages:
-  - build
+##############################
+######## DON'T TOUCH #########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == main'
-      when: on_success
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v2.0.2
+    file: base_pipeline.yml
+
+##############################
+############ Jobs ############
+##############################
+
+
+build:server:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: server
+
+deploy:server:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kube_common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: ./team03.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "development", "image": "server"}]'
+
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:server
+  variables:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
+    CI_CD_DEPLOYMENT_NAMES: "development"
+
+cleanup:server_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: server
+
