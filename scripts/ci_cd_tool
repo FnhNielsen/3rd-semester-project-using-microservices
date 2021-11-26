@@ -144,18 +144,21 @@ function command_remove_image {
 # Kube
 function command_kube_image {
   # $1: file set as file path (string) [Required]
-  # $2: container name (string) [Required]
-  # $3: container image (string) [Required]
+  # $2: kind (string) [Required]
+  # $3: container name (string) [Required]
+  # $4: container image (string) [Required]
   info "Set container image."
 
   debug "File: \"$1\""
-  debug "Container name: \"$2\""
-  debug "Container image: \"$3\""
+  debug "Kind: \"$2\""
+  debug "Container name: \"$3\""
+  debug "Container image: \"$4\""
   is_empty "$1" && error "No deployment file specified."
-  is_empty "$2" && error "No container name specified."
-  is_empty "$3" && error "No container image specified."
+  is_empty "$2" && error "No kind specified."
+  is_empty "$3" && error "No container name specified."
+  is_empty "$4" && error "No container image specified."
 
-  kube_set_image "$1" "$2" "$3"
+  kube_set_image "$1" "$2" "$3" "$4"
 }
 
 function command_kube_apply {
