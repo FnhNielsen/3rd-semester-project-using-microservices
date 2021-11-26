@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: dev
+    ref: v2.0.2
     file: base_pipeline.yml
 
 ##############################
@@ -15,6 +15,7 @@ build:compile:
   extends:
     - .build
     - .artifact
+  needs: []
   script:
     - echo "compiling"
     - echo "compiling"
@@ -22,47 +23,135 @@ build:compile:
 build:api_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
   needs:
     - build:compile
   variables:
     # Variables
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
-    # CI_CD_DOCKER_PATH: (string)
-    #   Default: .
-    # CI_CD_FILE_NAME: (string)
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
     #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
     #
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_PATH: api
+    CI_CD_PATH: api
 
 build:database_image:
   extends:
     - .build
-    - .test_image
-  needs:
-    - build:compile
+    - .build_image
+  needs: []
   variables:
     # Variables
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
-    # CI_CD_DOCKER_PATH: (string)
-    #   Default: .
-    # CI_CD_FILE_NAME: (string)
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
     #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
     #
     CI_CD_IMAGE_NAME: database
-    CI_CD_DOCKER_PATH: database
+    CI_CD_PATH: database
 
-### Test ###
-test:unit:
-  extends: .unit
+### Deploy ###
+deploy:kube_common:
+  extends:
+    - .deploy
+    - .kube
   needs:
+    - job: setup:state
+      optional: true
     - build:api_image
     - build:database_image
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/common.yaml
+
+deploy:kube_database:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kube_common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/database.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-database", "image": "database"}]'
+
+deploy:kube_api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:kube_common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    #   E.g.
+    #     [
+    #       {"container": "t12-api", "image": "api"},
+    #       {"container": "t12-database", "image": "database"}
+    #     ]
+    #
+    CI_CD_KUBE_FILE: kube/api.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
+
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+    - deploy:kube_api
+    - deploy:kube_database
+  variables:
+    # Variable
+    #
+    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+    #   E.g.
+    #     t12-common t12-api t12-database
+    #
+    CI_CD_DEPLOYMENT_NAMES: "t12-common t12-api t12-database"
+
+### Test ###
+test:unit_api:
+  extends: .unit
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}api:${CI_CD_TAG}
+  needs:
+    - job: build:api_image
+      optional: true
+  script:
+    - echo "run unit test cmds or script"
+    - echo "run unit test cmds or script"
+
+test:unit_database:
+  extends: .unit
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
+  needs:
+    - job: build:database_image
+      optional: true
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
@@ -70,7 +159,8 @@ test:unit:
 test:acceptance:
   extends: .acceptance
   needs:
-    - test:unit
+    - test:unit_api
+    - test:unit_database
   script:
     - echo "run acceptance test cmds or script"
     - echo "run acceptance test cmds or script"
@@ -78,7 +168,8 @@ test:acceptance:
 test:integration:
   extends: .integration
   needs:
-    - test:acceptance
+    - deploy:kube_database
+    - deploy:kube_api
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
@@ -91,28 +182,25 @@ test:performance:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
 
-### Deliver ###
-deliver:production_api_image:
+### Post ###
+cleanup:api_image:
   extends:
-    - .deliver
-    - .production_image
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
   variables:
     # Variable
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
+    # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: api
 
-deliver:production_database_image:
+cleanup:database_image:
   extends:
-    - .deliver
-    - .production_image
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
   variables:
     # Variable
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
+    # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: database
-
