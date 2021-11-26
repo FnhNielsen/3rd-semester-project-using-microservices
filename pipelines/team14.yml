@@ -10,7 +10,7 @@ build:aam:
     - .build_image
   variables:
     CI_CD_IMAGE_NAME: aam
-    CI_CD_DOCKER_PATH:  AAM_Service/api/
+    CI_CD_PATH:  AAM_Service/api/
 
 build:ads:
   extends:
