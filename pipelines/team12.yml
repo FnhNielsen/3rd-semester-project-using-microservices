@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v2.0.1
+    ref: v2.0.2
     file: base_pipeline.yml
 
 ##############################
@@ -133,7 +133,7 @@ deploy:status:
     #   E.g.
     #     t12-common t12-api t12-database
     #
-    CI_CD_DEPLOYMENT_NAMES: "t12-api t12-database"
+    CI_CD_DEPLOYMENT_NAMES: "t12-common t12-api t12-database"
 
 ### Test ###
 test:unit_api:
@@ -185,7 +185,7 @@ test:performance:
 ### Post ###
 cleanup:api_image:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     # Variable
@@ -196,7 +196,7 @@ cleanup:api_image:
 
 cleanup:database_image:
   extends:
-    - .delete_test_image
+    - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
     # Variable
