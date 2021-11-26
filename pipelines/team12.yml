@@ -135,8 +135,7 @@ deploy:status:
     #     t12-common t12-api t12-database
     #
     CI_CD_CHECK_STATUS: '[ 
-        {"type": "deployment", "name": "t12-api"}, 
-        {"type": "ConfigMap", "name": "t12-config"},
+        {"type": "deployment", "name": "t12-api"},
         {"type": "persistentvolumeclaim", "name": "t12-mysql-pv-claim"},
         {"type": "deployment", "name": "t12-database"}]'
 
