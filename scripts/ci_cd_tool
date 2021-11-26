@@ -179,18 +179,23 @@ function command_kube_describe {
 }
 
 function command_kube_status {
-  # $1: kind (string) [Required]
-  # $2: name (string) [Required]
-  # $3: config file set as file path (string) [Required]
-  # $4: timeout (string) [Optional]
-  debug "Kind: \"$1\""
-  debug "Name: \"$2\""
-  debug "Config file: \"$3\""
-  is_empty "$1" && error "No kind file specified."
-  is_empty "$2" && error "No name specified."
-  is_empty "$3" && error "No config file specified."
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  # $3: timeout (string) [Optional]
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  debug "Timeout: \"$3\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
 
-  kube_status "$1" "$2" "$3" "$4"
+  kinds="Deployment StatefulSet"
+  for kind in ${kinds}; do
+    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$2"); do
+      if [ "${name}" != "---" ]; then
+        kube_status "${kind,,}" "${name}" "$2" "$3"
+      fi
+    done
+  done
 }
 
 # Version
