@@ -1,6 +1,6 @@
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v2
+    ref: v3.0
     file: base_pipeline.yml
 
 ### Build ###
@@ -109,7 +109,23 @@ deploy:status:
     - deploy:kube_mongo
     - deploy:kube_aam
   variables:
-    CI_CD_DEPLOYMENT_NAMES: "t14-database t14-aam t14-at t14-client t14-billing t14-ads"
+    CI_CD_DEPLOYMENT_NAMES: '[
+        {"type": "deployment"}, {"name": "t14-database"},
+        {"type": "deployment"}, {"name": "t14-aam"},
+        {"type": "deployment"}, {"name": "t14-at"},
+        {"type": "deployment"}, {"name": "t14-client"},
+        {"type": "deployment"}, {"name": "t14-billing"},
+        {"type": "deployment"}, {"name": "t14-ads"}]'
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+    CI_CD_DEPLOYMENT_FILES: "mongo_deployment.yml aam_deployment.yml ads_deployment.yml at_deployment.yml client_deployment.yml billing_deployment.yml"
 
 ### Post ###
 cleanup:aam_image:

@@ -126,6 +126,7 @@ deploy:status:
   needs:
     - deploy:kube_api
     - deploy:kube_database
+  timeout: 5 minutes
   variables:
     # Variable
     #
@@ -134,9 +135,7 @@ deploy:status:
     #     t12-common t12-api t12-database
     #
     CI_CD_CHECK_STATUS: '[ 
-        {"type": "deployment", "name": "t12-api"}, 
-        {"type": "ConfigMap", "name": "t12-config"},
-        {"type": "persistentvolumeclaim", "name": "t12-mysql-pv-claim"},
+        {"type": "deployment", "name": "t12-api"},
         {"type": "deployment", "name": "t12-database"}]'
 
 deploy:failure:

@@ -240,7 +240,7 @@ default:
 .rollout_fail:
   # Variable
   #
-  # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
+  # CI_CD_DEPLOYMENT_FILES: (string) [Required]
   #   E.g.
   #     common.yaml api.yaml database.yaml
   #
