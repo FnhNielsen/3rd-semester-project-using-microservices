@@ -12,7 +12,7 @@ include:
 ############ Jobs ############
 ##############################
 variables:
-  CI_CD_DEVELOPMENT_BRANCH: "development"
+  #CI_CD_DEVELOPMENT_BRANCH: "development"
   CI_CD_TOOL_DEBUG: "true"
 
 
