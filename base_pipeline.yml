@@ -219,52 +219,30 @@ default:
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - ci_cd_tool registry remove "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
-.rollout_status:
-  # Variable
+.kube:
+  # Variables
   #
-  # CI_CD_CHECK_STATUS: (string) [Required]
+  # CI_CD_KUBE_FILE: (string) [Required]
+  # CI_CD_CHECK_STATUS: (json) [Required]
   #   E.g.
   #     [
   #       {"type": "deployment", "name": "t12-api"},
   #       {"type": "deployment", "name": "t12-database"},
   #     ]
-  #
-  image: $CI_CD_KUBE_IMAGE
-  timeout: 5 minutes
-  script:
-  - for row in $(echo "${CI_CD_CHECK_STATUS}" | jq -r ".[] | @base64"); do
-      _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
-      kubectl rollout status "$(_jq '.type')" "$(_jq '.name')" --kubeconfig=${CI_CD_KUBE_CONFIG};
-    done
-
-.rollout_fail:
-  # Variable
-  #
-  # CI_CD_DEPLOYMENT_FILES: (string) [Required]
-  #   E.g.
-  #     common.yaml api.yaml database.yaml
-  #
-  image: $CI_CD_KUBE_IMAGE
-  script:
-    - for deployment_file in ${CI_CD_DEPLOYMENT_FILES}; do
-        echo "==== describe ${deployment_file} ====";
-        kubectl describe -f ${deployment_file} --kubeconfig=${CI_CD_KUBE_CONFIG};
-      done
-
-.kube:
-  # Variables
-  #
-  # CI_CD_KUBE_FILE: (string) [Required]
   # CI_CD_CONTAINER_IMAGES: (json) [Optional]
   #   E.g.
   #     [
-  #       {"container": "t12-api", "image": "api"},
-  #       {"container": "t12-database", "image": "database"}
+  #       {"type": "deployment", "container": "t12-api", "image": "api"},
+  #       {"type": "deployment", "container": "t12-database", "image": "database"}
   #     ]
+  # CI_CD_TIMEOUT: (string) [Optional]
+  #   Default: .
+  #   E.g. 5m or 10s ect..
   #
   image: $CI_CD_KUBE_IMAGE
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
+    CI_CD_TIMEOUT: "3m"
   script:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
@@ -274,9 +252,16 @@ default:
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
-        ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
+        ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.type')" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
       done
     - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
+    - FAILURE_STATUS=0;
+      for row in $(echo "${CI_CD_CHECK_STATUS}" | jq -r ".[] | @base64"); do
+        _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
+        ci_cd_tool kube status "$(_jq '.type')" "$(_jq '.name')" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}" || FAILURE_STATUS=1;
+      done;
+      ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
+      [ "${FAILURE_STATUS}" == 1 ] && exit 1;
 
 ### Static Jobs ###
 test:check_request_title:
