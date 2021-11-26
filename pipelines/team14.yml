@@ -109,13 +109,13 @@ deploy:status:
     - deploy:kube_mongo
     - deploy:kube_aam
   variables:
-    CI_CD_DEPLOYMENT_NAMES: '[
-        {"type": "deployment"}, {"name": "t14-database"},
-        {"type": "deployment"}, {"name": "t14-aam"},
-        {"type": "deployment"}, {"name": "t14-at"},
-        {"type": "deployment"}, {"name": "t14-client"},
-        {"type": "deployment"}, {"name": "t14-billing"},
-        {"type": "deployment"}, {"name": "t14-ads"}]'
+    CI_CD_CHECK_STATUS: '[
+        {"type": "deployment", "name": "t14-database"},
+        {"type": "deployment", "name": "t14-aam"},
+        {"type": "deployment", "name": "t14-at"},
+        {"type": "deployment", "name": "t14-client"},
+        {"type": "deployment", "name": "t14-billing"},
+        {"type": "deployment", "name": "t14-ads"}]'
 
 deploy:failure:
   extends:
