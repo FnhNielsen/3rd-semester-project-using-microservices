@@ -64,25 +64,25 @@ deploy:subscriptionService:
     CI_CD_CONTAINER_IMAGES: '[{"container": "", "image": ""}]'
 
 ### Post ###
-cleanup:mailService:
-  extends:
-    - .cleanup_test_image
-    - .remove_test_image_if_exist
-  variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
-    CI_CD_IMAGE_NAME: mailService
+# cleanup:mailService:
+#   extends:
+#     - .cleanup_test_image
+#     - .remove_test_image_if_exist
+#   variables:
+#     # Variables
+#     #
+#     # CI_CD_IMAGE_NAME: (string) [Required]
+#     #
+#     CI_CD_IMAGE_NAME: mailService
 
-cleanup:subscriptionService:
-  extends:
-    - .cleanup_test_image
-    - .remove_test_image_if_exist
-  variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
-    CI_CD_IMAGE_NAME: subscriptionService
+# cleanup:subscriptionService:
+#   extends:
+#     - .cleanup_test_image
+#     - .remove_test_image_if_exist
+#   variables:
+#     # Variables
+#     #
+#     # CI_CD_IMAGE_NAME: (string) [Required]
+#     #
+#     CI_CD_IMAGE_NAME: subscriptionService
 
