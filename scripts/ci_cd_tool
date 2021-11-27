@@ -67,15 +67,23 @@ function command_create_image {
   # $1: Image (string) [Required]
   # $2: Docker file name (string) [Optional]
   # $3: Build path (string) [Optional]
-  # $4: Labels (array) [Optional]
-  #     Eg: (--label "org.opencontainers.image.title=<a title>"
-  #          --label "org.opencontainers.image.title=url=<a url>")
+  # $4: Labels (json) [Optional]
+  #     Eg: ["org.opencontainers.image.title=<a title>", "org.opencontainers.image.title=url=<a url>"]
   info "Build image."
 
   debug "Image: \"$1\""
   is_empty "$1" && error "Docker image name is empty."
 
-  docker_build_image "$1" "$2" "$3" "$4"
+  if [ -n "$4" ]; then
+    labels=$(echo "$4" | jq -r ".[] | @sh")
+    declare -a labels="($labels)"
+    labels=( "${arr[@]/#/--label }" )
+
+    docker_build_image "$1" "$2" "$3" "${labels[@]}"
+  else
+    docker_build_image "$1" "$2" "$3"
+  fi
+
 }
 
 function command_push_image {
