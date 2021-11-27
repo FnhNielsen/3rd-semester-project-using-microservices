@@ -126,7 +126,7 @@ deploy:status:
       - deploy:kube_ads
       - deploy:kube_aam
       - deploy:kube_billing
-      - deploy:client
+      - deploy:kube_client
   variables:
     CI_CD_CHECK_STATUS: '[
         {"type": "deployment", "name": "t14-database"},
