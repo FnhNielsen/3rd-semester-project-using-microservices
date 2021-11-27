@@ -195,10 +195,13 @@ default:
   script:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
-        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+        CI_CD_TAG=$(ci_cd_tool version normalize "${version}");
       fi
     - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
-      [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
+      if [ "${result}" == "Docker image already exist." ]; then
+        echo ${result};
+        exit 1;
+      fi
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - ci_cd_tool docker create "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_CD_FILE_NAME}" "${CI_CD_PATH}"
     - ci_cd_tool docker push "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
@@ -214,8 +217,11 @@ default:
   before_script:
     - certs_check
   script:
-    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}")
-      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 0
+    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
+      if [ "${result}" == "Docker image does not exist." ]; then
+        echo ${result};
+        exit 0;
+      fi
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - ci_cd_tool registry remove "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
 
@@ -241,21 +247,24 @@ default:
   script:
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
-        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+        CI_CD_TAG=$(ci_cd_tool version normalize "${version}");
 
-        ci_cd_tool git tag ${CI_CD_TAG};
+        ci_cd_tool git tag "${CI_CD_TAG}";
       fi
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
         ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.type')" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
       done
+    - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
     - FAILURE_STATUS=0;
-    - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
-    - ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}";
-    - echo $?;
-    - if [ "${FAILURE_STATUS}" == "1" ]; then exit 1; fi
+      if ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}"; then
+        FAILURE_STATUS=1;
+      fi;
+      ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
+      if [ "${FAILURE_STATUS}" == "1" ]; then
+        exit 1;
+      fi
 
-#ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
 
 ### Static Jobs ###
 test:check_request_title:
