@@ -8,7 +8,7 @@ include:
     file: base_pipeline.yml
 
 variables:
-  CI_CD_TOOL_DEBUG: "false"
+  CI_CD_TOOL_DEBUG: "true"
 
 ##############################
 ############ Jobs ############
