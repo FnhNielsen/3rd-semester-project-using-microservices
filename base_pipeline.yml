@@ -59,7 +59,7 @@ default:
     expire_in: 8 hrs
 
 ### Rules ###
-# Trigger rules
+# Run rules
 .merge_request_production:
   allow_failure: false
   rules:
