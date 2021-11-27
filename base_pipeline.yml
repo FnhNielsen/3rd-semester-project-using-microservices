@@ -278,7 +278,6 @@ default:
     # 2. Print a description for log purposes
     - $(ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}");
       FAILURE_STATUS=$?;
-      echo ${FAILURE_STATUS};
       ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
       exit ${FAILURE_STATUS};
 
