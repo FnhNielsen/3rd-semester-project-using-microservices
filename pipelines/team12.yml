@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v4.0
     file: base_pipeline.yml
 
 ##############################
@@ -69,12 +69,15 @@ deploy:kube_common:
     # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
-    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"container": "t12-api", "image": "api"},
-    #       {"container": "t12-database", "image": "database"}
+    #       {"type": "deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "deployment", "container": "t12-database", "image": "database"}
     #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
     #
     CI_CD_KUBE_FILE: kube/common.yaml
 
@@ -88,15 +91,18 @@ deploy:kube_database:
     # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
-    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"container": "t12-api", "image": "api"},
-    #       {"container": "t12-database", "image": "database"}
+    #       {"type": "deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "deployment", "container": "t12-database", "image": "database"}
     #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
     #
     CI_CD_KUBE_FILE: kube/database.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-database", "image": "database"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t12-database", "image": "database"}]'
 
 deploy:kube_api:
   extends:
@@ -108,45 +114,18 @@ deploy:kube_api:
     # Variables
     #
     # CI_CD_KUBE_FILE: (string) [Required]
-    # CI_CD_CONTAINER_IMAGES: (json) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"container": "t12-api", "image": "api"},
-    #       {"container": "t12-database", "image": "database"}
+    #       {"type": "deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "deployment", "container": "t12-database", "image": "database"}
     #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
     #
     CI_CD_KUBE_FILE: kube/api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t12-api", "image": "api"}]'
-
-deploy:status:
-  extends:
-    - .deploy
-    - .rollout_status
-    - .merge_request_production
-  needs:
-    - deploy:kube_api
-    - deploy:kube_database
-  timeout: 5 minutes
-  variables:
-    # Variable
-    #
-    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
-    #   E.g.
-    #     t12-common t12-api t12-database
-    #
-    CI_CD_CHECK_STATUS: '[ 
-        {"type": "deployment", "name": "t12-api"},
-        {"type": "deployment", "name": "t12-database"}]'
-
-deploy:failure:
-  extends:
-    - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
-  needs:
-    - deploy:status
-  variables:
-    CI_CD_DEPLOYMENT_FILES: "kube/api.yaml kube/common.yaml kube/database.yaml"
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t12-api", "image": "api"}]'
 
 ### Test ###
 test:unit_api:
