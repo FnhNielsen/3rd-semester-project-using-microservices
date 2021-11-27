@@ -275,13 +275,16 @@ default:
     # Deploying to staging or production
     - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
     # 1. Get status if any pods are rolled out
-    # 3. Print a description for log purposes
+    # 2. Print a description for log purposes
     - FAILURE_STATUS=0;
       if ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}"; then
         FAILURE_STATUS=1;
+        echo "${FAILURE_STATUS}";
       fi;
+      echo ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
       ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
       if [ "${FAILURE_STATUS}" == "1" ]; then
+        echo "exit 1";
         exit 1;
       fi
 
