@@ -190,6 +190,8 @@ function command_kube_status {
   # $1: file; set as file path (string) [Required]
   # $2: config file; set as file path (string) [Required]
   # $3: timeout (string) [Optional]
+  info "Get kube deploy status."
+
   debug "File: \"$1\""
   debug "Config file: \"$2\""
   is_empty "$1" && error "No deploy file specified."
