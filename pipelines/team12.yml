@@ -66,8 +66,6 @@ deploy:kube_common:
   needs:
     - job: setup:state
       optional: true
-    - build:api_image
-    - build:database_image
   variables:
     # Variables
     #
@@ -89,6 +87,7 @@ deploy:kube_database:
     - .deploy
     - .kube
   needs:
+    - build:api_image
     - deploy:kube_common
   variables:
     # Variables
@@ -113,6 +112,7 @@ deploy:kube_api:
     - .kube
   needs:
     - deploy:kube_common
+    - build:database_image
   variables:
     # Variables
     #
