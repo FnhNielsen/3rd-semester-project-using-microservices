@@ -110,7 +110,6 @@ deploy:kube_client:
       - deploy:kube_audience_targeting
       - deploy:kube_ads
       - deploy:kube_aam
-      - deploy:kube_mongo
       - deploy:kube_billing
     variables:
         CI_CD_KUBE_FILE: client_deployment.yml
@@ -122,8 +121,12 @@ deploy:status:
     - .rollout_status
     - .merge_request_production
   needs:
-    - deploy:kube_mongo
-    - deploy:kube_aam
+      - deploy:kube_mongo
+      - deploy:kube_audience_targeting
+      - deploy:kube_ads
+      - deploy:kube_aam
+      - deploy:kube_billing
+      - deploy:client
   variables:
     CI_CD_CHECK_STATUS: '[
         {"type": "deployment", "name": "t14-database"},
