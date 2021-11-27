@@ -276,11 +276,17 @@ default:
     - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
     # 1. Get status if any pods are rolled out
     # 2. Print a description for log purposes
-    - $(ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}");
-      FAILURE_STATUS=$?;
-      ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
-      exit ${FAILURE_STATUS};
-
+    - kinds="Deployment StatefulSet";
+      for kind in ${kinds}; do
+        echo "kind: \"${kind}\"";
+        for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "${CI_CD_KUBE_FILE}"); do
+          if [ "${name}" != "---" ]; then
+            echo "name: \"${name}\"";
+            kubectl rollout status --kubeconfig="${CI_CD_KUBE_CONFIG}" --timeout="${CI_CD_TIMEOUT}" "${kind,,}/${name}";
+          fi;
+        done;
+      done;
+    - ci_cd_tool kube describe "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
 
 ### Static Jobs ###
 test:check_request_title:
