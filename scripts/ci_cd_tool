@@ -190,6 +190,8 @@ function command_kube_status {
   # $1: file; set as file path (string) [Required]
   # $2: config file; set as file path (string) [Required]
   # $3: timeout (string) [Optional]
+  info "Get kube deploy status."
+
   debug "File: \"$1\""
   debug "Config file: \"$2\""
   is_empty "$1" && error "No deploy file specified."
@@ -197,15 +199,14 @@ function command_kube_status {
 
   kinds="Deployment StatefulSet"
   for kind in ${kinds}; do
-    debug "kind: \"$kind\""
+    debug "kind: \"${kind}\""
     for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
       if [ "${name}" != "---" ]; then
-        debug "name: \"$name\""
-        kube_status "${kind,,}" "${name}" "$2" "$3"
+        debug "name: \"${name}\""
+        kube_status "${kind,,}/${name}" "$2" "$3"
       fi
     done
   done
-  exit 0
 }
 
 # Version

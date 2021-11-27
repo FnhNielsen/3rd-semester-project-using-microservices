@@ -43,16 +43,14 @@ function kube_describe {
 }
 
 function kube_status {
-  # $1: kind (string) [Required]
-  # $2: name (string) [Required]
-  # $3: config file set as file path (string) [Required]
-  # $4: timeout (string) [Optional]
-  [ -z "$4" ] && timeout=3m || timeout=$4
+  # $1: "kind/name" (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  # $3: timeout (string) [Optional]
+  [ -z "$3" ] && timeout="3m" || timeout=$3
 
-  debug "Kind: \"$1\""
-  debug "Name: \"$2\""
-  debug "Config file: \"$3\""
-  debug "Timeout: \"$4\""
+  debug "Status of: \"$1\""
+  debug "Config file: \"$2\""
+  debug "Timeout: \"${timeout}\""
 
-  kubectl rollout status --kubeconfig="$3" --timeout="${timeout}" "$1" "$2" || error "Failed to get status."
+  kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error "Failed to get status."
 }
