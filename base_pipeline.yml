@@ -11,9 +11,9 @@ variables:
   CI_CD_HOTFIX_BRANCH: hotfix
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
   CI_CD_TEST_IMAGE_GROUP: test-image
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:3.0.2
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:3.0.2
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:2.0.2
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:3.0.3
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:3.0.3
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:2.0.3
   CI_CD_TOOL_DEBUG: "true"
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
