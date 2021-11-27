@@ -187,8 +187,8 @@ function command_kube_describe {
 }
 
 function command_kube_status {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   # $3: timeout (string) [Optional]
   debug "File: \"$1\""
   debug "Config file: \"$2\""
@@ -198,13 +198,14 @@ function command_kube_status {
   kinds="Deployment StatefulSet"
   for kind in ${kinds}; do
     debug "kind: \"$kind\""
-    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$2"); do
+    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
       if [ "${name}" != "---" ]; then
         debug "name: \"$name\""
         kube_status "${kind,,}" "${name}" "$2" "$3"
       fi
     done
   done
+  exit 0
 }
 
 # Version
