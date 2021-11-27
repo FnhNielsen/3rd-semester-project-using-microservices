@@ -102,6 +102,7 @@ deploy:database:
     #
     CI_CD_KUBE_FILE: kube/database.yaml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t12-database", "image": "database"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:api:
   extends:
