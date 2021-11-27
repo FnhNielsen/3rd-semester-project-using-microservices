@@ -7,6 +7,9 @@ include:
     ref: v4.0
     file: base_pipeline.yml
 
+variables:
+  CI_CD_TOOL_DEBUG: "false"
+
 ##############################
 ############ Jobs ############
 ##############################
