@@ -87,7 +87,7 @@ deploy:database:
     - .deploy
     - .kube
   needs:
-    - build:api
+    - build:database
     - deploy:common
   variables:
     # Variables
@@ -111,8 +111,8 @@ deploy:api:
     - .deploy
     - .kube
   needs:
+    - build:api
     - deploy:common
-    - build:database
   variables:
     # Variables
     #
