@@ -192,14 +192,15 @@ function command_kube_status {
   # $3: timeout (string) [Optional]
   debug "File: \"$1\""
   debug "Config file: \"$2\""
-  debug "Timeout: \"$3\""
   is_empty "$1" && error "No deploy file specified."
   is_empty "$2" && error "No config file specified."
 
   kinds="Deployment StatefulSet"
   for kind in ${kinds}; do
+    debug "kind: \"$kind\""
     for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$2"); do
       if [ "${name}" != "---" ]; then
+        debug "name: \"$name\""
         kube_status "${kind,,}" "${name}" "$2" "$3"
       fi
     done
