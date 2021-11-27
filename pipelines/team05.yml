@@ -69,6 +69,7 @@ deploy:elasticsearch_statefulset:
       optional: true
   variables:
     CI_CD_KUBE_FILE: kubernetes/elasticsearch_statefulset.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:mongo:
   extends:
@@ -78,6 +79,7 @@ deploy:mongo:
     - job: setup:state
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:kibana:
   extends:
@@ -88,6 +90,7 @@ deploy:kibana:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:data_pull:
   extends:
@@ -99,6 +102,7 @@ deploy:data_pull:
   variables:
     CI_CD_KUBE_FILE: kubernetes/data-puller.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-data-puller", "image": "data_pull"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:fluentd_config:
   extends:
@@ -109,6 +113,7 @@ deploy:fluentd_config:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:fluentd:
   extends:
@@ -120,6 +125,7 @@ deploy:fluentd:
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-fluentd", "image": "fluentd"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:api:
   extends:
@@ -132,6 +138,7 @@ deploy:api:
   variables:
     CI_CD_KUBE_FILE: kubernetes/api.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-api", "image": "api"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:visualisation:
   extends:
@@ -144,6 +151,7 @@ deploy:visualisation:
   variables:
     CI_CD_KUBE_FILE: kubernetes/visualization.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-visualization", "image": "visualization"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:home:
   extends:
@@ -156,6 +164,7 @@ deploy:home:
   variables:
     CI_CD_KUBE_FILE: kubernetes/home.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-home", "image": "home"}]'
+    CI_CD_TIMEOUT: 10m
 
 ### Test ###
 test:integration:
