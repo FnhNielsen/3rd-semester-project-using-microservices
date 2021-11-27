@@ -278,8 +278,10 @@ default:
     # 2. Print a description for log purposes
     - kinds="Deployment StatefulSet";
       for kind in ${kinds}; do
+        echo "kind: \"${kind}\"";
         for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "${CI_CD_KUBE_FILE}"); do
           if [ "${name}" != "---" ]; then
+            echo "name: \"${name}\"";
             kubectl rollout status --kubeconfig="${CI_CD_KUBE_CONFIG}" --timeout="${CI_CD_TIMEOUT}" "${kind,,}/${name}";
           fi;
         done;
