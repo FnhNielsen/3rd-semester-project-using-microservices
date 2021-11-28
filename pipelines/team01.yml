@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v4.0.0
+    ref: v4.0
     file: base_pipeline.yml
 
 ##############################
@@ -50,7 +50,7 @@ deploy:api:
 #     #     ]
 #     #
     CI_CD_KUBE_FILE: api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image", "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t1-api", "image", "api"}]'
 
 
 ### Test ###
