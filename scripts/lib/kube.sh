@@ -30,7 +30,7 @@ function kube_delete {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl apply --kubeconfig="$2" -f "$1" || error "Failed to delete."
+  kubectl delete --kubeconfig="$2" -f "$1" || error "Failed to delete."
 }
 
 function kube_describe {
