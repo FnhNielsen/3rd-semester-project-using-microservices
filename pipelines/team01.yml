@@ -16,7 +16,7 @@ build:api:
   extends:
     - .build
     - .build_image
-    - .except_development
+
   needs: []
   variables:
     # Variables
@@ -54,17 +54,17 @@ deploy:api:
 
 
 ### Test ###
-test:unit:
-  image: 
-    name: python:3.10-alpine3.14
-    entrypoint: ["/bin/sh"]
-  needs: []
-  extends: .unit
-  script:
-    - cd ${CI_PROJECT_DIR}/src/flask
-    - pip install -U flask
-    - export FLASK_APP=flaskTest.py
-    - flask test
+#test:unit:
+ # image: 
+  #  name: python:3.10-alpine3.14
+   # entrypoint: ["/bin/sh"]
+  #needs: []
+  #extends: .unit
+  #script:
+    #- cd ${CI_PROJECT_DIR}/src/flask
+    #- pip install -U flask
+    #- export FLASK_APP=${CI_PROJECT_DIR}/src/flask/flaskTest.py
+    #- flask test
 
 
 
@@ -73,7 +73,6 @@ cleanup:api:
   extends:
     - .cleanup_test_image
     - .remove_test_image_if_exist
-    - .always_merge_request_production
   variables:
     # Variable
     #
