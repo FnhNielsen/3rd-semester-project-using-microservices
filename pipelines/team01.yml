@@ -16,6 +16,7 @@ build:api:
   extends:
     - .build
     - .build_image
+    - .except_development
   needs: []
   variables:
     # Variables
@@ -57,10 +58,10 @@ test:unit:
   image: 
     name: python:3.10-alpine3.14
     entrypoint: ["/bin/sh"]
-
+  needs: []
   extends: .unit
   script:
-    - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/src/flask
+    - cd /${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/src/flask
     - pip install -U flask
     - flask test
 
@@ -71,6 +72,7 @@ cleanup:api:
   extends:
     - .cleanup_test_image
     - .remove_test_image_if_exist
+    - .always_merge_request_production
   variables:
     # Variable
     #
