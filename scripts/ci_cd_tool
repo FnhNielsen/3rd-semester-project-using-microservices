@@ -173,7 +173,7 @@ function command_kube_delete {
   kube_delete "$1" "$2"
 }
 
-function command_kube_describe {
+function command_kube_describe_deploy {
   # $1: file set as file path (string) [Required]
   # $2: config file set as file path (string) [Required]
   info "Describe kube deploy."
@@ -183,7 +183,29 @@ function command_kube_describe {
   is_empty "$1" && error "No deploy file specified."
   is_empty "$2" && error "No config file specified."
 
-  kube_describe "$1" "$2"
+  for kind in $(yq e ".kind" "$1"); do
+    if [ "${kind}" != "---" ]; then
+      debug "kind: \"${kind}\""
+
+      for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
+        if [ "${name}" != "---" ]; then
+          debug "name: \"${name}\""
+
+          echo "==== describe ${kind,,}/${name} ===="
+          kube_describe "${kind,,}/${name}" "$2"
+
+          if [ "${kind}" == "Deployment" ] \
+              || [ "${kind}" == "StatefulSet" ] \
+              || [ "${kind}" == "Job" ] \
+              || [ "${kind}" == "DaemonSet" ]
+          then
+            echo "==== ${kind,,}/${name} pod log ===="
+            kube_service_pods_log "${kind,,}/${name}" "$2"
+          fi
+        fi
+      done
+    fi
+  done
 }
 
 function command_kube_status {
@@ -259,7 +281,7 @@ function command_kube {
     apply) shift; command_kube_apply "$@";;
     delete) shift; command_kube_delete "$@";;
     status) shift; command_kube_status "$@";;
-    describe) shift; command_kube_describe "$@";;
+    outcome) shift; command_kube_describe_deploy "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
