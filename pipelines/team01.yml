@@ -55,7 +55,7 @@ deploy:api:
 ### Test ###
 test:unit:
   image: python:3.10-alpine3.14
-  entrypoint: [""]
+  entrypoint: ["/bin/sh", "-c"]
   extends: .unit
   script:
     - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/src/flask
