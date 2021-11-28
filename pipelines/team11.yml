@@ -71,7 +71,6 @@ deploy:db_service:
     - deploy:database
   variables:
     CI_CD_KUBE_FILE:  Cassandra/service.yml
-    CI_CD_CONTAINER_IMAGES:
 
 ### Post ###
 cleanup:api_image:
