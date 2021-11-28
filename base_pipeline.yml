@@ -11,10 +11,10 @@ variables:
   CI_CD_HOTFIX_BRANCH: hotfix
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
   CI_CD_TEST_IMAGE_GROUP: test-image
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:2.0.7
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:1.0.10
-  CI_CD_TOOL_DEBUG: "true"
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.0
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.0
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.0
+  CI_CD_TOOL_DEBUG: "false"
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
   CI_CD_TEST_IMAGE_PRE: "test-image/"
@@ -59,7 +59,7 @@ default:
     expire_in: 8 hrs
 
 ### Rules ###
-# Trigger rules
+# Run rules
 .merge_request_production:
   allow_failure: false
   rules:
@@ -168,6 +168,7 @@ default:
 
 ### Methods ###
 .artifact:
+  # Artifact method to use in jobs that create new files to be used in other jobs
   artifacts:
     name: job-${CI_JOB_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
@@ -191,16 +192,27 @@ default:
     CI_CD_FILE_NAME: Dockerfile
     CI_CD_PATH: .
   before_script:
+    # Sometimes the pipeline is faster than /certs/client/ca.pem becomes available.
+    # This cmd is used for waiting on /certs/client/ca.pem to become available,
+    # in order to prevent Docker failure when /certs/client/ca.pem is not available.
     - certs_check
   script:
+    # Get version and set CI_CD_TAG with version if the pipeline is deploying to production
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
-        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+        CI_CD_TAG=$(ci_cd_tool version normalize "${version}");
       fi
+    # Checks if the image is in the registry
     - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
-      [ "${result}" == "Docker image already exist." ] && echo ${result} && exit 1
+      if [ "${result}" == "Docker image already exist." ]; then
+        echo ${result};
+        exit 1;
+      fi
+    # Login to the docker registry
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    # Create docker image
     - ci_cd_tool docker create "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}" "${CI_CD_FILE_NAME}" "${CI_CD_PATH}"
+    # Push docker image to registry
     - ci_cd_tool docker push "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}:${CI_CD_TAG}"
 
 .remove_test_image_if_exist:
@@ -212,41 +224,21 @@ default:
   services:
     - docker:dind
   before_script:
+    # Sometimes the pipeline is faster than /certs/client/ca.pem becomes available.
+    # This cmd is used for waiting on /certs/client/ca.pem to become available,
+    # in order to prevent Docker failure when /certs/client/ca.pem is not available.
     - certs_check
   script:
-    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}")
-      [ "${result}" == "Docker image does not exist." ] && echo ${result} && exit 0
+    # Checks if the image is in the registry
+    - result=$(ci_cd_tool registry exist "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}");
+      if [ "${result}" == "Docker image does not exist." ]; then
+        echo ${result};
+        exit 0;
+      fi
+    # Login to the docker registry
     - ci_cd_tool docker login "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    # Remove image from registry
     - ci_cd_tool registry remove "${CI_CD_PRE_IMAGE_NAME}${CI_CD_IMAGE_NAME}" "${CI_CD_TAG}"
-
-.rollout_status:
-  # Variable
-  #
-  # CI_CD_CHECK_STATUS: (string) [Required]
-  #   E.g.
-  #     [
-  #       {"type": "deployment", "name": "t12-api"},
-  #       {"type": "deployment", "name": "t12-database"},
-  #     ]
-  #
-  image: $CI_CD_KUBE_IMAGE
-  timeout: 2 minutes
-  script:
-  - for row in $(echo "${CI_CD_CHECK_STATUS}" | jq -r ".[] | @base64"); do
-      _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
-      kubectl rollout status "$(_jq '.type')" "$(_jq '.name')" --kubeconfig=${CI_CD_KUBE_CONFIG};
-    done
-
-.rollout_fail:
-  # Variable
-  #
-  # CI_CD_DEPLOYMENT_FILES: (string) [Required]
-  #   E.g.
-  #     common.yaml api.yaml database.yaml
-  #
-  image: $CI_CD_KUBE_IMAGE
-  script:
-    - for deployment_name in ${CI_CD_DEPLOYMENT_FILES}; do kubectl describe -f ${deployment_name} --kubeconfig=${CI_CD_KUBE_CONFIG}; done
 
 .kube:
   # Variables
@@ -255,25 +247,40 @@ default:
   # CI_CD_CONTAINER_IMAGES: (json) [Optional]
   #   E.g.
   #     [
-  #       {"container": "t12-api", "image": "api"},
-  #       {"container": "t12-database", "image": "database"}
+  #       {"type": "deployment", "container": "t12-api", "image": "api"},
+  #       {"type": "deployment", "container": "t12-database", "image": "database"}
   #     ]
+  # CI_CD_TIMEOUT: (string) [Optional]
+  #   Default: .
+  #   E.g. 5m or 10s ect..
   #
   image: $CI_CD_KUBE_IMAGE
   variables:
     CI_CD_CONTAINER_IMAGES: "[]"
+    CI_CD_CHECK_STATUS: "[]"
+    CI_CD_TIMEOUT: "3m"
   script:
+    # Get version and set CI_CD_TAG and add git tag with version if the pipeline is deploying to production
     - if [ "${CI_PIPELINE_SOURCE}" == "push" ] && [ "${CI_COMMIT_REF_NAME}" == "${CI_CD_PRODUCTION_BRANCH}" ]; then
         for version in ${CI_COMMIT_DESCRIPTION}; do break; done;
-        CI_CD_TAG=$(ci_cd_tool version normalize ${version});
+        CI_CD_TAG=$(ci_cd_tool version normalize "${version}");
 
-        ci_cd_tool git tag ${CI_CD_TAG};
+        ci_cd_tool git tag "${CI_CD_TAG}";
       fi
+    # Set docker image
     - for row in $(echo "${CI_CD_CONTAINER_IMAGES}" | jq -r ".[] | @base64"); do
         _jq () { echo "${row}" | base64 -d | jq -r "$1"; };
-        ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
+        ci_cd_tool kube image "${CI_CD_KUBE_FILE}" "$(_jq '.type')" "$(_jq '.container')" "${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}$(_jq '.image'):${CI_CD_TAG}";
       done
+    # Deploying to staging or production
     - ci_cd_tool kube apply "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}"
+    # 1. Get status if any pods are rolled out
+    # 2. Print a description for log purposes
+    - FAILURE_STATUS=0;
+      ci_cd_tool kube status "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIMEOUT}" || FAILURE_STATUS=$?;
+      ci_cd_tool kube outcome "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
+      exit ${FAILURE_STATUS};
+
 
 ### Static Jobs ###
 test:check_request_title:

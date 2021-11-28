@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v4.0
     file: base_pipeline.yml
 
 variables:
@@ -14,6 +14,15 @@ variables:
 ############ Jobs ############
 ##############################
 ### Build ###
+build:data_pull:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: data_pull
+    CI_CD_PATH: Docker/Data_pull
+
 build:fluent:
   extends:
     - .build
@@ -60,33 +69,51 @@ deploy:elasticsearch_statefulset:
       optional: true
   variables:
     CI_CD_KUBE_FILE: kubernetes/elasticsearch_statefulset.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:mongo:
   extends:
     - .deploy
     - .kube
   needs:
-    - deploy:elasticsearch_statefulset
+    - job: setup:state
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:kibana:
   extends:
     - .deploy
     - .kube
   needs:
+    - deploy:elasticsearch_statefulset
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
+    CI_CD_TIMEOUT: 10m
+
+deploy:data_pull:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/data-puller.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-data-puller", "image": "data_pull"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:fluentd_config:
   extends:
     - .deploy
     - .kube
   needs:
-    - deploy:kibana
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
+    CI_CD_TIMEOUT: 10m
 
 deploy:fluentd:
   extends:
@@ -97,7 +124,8 @@ deploy:fluentd:
     - deploy:fluentd_config
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-fluentd", "image": "fluentd"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-fluentd", "image": "fluentd"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:api:
   extends:
@@ -105,10 +133,12 @@ deploy:api:
     - .kube
   needs:
     - build:api
-    - deploy:fluentd
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/api.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-api", "image": "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-api", "image": "api"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:visualisation:
   extends:
@@ -116,10 +146,12 @@ deploy:visualisation:
     - .kube
   needs:
     - build:visualization
-    - deploy:api
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/visualization.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-visualization", "image": "visualization"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-visualization", "image": "visualization"}]'
+    CI_CD_TIMEOUT: 10m
 
 deploy:home:
   extends:
@@ -127,47 +159,23 @@ deploy:home:
     - .kube
   needs:
     - build:home
-    - deploy:visualisation
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/home.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t05-home", "image": "home"}]'
-
-deploy:status:
-  extends:
-    - .deploy
-    - .rollout_status
-    - .merge_request_production
-  needs:
-    - deploy:home
-  variables:
-    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t05-kibana"},
-     {"type": "deployment", "name": "t05-fluentd"},
-     {"type": "deployment", "name": "t05-api"},
-     {"type": "deployment", "name": "t05-visualization"},
-     {"type": "deployment", "name": "t05-home"}]'
-
-deploy:describe:
-  extends:
-    - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
-  needs:
-    - deploy:status
-  variables:
-    CI_CD_DEPLOYMENT_FILES: "kubernetes/elasticsearch_statefulset.yml
-      kubernetes/mongo.yml
-      kubernetes/kibana.yml
-      kubernetes/fluentd-config.yml
-      kubernetes/fluentd-deployment.yml
-      kubernetes/api.yml
-      kubernetes/visualization.yml
-      kubernetes/home.yml"
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t05-home", "image": "home"}]'
+    CI_CD_TIMEOUT: 10m
 
 ### Test ###
 test:integration:
   extends: .integration
   needs:
-    - deploy:status
+    - deploy:kibana
+    - deploy:data_pull
+    - deploy:fluentd
+    - deploy:api
+    - deploy:visualisation
+    - deploy:home
   script:
     - echo "run integration test cmds or script"
 

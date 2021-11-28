@@ -11,36 +11,11 @@ PROG="ci_cd_tool"
 
 USAGE="\
 Usage:
-  ${PROG} test [--debug] <image_name> [<docker_file>] [<build_path>]
-  ${PROG} production [--debug] <image_name>
-  ${PROG} version [--debug] [<version>]
   ${PROG} --help
 
 Options:
   -v, --debug  Print more info.
-  -h, --help   Print this help message.
-
-Arguments:
-  All arguments can be replaced with system variables.
-  - See commands section.
-
-Commands:
-  test        Use 'create' to build and push test image or 'remove' to remove a test image.
-              Argument:
-                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
-
-              Optional:
-                <docker_file>, CI_CD_DOCKER_FILE  - Specify Docker file name and possibly path
-                <build_path>, CI_CD_DOCKER_PATH   - Specify the build folder for files to be
-                                                    included in the Docker image
-
-  production  This command will create new tag from a test image and push it to the production.
-              Argument:
-                <image_name>, CI_CD_IMAGE_NAME  - Specify the Docker image name
-
-  version     Check that the new release version is valid with Semantic Versioning.
-              Optional:
-                <version>  - Alternatively, you can specify a version to validate."
+  -h, --help   Print this help message."
 
 LIB_DIR="/usr/local/lib/ci_cd_lib"
 if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
@@ -92,12 +67,23 @@ function command_create_image {
   # $1: Image (string) [Required]
   # $2: Docker file name (string) [Optional]
   # $3: Build path (string) [Optional]
+  # $4: Labels (json) [Optional]
+  #     Eg: ["org.opencontainers.image.title=<a title>", "org.opencontainers.image.title=url=<a url>"]
   info "Build image."
 
   debug "Image: \"$1\""
   is_empty "$1" && error "Docker image name is empty."
 
-  docker_build_image "$1" "$2" "$3"
+  if [ -n "$4" ]; then
+    labels=$(echo "$4" | jq -r ".[] | @sh")
+    declare -a labels="($labels)"
+    labels=( "${arr[@]/#/--label }" )
+
+    docker_build_image "$1" "$2" "$3" "${labels[@]}"
+  else
+    docker_build_image "$1" "$2" "$3"
+  fi
+
 }
 
 function command_push_image {
@@ -144,18 +130,21 @@ function command_remove_image {
 # Kube
 function command_kube_image {
   # $1: file set as file path (string) [Required]
-  # $2: container name (string) [Required]
-  # $3: container image (string) [Required]
+  # $2: kind (string) [Required]
+  # $3: container name (string) [Required]
+  # $4: container image (string) [Required]
   info "Set container image."
 
   debug "File: \"$1\""
-  debug "Container name: \"$2\""
-  debug "Container image: \"$3\""
+  debug "Kind: \"$2\""
+  debug "Container name: \"$3\""
+  debug "Container image: \"$4\""
   is_empty "$1" && error "No deployment file specified."
-  is_empty "$2" && error "No container name specified."
-  is_empty "$3" && error "No container image specified."
+  is_empty "$2" && error "No kind specified."
+  is_empty "$3" && error "No container name specified."
+  is_empty "$4" && error "No container image specified."
 
-  kube_set_image "$1" "$2" "$3"
+  kube_set_image "$1" "$2" "$3" "$4"
 }
 
 function command_kube_apply {
@@ -182,6 +171,64 @@ function command_kube_delete {
   is_empty "$2" && error "No config file specified."
 
   kube_delete "$1" "$2"
+}
+
+function command_kube_describe_deploy {
+  # $1: file set as file path (string) [Required]
+  # $2: config file set as file path (string) [Required]
+  info "Describe kube deploy."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  for kind in $(yq e ".kind" "$1"); do
+    if [ "${kind}" != "---" ]; then
+      debug "kind: \"${kind}\""
+
+      for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
+        if [ "${name}" != "---" ]; then
+          debug "name: \"${name}\""
+
+          echo "==== describe ${kind,,}/${name} ===="
+          kube_describe "${kind,,}/${name}" "$2"
+
+          if [ "${kind}" == "Deployment" ] \
+              || [ "${kind}" == "StatefulSet" ] \
+              || [ "${kind}" == "Job" ] \
+              || [ "${kind}" == "DaemonSet" ]
+          then
+            echo "==== ${kind,,}/${name} pod log ===="
+            kube_service_pods_log "${kind,,}/${name}" "$2"
+          fi
+        fi
+      done
+    fi
+  done
+}
+
+function command_kube_status {
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
+  # $3: timeout (string) [Optional]
+  info "Get kube deploy status."
+
+  debug "File: \"$1\""
+  debug "Config file: \"$2\""
+  is_empty "$1" && error "No deploy file specified."
+  is_empty "$2" && error "No config file specified."
+
+  kinds="Deployment StatefulSet Job DaemonSet"
+  for kind in ${kinds}; do
+    debug "kind: \"${kind}\""
+    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
+      if [ "${name}" != "---" ]; then
+        debug "name: \"${name}\""
+        kube_status "${kind,,}/${name}" "$2" "$3"
+      fi
+    done
+  done
 }
 
 # Version
@@ -233,6 +280,8 @@ function command_kube {
     image) shift; command_kube_image "$@";;
     apply) shift; command_kube_apply "$@";;
     delete) shift; command_kube_delete "$@";;
+    status) shift; command_kube_status "$@";;
+    outcome) shift; command_kube_describe_deploy "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
