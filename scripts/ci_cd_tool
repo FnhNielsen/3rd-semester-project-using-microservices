@@ -194,13 +194,16 @@ function command_kube_describe_deploy {
           echo "==== describe ${kind,,}/${name} ===="
           kube_describe "${kind,,}/${name}" "$2"
 
-          if [ "${kind}" == "Deployment" ] \
-              || [ "${kind}" == "StatefulSet" ] \
-              || [ "${kind}" == "Job" ] \
-              || [ "${kind}" == "DaemonSet" ]
-          then
-            echo "==== ${kind,,}/${name} pod log ===="
-            kube_service_pods_log "${kind,,}/${name}" "$2"
+          if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
+            pods=$(kube_service_pods "${kind,,}/${name}" "$2")
+
+            for pod in ${pods}; do
+              echo "==== describe pod/${pod} ===="
+              kube_describe "pod/${pod}" "$2"
+
+              echo "==== pod/${pod} log ===="
+              kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2"
+            done
           fi
         fi
       done
@@ -219,7 +222,7 @@ function command_kube_status {
   is_empty "$1" && error "No deploy file specified."
   is_empty "$2" && error "No config file specified."
 
-  kinds="Deployment StatefulSet Job DaemonSet"
+  kinds="Deployment StatefulSet"
   for kind in ${kinds}; do
     debug "kind: \"${kind}\""
     for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
