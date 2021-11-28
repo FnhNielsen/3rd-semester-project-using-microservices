@@ -1,21 +1,11 @@
-variables:
-  CI_CD_DEVELOPMENT_BRANCH: "dev"
-  CI_CD_TOOL_DEBUG: "true"
-
-##############################
-######## DON'T TOUCH #########
-##############################
-
 include:
-- project: 'semester-project-e2021/team-12/ci-cd'
-  ref: 'v2'
-  file: 'base_pipeline.yml'
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v3.0
+    file: base_pipeline.yml
 
 ##############################
 ############ JOBS ############
 ##############################
-
-
 
 #Builds mysql image
 build:mySQL:
@@ -37,23 +27,14 @@ build:djangoService:
       - CI_CD_PATH: 'MediaAcquisition/'
 
 
-#Run unit tests
-# test:unit:
-#   image:
-#     - openjdk:17
-#     - gradle:7.2.0-jdk17
-#   extends: .unit
-#   script:
-#     - gradle test
-
-# deploy
+# deliver
 deploy:mySQL:
   extends:
     - .deploy
     - .kube
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "", "image": ""}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t09-mysql", "image": "mysql"}]'
 
 deploy:djangoService:
   extends:
@@ -61,28 +42,20 @@ deploy:djangoService:
     - .kube
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "", "image": ""}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t09-django", "image": "djangoService"}]'
 
 ### Post ###
-# cleanup:mailService:
-#   extends:
-#     - .cleanup_test_image
-#     - .remove_test_image_if_exist
-#   variables:
-#     # Variables
-#     #
-#     # CI_CD_IMAGE_NAME: (string) [Required]
-#     #
-#     CI_CD_IMAGE_NAME: mailService
+cleanup:mySQL:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: mysql
 
-# cleanup:subscriptionService:
-#   extends:
-#     - .cleanup_test_image
-#     - .remove_test_image_if_exist
-#   variables:
-#     # Variables
-#     #
-#     # CI_CD_IMAGE_NAME: (string) [Required]
-#     #
-#     CI_CD_IMAGE_NAME: subscriptionService
+cleanup:djangoService:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: django-service
 

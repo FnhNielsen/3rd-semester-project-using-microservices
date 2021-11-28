@@ -1,11 +1,3 @@
-variables:
-  CI_CD_DEVELOPMENT_BRANCH: "dev"
-  CI_CD_TOOL_DEBUG: "true"
-
-##############################
-######## DON'T TOUCH #########
-##############################
-
 include:
 - project: semester-project-e2021/team-12/ci-cd'
   ref: v3.0
@@ -14,8 +6,6 @@ include:
 ##############################
 ############ JOBS ############
 ##############################
-
-
 
 #Builds mailService image
 build:mailService:
@@ -46,7 +36,7 @@ test:unit:
   script:
     - gradle test
 
-# deploy
+# depliver
 deploy:mailService:
   extends:
     - .deploy
@@ -63,16 +53,37 @@ deploy:subscriptionService:
     CI_CD_KUBE_FILE: /manifest.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]'
 
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+      - deploy:mailService
+      - deploy:subscriptionService
+  variables:
+    CI_CD_CHECK_STATUS: '[
+        {"type": "deployment", "name": "t04-mailService"},
+        {"type": "deployment", "name": "t04-subscription"}]'
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+      CI_CD_DEPLOYMENT_FILES: "/manifest.yml"
+
+
+
 ### Post ###
 cleanup:mailService:
   extends:
     - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
     CI_CD_IMAGE_NAME: mailService
 
 cleanup:subscriptionService:
@@ -80,9 +91,5 @@ cleanup:subscriptionService:
     - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
     CI_CD_IMAGE_NAME: subscriptionService
     
