@@ -49,7 +49,7 @@ deploy:api:
       optional: true
   variables:
     CI_CD_KUBE_FILE: NodeJS/deployment.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t11-api", "image": "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
 
 deploy:database:
   extends:
@@ -61,7 +61,7 @@ deploy:database:
       optional: true
   variables:
     CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "statefulset", "container": "t11-cassandra", "image": "database"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "StatefulSet", "container": "t11-cassandra", "image": "database"}]'
 
 deploy:db_service:
   extends:
