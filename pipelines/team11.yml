@@ -12,7 +12,7 @@ variables:
 
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: v3.0
+    ref: v4.0
     file: 'base_pipeline.yml'
 
 ##############################
@@ -38,80 +38,30 @@ build:database_image:
     CI_CD_IMAGE_NAME: database
     CI_CD_PATH: Cassandra
 
-#Run unit tests
-#test:unit:
-#  image: node:latest
-#  extends: .unit
-#  script:
-#    - cd ./NodeJS/app
-#    - npm i
-#    - npm test
-
-# test:acceptance:
-#   extends: .acceptance
-#   needs:
-#     - test:unit
-#   script:
-#     - echo "run acceptance test cmds or script"
-#     - echo "run acceptance test cmds or script"
-
-# test:integration:
-#   extends: .integration
-#   needs:
-#     - test:acceptance
-#   script:
-#     - echo "run integration test cmds or script"
-#     - echo "run integration test cmds or script"
-
-# test:performance:
-#   extends: .performance
-#   needs:
-#     - test:integration
-#   script:
-#     - echo "run performance test cmds or script"
-#     - echo "run performance test cmds or script"
-
-### Deliver ###
-deploy:kube_api:
+### Deploy ###
+deploy:api:
   extends:
     - .deploy
     - .kube
   needs:
     - build:api_image
+    - setup:state
+      optional: true
   variables:
     CI_CD_KUBE_FILE: node.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t11-api", "image": "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t11-api", "image": "api"}]'
 
-deploy:kube_database:
+deploy:database:
   extends:
     - .deploy
     - .kube
   needs:
     - build:database_image
+    - setup:state
+      optional: true
   variables:
     CI_CD_KUBE_FILE:  cass.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t11-cassandra", "image": "database"}]'
-
-deploy:status:
-  extends: 
-    - .deploy
-    - .rollout_status
-    - .merge_request_production
-  needs:
-    - deploy:kube_api
-  variables:
-    CI_CD_CHECK_STATUS: '[{"type": "deployment", "name": "t11-api"}]'
-
-deploy:failure:
-  extends:
-    - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
-  needs:
-    - deploy:status
-    - deploy:kube_database
-  variables:
-    CI_CD_DEPLOYMENT_FILES: "cass.yaml node.yaml"
+    CI_CD_CONTAINER_IMAGES: '[{"type": "statefulset", "container": "t11-cassandra", "image": "database"}]'
 
 ### Post ###
 cleanup:api_image:
