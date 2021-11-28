@@ -48,7 +48,7 @@ deploy:api:
     - job: setup:state
       optional: true
   variables:
-    CI_CD_KUBE_FILE: node.yaml
+    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
     CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t11-api", "image": "api"}]'
 
 deploy:database:
@@ -60,8 +60,18 @@ deploy:database:
     - job: setup:state
       optional: true
   variables:
-    CI_CD_KUBE_FILE:  cass.yml
+    CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "statefulset", "container": "t11-cassandra", "image": "database"}]'
+
+deploy:db_service:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:database
+  variables:
+    CI_CD_KUBE_FILE:  Cassandra/service.yml
+    CI_CD_CONTAINER_IMAGES:
 
 ### Post ###
 cleanup:api_image:
