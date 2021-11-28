@@ -45,7 +45,7 @@ deploy:api:
     - .kube
   needs:
     - build:api_image
-    - setup:state
+    - job: setup:state
       optional: true
   variables:
     CI_CD_KUBE_FILE: node.yaml
@@ -57,7 +57,7 @@ deploy:database:
     - .kube
   needs:
     - build:database_image
-    - setup:state
+    - job: setup:state
       optional: true
   variables:
     CI_CD_KUBE_FILE:  cass.yml
