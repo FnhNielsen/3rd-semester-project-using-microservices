@@ -62,6 +62,7 @@ test:unit:
   extends: .unit
   script:
     - pwd
+    - printenv
     - ls -l 
     - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
     - ls -l
