@@ -17,16 +17,16 @@ function kube_set_image {
 
 function kube_apply {
   # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $2: config; file set as file path (string) [Required]
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl apply --kubeconfig="$2" -f "$1" || error "Failed to apply."
+  kubectl apply --kubeconfig="$2" -f "$1" || error "Failed to apply $1."
 }
 
 function kube_delete {
   # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $2: config; file set as file path (string) [Required]
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
@@ -35,16 +35,16 @@ function kube_delete {
 
 function kube_describe {
   # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $2: config; file set as file path (string) [Required]
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl describe --kubeconfig="$2" -f "$1" || error "Failed to describe."
+  kubectl describe --kubeconfig="$2" -f "$1" || error "Failed to describe $1."
 }
 
 function kube_status {
-  # $1: "kind/name" (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: "<kind>/<service name>" (string) [Required]
+  # $2: config; file set as file path (string) [Required]
   # $3: timeout (string) [Optional]
   [ -z "$3" ] && timeout="3m" || timeout=$3
 
