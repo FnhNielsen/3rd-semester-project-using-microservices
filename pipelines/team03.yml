@@ -37,8 +37,6 @@ deploy:server:
   extends:
     - .deploy
     - .kube
-  needs:
-    - deploy:kube_common
   variables:
     # Variables
     #
