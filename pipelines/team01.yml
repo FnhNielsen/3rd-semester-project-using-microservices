@@ -63,9 +63,6 @@ test:unit:
 
 ### Post ###
 cleanup:api:
-  extends:
-    - .delete_test_image
-    - .remove_test_image_if_exist
   variables:
     # Variable
     #
