@@ -55,32 +55,38 @@ function kube_status {
   kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error "Failed to get status."
 }
 
-function kube_log {
-  # $1: pod (string) [Required]
-  # $2: container (string) [Required]
-  # $3: config; file set as file path (string) [Required]
-  debug "Pod: \"$1\""
-  debug "Container: \"$2\""
-  debug "Config file: \"$3\""
-
-  kubectl logs "$1" "$2" --kubeconfig="$3" || error "Failed to get log."
-}
-
-function kube_service_pods_log {
-  # $1: "<kind>/<service name>" (string) [Required]
+function kube_service_pods {
+  # $1: "<kind>/<name>" (string) [Required]
   # $2: config; file set as file path (string) [Required]
   debug "Get pod(s) for: \"$1\""
   debug "Config file: \"$2\""
 
-  service_json=$(kubectl get "$1" -o json --kubeconfig="$2")
-  for selector_name in $(echo "${service_json}" | jq -r ".spec.selector.matchLabels | .[]"); do
+  # shellcheck disable=SC2207
+  _split=($(echo "$1" | tr "/" "\n"))
+  if [ "${_split[0]}" == "statefulset" ]; then
+    selector_names="${_split[1]}"
+    exp="[0-9]+"
+  else
+    selector_names="$(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".spec.selector.matchLabels | .[]")"
+    exp="[a-z0-9]+-[a-z0-9]+"
+  fi
+
+  for selector_name in ${selector_names}; do
     debug "Selector name: \"${selector_name}\""
-    for pod_name in $(kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-[a-z0-9]+-[a-z0-9]+$\")) | .metadata.name"); do
-      debug "Pod name: \"${pod_name}\""
-      for container_name in $(echo "${service_json}" | jq -r ".spec.template.spec.containers[].name"); do
-        debug "Container name: \"${container_name}\""
-        kube_log "${pod_name}" "${container_name}" "$2"
-      done
-    done
+    kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-${exp}$\")) | .metadata.name"
+  done
+}
+
+function kube_service_pod_log {
+  # $1: "<kind>/<name>" (string) [Required]
+  # $2: pod name (string) [Required]
+  # $3: config; file set as file path (string) [Required]
+  debug "Kind/name: \"$1\""
+  debug "Pod: \"$2\""
+  debug "Config file: \"$3\""
+
+  for container_name in $(kubectl get "$1" -o json --kubeconfig="$3" | jq -r ".spec.template.spec.containers[].name"); do
+    debug "Container name: \"${container_name}\""
+    kubectl logs "$2" "${container_name}" --kubeconfig="$3" || error "Failed to get log."
   done
 }
