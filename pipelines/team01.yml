@@ -54,9 +54,12 @@ deploy:api:
 
 ### Test ###
 test:unit:
-  image: flask:2.0.2
+  image: python:3.10-alpine3.14
+  entrypoint: ["/bin/sh"]
   extends: .unit
   script:
+    - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}/src/flask
+    - pip install -U flask
     - flask test
 
 
