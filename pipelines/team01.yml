@@ -63,6 +63,7 @@ test:unit:
   script:
     - cd ${CI_PROJECT_DIR}/src/flask
     - pip install -U flask
+    - export FLASK_APP=flaskTest.py
     - flask test
 
 
