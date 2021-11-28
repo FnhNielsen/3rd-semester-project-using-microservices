@@ -61,6 +61,7 @@ test:unit:
   needs: []
   extends: .unit
   script:
+    - pwd
     - ls -l 
     - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
     - ls -l
