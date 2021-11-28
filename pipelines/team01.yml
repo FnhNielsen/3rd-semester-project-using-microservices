@@ -61,11 +61,7 @@ test:unit:
   needs: []
   extends: .unit
   script:
-    - pwd
-    - printenv
-    - ls -l 
-    - cd ${CI_BUILDS_DIR}/${CI_PROJECT_PATH}
-    - ls -l
+    - cd ${CI_PROJECT_DIR}/src/flask
     - pip install -U flask
     - flask test
 
