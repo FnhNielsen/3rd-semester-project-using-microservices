@@ -61,13 +61,13 @@ function kube_service_pods {
   debug "Get pod(s) for: \"$1\""
   debug "Config file: \"$2\""
 
+  selector_names="$(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".metadata.name")"
   # shellcheck disable=SC2207
   _split=($(echo "$1" | tr "/" "\n"))
   if [ "${_split[0]}" == "statefulset" ]; then
-    selector_names="${_split[1]}"
     exp="[0-9]+"
   else
-    selector_names="$(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".spec.selector.matchLabels | .[]")"
+    selector_names="${selector_names} $(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".metadata.selector.matchLabels | .[]")"
     exp="[a-z0-9]+-[a-z0-9]+"
   fi
 
