@@ -13,7 +13,7 @@ build:mailService:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: mailService 
+      - CI_CD_IMAGE_NAME: 'mailService' 
       - CI_CD_PATH: 'dockerfiles/mailserviceDocker'
 
 
@@ -23,7 +23,7 @@ build:subscriptionService:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: subscriptionService
+      - CI_CD_IMAGE_NAME: 'subscriptionService'
       - CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
 
 
