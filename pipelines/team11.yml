@@ -12,7 +12,7 @@ variables:
 
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: v1.0.0
+    ref: v4.0
     file: 'base_pipeline.yml'
 
 ##############################
@@ -23,73 +23,74 @@ include:
 build:api_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
+  needs: []
   variables:
     CI_CD_IMAGE_NAME: api
-    CI_CD_DOCKER_PATH: NodeJS
+    CI_CD_PATH: NodeJS
 
 build:database_image:
   extends:
     - .build
-    - .test_image
+    - .build_image
+  needs: []
   variables:
     CI_CD_IMAGE_NAME: database
-    CI_CD_DOCKER_PATH: Cassandra
+    CI_CD_PATH: Cassandra
 
-#Run unit tests
-#test:unit:
-#  image: node:latest
-#  extends: .unit
-#  script:
-#    - cd ./NodeJS/app
-#    - npm i
-#    - npm test
-
-# test:acceptance:
-#   extends: .acceptance
-#   needs:
-#     - test:unit
-#   script:
-#     - echo "run acceptance test cmds or script"
-#     - echo "run acceptance test cmds or script"
-
-# test:integration:
-#   extends: .integration
-#   needs:
-#     - test:acceptance
-#   script:
-#     - echo "run integration test cmds or script"
-#     - echo "run integration test cmds or script"
-
-# test:performance:
-#   extends: .performance
-#   needs:
-#     - test:integration
-#   script:
-#     - echo "run performance test cmds or script"
-#     - echo "run performance test cmds or script"
-
-### Deliver ###
-deliver:production_api_image:
+### Deploy ###
+deploy:api:
   extends:
-    - .deliver
-    - .production_image
+    - .deploy
+    - .kube
+  needs:
+    - build:api_image
+    - job: setup:state
+      optional: true
   variables:
-    # Variable
+    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
+
+deploy:database:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:database_image
+    - job: setup:state
+      optional: true
+  variables:
+    CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "StatefulSet", "container": "t11-cassandra", "image": "database"}]'
+
+deploy:db_service:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:database
+  variables:
+    CI_CD_KUBE_FILE:  Cassandra/service.yml
+
+### Post ###
+cleanup:api_image:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variables
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
+    # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: api
 
-deliver:production_database_image:
+cleanup:database_image:
   extends:
-    - .deliver
-    - .production_image
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
   variables:
-    # Variable
+    # Variables
     #
-    # CI_CD_IMAGE_NAME: (string)
-    #   Required
+    # CI_CD_IMAGE_NAME: (string) [Required]
     #
     CI_CD_IMAGE_NAME: database
