@@ -192,17 +192,17 @@ function command_kube_describe_deploy {
           debug "name: \"${name}\""
 
           echo "==== describe ${kind,,}/${name} ===="
-          kube_describe "${kind,,}/${name}" "$2"
+          kube_describe "${kind,,}/${name}" "$2" || info "It was not possible to describe ${kind,,}/${name}."
 
           if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
             pods=$(kube_service_pods "${kind,,}/${name}" "$2")
 
             for pod in ${pods}; do
               echo "==== describe pod/${pod} ===="
-              kube_describe "pod/${pod}" "$2"
+              kube_describe "pod/${pod}" "$2" || info "It was not possible to describe pod/${pod}."
 
               echo "==== pod/${pod} log ===="
-              kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2"
+              kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || info "No logs available."
             done
           fi
         fi
