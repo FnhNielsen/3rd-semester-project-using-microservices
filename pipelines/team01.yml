@@ -53,7 +53,7 @@ deploy:api:
 #     #     ]
 #     #
     CI_CD_KUBE_FILE: api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image", "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image": "api"}]'
 
 
 ### Test ###
