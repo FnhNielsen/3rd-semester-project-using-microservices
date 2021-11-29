@@ -247,8 +247,8 @@ default:
   # CI_CD_CONTAINER_IMAGES: (json) [Optional]
   #   E.g.
   #     [
-  #       {"type": "deployment", "container": "t12-api", "image": "api"},
-  #       {"type": "deployment", "container": "t12-database", "image": "database"}
+  #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+  #       {"type": "Deployment", "container": "t12-database", "image": "database"}
   #     ]
   # CI_CD_TIMEOUT: (string) [Optional]
   #   Default: .
