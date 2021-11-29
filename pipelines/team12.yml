@@ -70,8 +70,8 @@ deploy:common:
     # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"type": "deployment", "container": "t12-api", "image": "api"},
-    #       {"type": "deployment", "container": "t12-database", "image": "database"}
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
     #     ]
     # CI_CD_TIMEOUT: (string) [Optional]
     #   Default: .
@@ -93,15 +93,15 @@ deploy:database:
     # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"type": "deployment", "container": "t12-api", "image": "api"},
-    #       {"type": "deployment", "container": "t12-database", "image": "database"}
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
     #     ]
     # CI_CD_TIMEOUT: (string) [Optional]
     #   Default: .
     #   E.g. 5m or 10s ect..
     #
     CI_CD_KUBE_FILE: kube/database.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t12-database", "image": "database"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t12-database", "image": "database"}]'
     CI_CD_TIMEOUT: 10m
 
 deploy:api:
@@ -118,15 +118,15 @@ deploy:api:
     # CI_CD_CONTAINER_IMAGES: (json) [Optional]
     #   E.g.
     #     [
-    #       {"type": "deployment", "container": "t12-api", "image": "api"},
-    #       {"type": "deployment", "container": "t12-database", "image": "database"}
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
     #     ]
     # CI_CD_TIMEOUT: (string) [Optional]
     #   Default: .
     #   E.g. 5m or 10s ect..
     #
     CI_CD_KUBE_FILE: kube/api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t12-api", "image": "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t12-api", "image": "api"}]'
 
 ### Test ###
 test:unit_api:

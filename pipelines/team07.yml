@@ -1,11 +1,81 @@
-stages:
-  - build
+##############################
+######## DON'T TOUCH #########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: on_success
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v4.0
+    file: base_pipeline.yml
+
+##############################
+############ Jobs ############
+##############################
+
+### Build ###
+build:media-player:
+  extends:
+    - .build
+    - .build_image
+
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: media-player
+
+### Deploy ###
+deploy:media-player:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - job: setup:state
+      optional: true
+    - build:media-player
+  variables:
+  #Variables
+     
+     #CI_CD_KUBE_FILE: (string) [Required]
+     #CI_CD_CONTAINER_IMAGES: (json) [Required]
+#     #   E.g.
+#     #     [
+#     #       {"container": "t12-api", "image": "api"},
+#     #       {"container": "t12-database", "image": "database"}
+#     #     ]
+#     #
+    CI_CD_KUBE_FILE: media-player.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t07-media-player", "image", "media-player"}]'
+
+
+### Test ###
+#test:unit:
+ # image: 
+  #  name: python:3.10-alpine3.14
+   # entrypoint: ["/bin/sh"]
+  #needs: []
+  #extends: .unit
+  #script:
+    #- cd ${CI_PROJECT_DIR}/src/flask
+    #- pip install -U flask
+    #- export FLASK_APP=${CI_PROJECT_DIR}/src/flask/flaskTest.py
+    #- flask test
+
+
+
+### Post ###
+cleanup:media-player:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: media-player

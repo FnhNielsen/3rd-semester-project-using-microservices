@@ -13,7 +13,7 @@ build:mySQL:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: mysql 
+      - CI_CD_IMAGE_NAME: 'mysql' 
       - CI_CD_PATH: 'MediaAcquisition/Docker/'
 
 
@@ -23,7 +23,7 @@ build:djangoService:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: django-service
+      - CI_CD_IMAGE_NAME: 'django-service'
       - CI_CD_PATH: 'MediaAcquisition/'
 
 

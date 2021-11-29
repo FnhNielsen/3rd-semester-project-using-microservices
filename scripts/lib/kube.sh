@@ -13,6 +13,10 @@ function kube_set_image {
   debug "Container image: \"$4\""
 
   yq e -i "select(.kind==\"$2\") |= .spec.template.spec.containers[] |= select(.name==\"$3\").image=\"$4\"" "$1"
+  image_name=$(yq e "select(.kind==\"$2\").spec.template.spec.containers[] | select(.name==\"$3\").image" "$1")
+  if [ "${image_name}" != "$4" ]; then
+    error "Unable to set image."
+  fi
 }
 
 function kube_apply {
