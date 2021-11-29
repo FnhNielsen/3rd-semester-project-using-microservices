@@ -43,7 +43,7 @@ deploy:api:
     - build:api
   variables:
   #Variables
-     
+
      #CI_CD_KUBE_FILE: (string) [Required]
      #CI_CD_CONTAINER_IMAGES: (json) [Required]
 #     #   E.g.
@@ -53,7 +53,7 @@ deploy:api:
 #     #     ]
 #     #
     CI_CD_KUBE_FILE: api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "deployment", "container": "t01-api", "image", "api"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image", "api"}]'
 
 
 ### Test ###
