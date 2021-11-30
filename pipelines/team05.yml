@@ -23,13 +23,13 @@ build:data_pull:
     CI_CD_IMAGE_NAME: data_pull
     CI_CD_PATH: Docker/Data_pull
 
-build:fluent:
+build:fluentd:
   extends:
     - .build
     - .build_image
   needs: []
   variables:
-    CI_CD_IMAGE_NAME: fluent
+    CI_CD_IMAGE_NAME: fluentd
     CI_CD_PATH: Docker/fluent
 
 build:api:
@@ -180,12 +180,12 @@ test:integration:
     - echo "run integration test cmds or script"
 
 ### Post ###
-cleanup:fluent:
+cleanup:fluentd:
   extends:
     - .cleanup_test_image
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: fluent
+    CI_CD_IMAGE_NAME: fluentd
 
 cleanup:api:
   extends:
