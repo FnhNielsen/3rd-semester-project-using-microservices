@@ -44,3 +44,9 @@ function error {
   echo -e "ERROR (${FUNCNAME[1]}): $1" >&2
   exit 1
 }
+
+function error_return {
+  # $1: Message (string) [Required]
+  echo -e "ERROR (${FUNCNAME[1]}): $1" >&2
+  return 1
+}

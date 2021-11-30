@@ -83,7 +83,6 @@ function command_create_image {
   else
     docker_build_image "$1" "$2" "$3"
   fi
-
 }
 
 function command_push_image {

@@ -43,7 +43,7 @@ function kube_describe {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl describe "$1" --kubeconfig="$2" || error "Failed to describe $1."
+  kubectl describe "$1" --kubeconfig="$2" || error_return "Failed to describe $1."
 }
 
 function kube_status {
@@ -91,6 +91,6 @@ function kube_service_pod_log {
 
   for container_name in $(kubectl get "$1" -o json --kubeconfig="$3" | jq -r ".spec.template.spec.containers[].name"); do
     debug "Container name: \"${container_name}\""
-    kubectl logs "$2" "${container_name}" --kubeconfig="$3" || error "Failed to get log."
+    kubectl logs "$2" "${container_name}" --kubeconfig="$3" || error_return "Failed to get log."
   done
 }
