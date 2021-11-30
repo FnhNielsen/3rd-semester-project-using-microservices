@@ -121,6 +121,7 @@ deploy:fluentd:
     - .kube
   needs:
     - build:fluentd
+    - deploy:elasticsearch_statefulset
     - deploy:fluentd_config
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
