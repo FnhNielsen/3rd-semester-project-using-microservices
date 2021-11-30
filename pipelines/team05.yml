@@ -120,7 +120,7 @@ deploy:fluentd:
     - .deploy
     - .kube
   needs:
-    - build:fluent
+    - build:fluentd
     - deploy:fluentd_config
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
