@@ -64,7 +64,7 @@ deploy:common:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
       optional: true
   variables:
     # Variables
