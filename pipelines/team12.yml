@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v4.0
+    ref: v4.1.0
     file: base_pipeline.yml
 
 variables:
@@ -179,6 +179,21 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Post ###
+cleanup:stage_env:
+  extends:
+    - .cleanup_stage_env
+    - .kube_delete
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
+
 cleanup:api:
   extends:
     - .cleanup_test_image
