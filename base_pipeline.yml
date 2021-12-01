@@ -166,6 +166,12 @@ default:
     - .always_except_merge_production
   allow_failure: true
 
+.cleanup_stage_env:
+  stage: .post
+  extends:
+    - .always_merge_request_production
+  allow_failure: true
+
 ### Methods ###
 .artifact:
   # Artifact method to use in jobs that create new files to be used in other jobs
@@ -282,6 +288,20 @@ default:
       ci_cd_tool kube outcome "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
       exit ${FAILURE_STATUS};
 
+.kube_delete:
+  # Variables
+  #
+  # CI_CD_KUBE_FILES: (string) [Required]
+  #   E.g. Only one file
+  #     kube/api.yml
+  #   E.g. Multiple files at once
+  #     kube/api.yml kube/database.yml
+  #
+  image: $CI_CD_KUBE_IMAGE
+  script:
+    - for file in "${CI_CD_KUBE_FILES}"; do
+        ci_cd_tool kube delete "${file}" "${CI_CD_KUBE_CONFIG}";
+      done
 
 ### Static Jobs ###
 test:check_request_title:
@@ -293,18 +313,10 @@ test:check_request_title:
   script:
     - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
 
-setup:state:
+setup:stage_env:
   stage: .pre
   extends:
     - .merge_request_production
   needs: []
   script:
-    - echo "init_state"
-
-cleanup:state:
-  allow_failure: true
-  stage: .post
-  extends:
-    - .always_merge_request_production
-  script:
-    - echo "takedown_state"
+    - echo "init_stage"
