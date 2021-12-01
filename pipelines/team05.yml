@@ -97,6 +97,7 @@ deploy:data_pull:
     - .deploy
     - .kube
   needs:
+    - build:data_pull
     - deploy:elasticsearch_statefulset
     - deploy:mongo
   variables:
