@@ -50,7 +50,7 @@ deploy:database:
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-database", "image": "database"}]'
     CI_CD_TIMEOUT: 5m
     
-deploy: backend:
+deploy:backend:
   extends:
     - .deploy
     - .kube
