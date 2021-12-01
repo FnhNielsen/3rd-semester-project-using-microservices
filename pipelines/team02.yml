@@ -46,7 +46,7 @@ deploy:database:
     - job: setup:state
       optional: true
   variables:
-    CI_CD_CUBE_FILE: database.yml
+    CI_CD_KUBE_FILE: database.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-database", "image": "database"}]'
     CI_CD_TIMEOUT: 5m
     
@@ -57,7 +57,7 @@ deploy:backend:
   needs:
     - deploy:database
   variables:
-    CI_CD_CUBE_FILE: backend.yml
+    CI_CD_KUBE_FILE: backend.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-backend", "image": "backend"}]'
     CI_CD_TIMEOUT: 5m
 
