@@ -180,6 +180,13 @@ test:integration:
     - echo "run integration test cmds or script"
 
 ### Post ###
+cleanup:data_pull:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: data_pull
+
 cleanup:fluentd:
   extends:
     - .cleanup_test_image
