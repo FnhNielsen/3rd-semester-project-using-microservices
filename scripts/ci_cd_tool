@@ -176,8 +176,8 @@ function command_kube_image {
 }
 
 function command_kube_apply {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Applying to kube."
 
   validate_kube_file_input "$1"
@@ -187,8 +187,8 @@ function command_kube_apply {
 }
 
 function command_kube_delete {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Remove from kube."
 
   validate_kube_file_input "$1"
@@ -198,8 +198,8 @@ function command_kube_delete {
 }
 
 function command_kube_describe_deploy {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Describe kube deploy."
 
   validate_kube_file_input "$1"
