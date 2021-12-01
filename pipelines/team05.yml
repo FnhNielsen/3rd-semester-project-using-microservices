@@ -167,18 +167,18 @@ deploy:fluentd:
 #    CI_CD_TIMEOUT: 10m
 
 ### Test ###
-test:integration:
-  extends: .integration
-  needs:
-    - deploy:kibana
-    - deploy:data_pull
-    - deploy:fluentd
-    - deploy:api
-    - deploy:visualisation
-    - deploy:home
-  script:
-    - echo "run integration test cmds or script"
-
+#test:integration:
+#  extends: .integration
+#  needs:
+#    - deploy:kibana
+#    - deploy:data_pull
+#    - deploy:fluentd
+#    - deploy:api
+#    - deploy:visualisation
+#    - deploy:home
+#  script:
+#    - echo "run integration test cmds or script"
+#
 ### Post ###
 cleanup:data_pull:
   extends:
