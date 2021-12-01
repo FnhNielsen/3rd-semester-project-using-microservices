@@ -1,6 +1,6 @@
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v4.0
     file: base_pipeline.yml
 
 ### Build ###
@@ -59,7 +59,7 @@ deploy:kube_mongo:
       - .kube
     variables:
         CI_CD_KUBE_FILE: mongo_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-database", "image": "database"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-database", "image": "database"}]'
 
 deploy:kube_aam:
     extends:
@@ -69,7 +69,7 @@ deploy:kube_aam:
       - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: aam_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-aam-service", "image": "aam"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-aam-service", "image": "aam"}]'
 
 deploy:kube_ads:
     extends:
@@ -79,7 +79,7 @@ deploy:kube_ads:
       - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: ads_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-ads", "image": "ads"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-ads", "image": "ads"}]'
 
 deploy:kube_audience_targeting:
     extends:
@@ -89,7 +89,7 @@ deploy:kube_audience_targeting:
       - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: at_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-at", "image": "audience_targeting"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-at", "image": "at"}]'
 
 deploy:kube_billing:
     extends:
@@ -99,7 +99,7 @@ deploy:kube_billing:
       - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: billing_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-billing", "image": "billing"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-billing", "image": "billing"}]'
 
 deploy:kube_client:
     extends:
@@ -113,38 +113,7 @@ deploy:kube_client:
       - deploy:kube_billing
     variables:
         CI_CD_KUBE_FILE: client_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"container": "t14-client", "image": "client"}]'
-
-deploy:status:
-  extends:
-    - .deploy
-    - .rollout_status
-    - .merge_request_production
-  needs:
-      - deploy:kube_mongo
-      - deploy:kube_audience_targeting
-      - deploy:kube_ads
-      - deploy:kube_aam
-      - deploy:kube_billing
-      - deploy:kube_client
-  variables:
-    CI_CD_CHECK_STATUS: '[
-        {"type": "deployment", "name": "t14-database"},
-        {"type": "deployment", "name": "t14-aam"},
-        {"type": "deployment", "name": "t14-at"},
-        {"type": "deployment", "name": "t14-client"},
-        {"type": "deployment", "name": "t14-billing"},
-        {"type": "deployment", "name": "t14-ads"}]'
-
-deploy:failure:
-  extends:
-    - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
-  needs:
-    - deploy:status
-  variables:
-    CI_CD_DEPLOYMENT_FILES: "mongo_deployment.yml aam_deployment.yml ads_deployment.yml at_deployment.yml client_deployment.yml billing_deployment.yml"
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-client", "image": "client"}]'
 
 ### Post ###
 cleanup:aam_image:
