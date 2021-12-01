@@ -14,15 +14,15 @@ variables:
 ############ Jobs ############
 ##############################
 ### Build ###
-#build:data_pull:
-#  extends:
-#    - .build
-#    - .build_image
-#  needs: []
-#  variables:
-#    CI_CD_IMAGE_NAME: data_pull
-#    CI_CD_PATH: Docker/Data_pull
-#
+build:data_pull:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: data_pull
+    CI_CD_PATH: Docker/Data_pull
+
 build:fluentd:
   extends:
     - .build
@@ -32,33 +32,33 @@ build:fluentd:
     CI_CD_IMAGE_NAME: fluentd
     CI_CD_PATH: Docker/fluent
 
-#build:api:
-#  extends:
-#    - .build
-#    - .build_image
-#  needs: []
-#  variables:
-#    CI_CD_IMAGE_NAME: api
-#    CI_CD_PATH: Docker/api
-#
-#build:visualization:
-#  extends:
-#    - .build
-#    - .build_image
-#  needs: []
-#  variables:
-#    CI_CD_IMAGE_NAME: visualization
-#    CI_CD_PATH: Docker/visualization
-#
-#build:home:
-#  extends:
-#    - .build
-#    - .build_image
-#  needs: []
-#  variables:
-#    CI_CD_IMAGE_NAME: home
-#    CI_CD_PATH: Docker/home
-#
+build:api:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: api
+    CI_CD_PATH: Docker/api
+
+build:visualization:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: visualization
+    CI_CD_PATH: Docker/visualization
+
+build:home:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: home
+    CI_CD_PATH: Docker/home
+
 ### Deploy ###
 deploy:elasticsearch_statefulset:
   extends:
@@ -71,16 +71,16 @@ deploy:elasticsearch_statefulset:
     CI_CD_KUBE_FILE: kubernetes/elasticsearch_statefulset.yml
     CI_CD_TIMEOUT: 10m
 
-#deploy:mongo:
-#  extends:
-#    - .deploy
-#    - .kube
-#  needs:
-#    - job: setup:state
-#  variables:
-#    CI_CD_KUBE_FILE: kubernetes/mongo.yml
-#    CI_CD_TIMEOUT: 10m
-#
+deploy:mongo:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - job: setup:state
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/mongo.yml
+    CI_CD_TIMEOUT: 10m
+
 deploy:kibana:
   extends:
     - .deploy
@@ -92,18 +92,18 @@ deploy:kibana:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
     CI_CD_TIMEOUT: 10m
 
-#deploy:data_pull:
-#  extends:
-#    - .deploy
-#    - .kube
-#  needs:
-#    - deploy:elasticsearch_statefulset
-#    - deploy:mongo
-#  variables:
-#    CI_CD_KUBE_FILE: kubernetes/data-puller.yml
-#    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-data-puller", "image": "data_pull"}]'
-#    CI_CD_TIMEOUT: 10m
-#
+deploy:data_pull:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/data-puller.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-data-puller", "image": "data_pull"}]'
+    CI_CD_TIMEOUT: 10m
+
 deploy:fluentd_config:
   extends:
     - .deploy
@@ -127,44 +127,44 @@ deploy:fluentd:
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-fluentd", "image": "fluentd"}]'
     CI_CD_TIMEOUT: 10m
 
-#deploy:api:
-#  extends:
-#    - .deploy
-#    - .kube
-#  needs:
-#    - build:api
-#    - deploy:elasticsearch_statefulset
-#    - deploy:mongo
-#  variables:
-#    CI_CD_KUBE_FILE: kubernetes/api.yml
-#    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-api", "image": "api"}]'
-#    CI_CD_TIMEOUT: 10m
-#
-#deploy:visualisation:
-#  extends:
-#    - .deploy
-#    - .kube
-#  needs:
-#    - build:visualization
-#    - deploy:elasticsearch_statefulset
-#    - deploy:mongo
-#  variables:
-#    CI_CD_KUBE_FILE: kubernetes/visualization.yml
-#    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-visualization", "image": "visualization"}]'
-#    CI_CD_TIMEOUT: 10m
-#
-#deploy:home:
-#  extends:
-#    - .deploy
-#    - .kube
-#  needs:
-#    - build:home
-#    - deploy:elasticsearch_statefulset
-#    - deploy:mongo
-#  variables:
-#    CI_CD_KUBE_FILE: kubernetes/home.yml
-#    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-home", "image": "home"}]'
-#    CI_CD_TIMEOUT: 10m
+deploy:api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:api
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/api.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-api", "image": "api"}]'
+    CI_CD_TIMEOUT: 10m
+
+deploy:visualisation:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:visualization
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/visualization.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-visualization", "image": "visualization"}]'
+    CI_CD_TIMEOUT: 10m
+
+deploy:home:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:home
+    - deploy:elasticsearch_statefulset
+    - deploy:mongo
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/home.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-home", "image": "home"}]'
+    CI_CD_TIMEOUT: 10m
 
 ### Test ###
 test:integration:
