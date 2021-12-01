@@ -87,7 +87,7 @@ deploy:kibana:
     - .kube
   needs:
     - deploy:elasticsearch_statefulset
-    - deploy:mongo
+#    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/kibana.yml
     CI_CD_TIMEOUT: 10m
@@ -110,7 +110,7 @@ deploy:fluentd_config:
     - .kube
   needs:
     - deploy:elasticsearch_statefulset
-    - deploy:mongo
+#    - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
     CI_CD_TIMEOUT: 10m
