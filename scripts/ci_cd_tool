@@ -172,7 +172,7 @@ function command_kube_image {
   debug "Container image: \"$4\""
   is_empty "$4" && error "No container image specified."
 
-  kube_set_image "$1" "$2" "$3" "$4"
+  kube_set_image "$1" "$2" "$3" "$4" || exit 1
 }
 
 function command_kube_apply {
@@ -183,7 +183,7 @@ function command_kube_apply {
   validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  kube_apply "$1" "$2"
+  kube_apply "$1" "$2" || exit 1
 }
 
 function command_kube_delete {
@@ -194,7 +194,7 @@ function command_kube_delete {
   validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  kube_delete "$1" "$2"
+  kube_delete "$1" "$2" || exit 1
 }
 
 function command_kube_describe_deploy {
@@ -248,7 +248,7 @@ function command_kube_status {
     for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
       if [ "${name}" != "---" ]; then
         debug "name: \"${name}\""
-        kube_status "${kind,,}/${name}" "$2" "$3"
+        kube_status "${kind,,}/${name}" "$2" "$3" | exit 1
       fi
     done
   done

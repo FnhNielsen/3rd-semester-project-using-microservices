@@ -15,7 +15,7 @@ function kube_set_image {
   yq e -i "select(.kind==\"$2\") |= .spec.template.spec.containers[] |= select(.name==\"$3\").image=\"$4\"" "$1"
   image_name=$(yq e "select(.kind==\"$2\").spec.template.spec.containers[] | select(.name==\"$3\").image" "$1")
   if [ "${image_name}" != "$4" ]; then
-    error "Unable to set image."
+    error_return "Unable to set image."
   fi
 }
 
@@ -25,7 +25,7 @@ function kube_apply {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl apply --kubeconfig="$2" -f "$1" || error "Failed to apply $1."
+  kubectl apply --kubeconfig="$2" -f "$1" || error_return "Failed to apply $1."
 }
 
 function kube_delete {
@@ -34,7 +34,7 @@ function kube_delete {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl delete --kubeconfig="$2" -f "$1" || error "Failed to delete."
+  kubectl delete --kubeconfig="$2" -f "$1" || error_return "There was a deletion error."
 }
 
 function kube_describe {
@@ -56,7 +56,7 @@ function kube_status {
   debug "Config file: \"$2\""
   debug "Timeout: \"${timeout}\""
 
-  kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error "Failed to get status."
+  kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error_return "Failed to get status."
 }
 
 function kube_service_pods {
