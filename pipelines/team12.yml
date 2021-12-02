@@ -133,7 +133,7 @@ deploy:api:
 
 status:monitor_containers:
   extends:
-    - .status
+    - .deploy
     - .kube_monitor
   needs:
     - deploy:database

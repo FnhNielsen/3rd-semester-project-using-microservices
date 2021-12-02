@@ -160,11 +160,6 @@ default:
   extends:
     - .except_development
 
-.status:
-  stage: deploy
-  extends:
-    - .merge_request_production
-
 .cleanup:
   stage: .post
   extends:
