@@ -71,7 +71,7 @@ function kube_service_pods {
   if [ "${_split[0]}" == "statefulset" ]; then
     exp="[0-9]+"
   else
-    selector_names="${selector_names} $(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".metadata.selector.matchLabels | .[]")"
+    selector_names="${selector_names} $(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".spec.selector.matchLabels | .[]")"
     exp="[a-z0-9]+-[a-z0-9]+"
   fi
 
