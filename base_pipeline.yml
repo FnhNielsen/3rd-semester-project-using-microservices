@@ -319,7 +319,7 @@ default:
   #   E.g. Only one file
   #     kube/api.yml
   #   E.g. Multiple files at once
-  #     kube/api.yml kube/database.yml
+  #     kube/common.yaml kube/api.yml kube/database.yml
   #
   image: $CI_CD_KUBE_IMAGE
   script:

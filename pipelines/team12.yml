@@ -146,6 +146,8 @@ status:monitor_containers:
     #     kube/api.yml
     #   E.g. Multiple files at once
     #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
     #
     CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
@@ -211,13 +213,13 @@ cleanup:stage_env:
     - .always_merge_request_production
     - .kube_delete
   variables:
-    # Variables
+    # Variable
     #
     # CI_CD_KUBE_FILES: (string) [Required]
     #   E.g. Only one file
     #     kube/api.yml
     #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
+    #     kube/common.yaml kube/api.yml kube/database.yml
     #
     CI_CD_KUBE_FILES: "kube/common.yaml kube/api.yaml kube/database.yaml"
 
