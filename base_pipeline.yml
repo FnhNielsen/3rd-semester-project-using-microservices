@@ -165,16 +165,10 @@ default:
   extends:
     - .merge_request_production
 
-.cleanup_test_image:
+.cleanup:
   stage: .post
   extends:
     - .always_except_merge_production
-  allow_failure: true
-
-.cleanup_stage_env:
-  stage: .post
-  extends:
-    - .always_merge_request_production
   allow_failure: true
 
 ### Methods ###
