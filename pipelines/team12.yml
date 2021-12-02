@@ -146,23 +146,6 @@ status:monitor_containers:
     #
     CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
-status:pods_resource:
-  extends:
-    - .status
-    - .kube_top
-  needs:
-    - status:monitor_containers
-  variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    #
-    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
-
 ### Test ###
 test:unit_api:
   extends: .unit
@@ -196,18 +179,27 @@ test:acceptance:
 test:integration:
   extends: .integration
   needs:
-    - status:pods_resource
+    - status:monitor_containers
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
 
 test:performance:
-  extends: .performance
+  extends:
+    - .performance
+    - .kube_top
   needs:
     - test:integration
-  script:
-    - echo "run performance test cmds or script"
-    - echo "run performance test cmds or script"
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
 ### Post ###
 cleanup:stage_env:
