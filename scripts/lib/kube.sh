@@ -101,10 +101,13 @@ function kube_service_pods {
     exp="[a-z0-9]+-[a-z0-9]+"
   fi
 
+  pods=()
   for selector_name in ${selector_names}; do
     debug "Selector name: \"${selector_name}\""
-    kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-${exp}$\")) | .metadata.name"
+    pods+=("$(kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-${exp}$\")) | .metadata.name")")
   done
+
+  echo "${pods[*]}" | xargs -n1 | sort -u | xargs
 }
 
 function kube_service_pod_log {
