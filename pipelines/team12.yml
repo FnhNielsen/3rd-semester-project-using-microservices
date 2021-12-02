@@ -211,6 +211,9 @@ test:performance:
   extends: .performance
   needs:
     - test:integration
+  script:
+    - echo "run performance test cmds or script"
+    - echo "run performance test cmds or script"
 
 ### Post ###
 cleanup:stage_env:
