@@ -248,7 +248,7 @@ function command_kube_status {
     for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
       if [ "${name}" != "---" ]; then
         debug "name: \"${name}\""
-        kube_status "${kind,,}/${name}" "$2" "$3" | exit 1
+        kube_status "${kind,,}/${name}" "$2" "$3" || exit 1
       fi
     done
   done
