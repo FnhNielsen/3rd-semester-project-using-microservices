@@ -298,6 +298,12 @@ function command_kube_monitor_containers {
 
     sleep 1
   done
+
+  for status in ${container_status[*]}; do
+    [ "${status}" != "running" ] && exit 1
+  done
+
+  exit 0
 }
 
 function command_kube_top {
