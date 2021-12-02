@@ -59,6 +59,32 @@ function kube_status {
   kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error_return "Failed to get status."
 }
 
+function kube_get_kinds {
+  # $1: file; set as file path (string) [Required]
+  debug "File: \"$1\""
+
+  for kind in $(yq e ".kind" "$1"); do
+    if [ "${kind}" != "---" ]; then
+      debug "kind: \"${kind}\""
+      echo "${kind}"
+    fi
+  done
+}
+
+function kube_get_service_names {
+  # $1: file; set as file path (string) [Required]
+  # $2: kind [Required]
+  debug "File: \"$1\""
+  debug "Kind: \"$2\""
+
+  for name in $(yq e "select(.kind==\"$2\") | .metadata.name" "$1"); do
+    if [ "${name}" != "---" ]; then
+      debug "name: \"${name}\""
+      echo "${name}"
+    fi
+  done
+}
+
 function kube_service_pods {
   # $1: "<kind>/<name>" (string) [Required]
   # $2: config; file set as file path (string) [Required]

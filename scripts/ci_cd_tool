@@ -34,6 +34,8 @@ if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:u
 fi
 [ -n "${CI_CD_GUIDE_URL}" ] && GUIDE_TEXT=" See ${CI_CD_GUIDE_URL}."
 
+POD_KINDS="Deployment StatefulSet"
+
 function usage_help() {
     echo -e "${USAGE}"
     exit 0
@@ -205,31 +207,21 @@ function command_kube_describe_deploy {
   validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  for kind in $(yq e ".kind" "$1"); do
-    if [ "${kind}" != "---" ]; then
-      debug "kind: \"${kind}\""
+  for kind in $(kube_get_kinds "$1"); do
+    for name in $(kube_get_service_names "$1" "${kind}"); do
+        echo "==== describe ${kind,,}/${name} ===="
+        kube_describe "${kind,,}/${name}" "$2" || warning "It was not possible to describe ${kind,,}/${name}."
 
-      for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
-        if [ "${name}" != "---" ]; then
-          debug "name: \"${name}\""
+        if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
+          for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+            echo "==== describe pod/${pod} ===="
+            kube_describe "pod/${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
 
-          echo "==== describe ${kind,,}/${name} ===="
-          kube_describe "${kind,,}/${name}" "$2" || warning "It was not possible to describe ${kind,,}/${name}."
-
-          if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
-            pods=$(kube_service_pods "${kind,,}/${name}" "$2")
-
-            for pod in ${pods}; do
-              echo "==== describe pod/${pod} ===="
-              kube_describe "pod/${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
-
-              echo "==== pod/${pod} log ===="
-              kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || warning "No logs available."
-            done
-          fi
+            echo "==== pod/${pod} log ===="
+            kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || warning "No logs available."
+          done
         fi
       done
-    fi
   done
 }
 
@@ -242,14 +234,12 @@ function command_kube_status {
   validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  kinds="Deployment StatefulSet"
-  for kind in ${kinds}; do
-    debug "kind: \"${kind}\""
-    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
-      if [ "${name}" != "---" ]; then
-        debug "name: \"${name}\""
-        kube_status "${kind,,}/${name}" "$2" "$3" || exit 1
-      fi
+  [ -z "$3" ] && timeout="3m" || timeout=$3
+  debug "Timeout: \"${timeout}\""
+
+  for kind in ${POD_KINDS}; do
+    for name in $(kube_get_service_names "$1" "${kind}"); do
+        kube_status "${kind,,}/${name}" "$2" "${timeout}" || exit 1
     done
   done
 }
