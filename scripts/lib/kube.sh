@@ -123,3 +123,32 @@ function kube_service_pod_log {
     kubectl logs "$2" "${container_name}" --kubeconfig="$3" || error_return "Failed to get log."
   done
 }
+
+function kube_container_status {
+  # $1: "<kind>/<service name>" (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+
+  debug "Status of: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl get --kubeconfig="$2" -o json "$1" | jq -r ".status.containerStatuses[] | .state | keys | unique | .[]"
+}
+
+function kube_get {
+  # $1: "<kind>/<service name>" (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+
+  debug "Status of: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl get --kubeconfig="$2" "$1" || error_return "Failed to get $1."
+}
+
+function kube_top_pod {
+  # $1: pod name (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+  debug "Kind/name: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
+}

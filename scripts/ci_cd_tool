@@ -244,6 +244,81 @@ function command_kube_status {
   done
 }
 
+function command_kube_monitor_containers {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: config file; set as file path (string) [Required]
+  # $3: monitor time (string) [Optional]
+  info "Monitoring container(s)."
+
+  validate_kube_conf_input "$2"
+
+  # Create a pod list
+  pods=()
+  for file in $1; do
+    validate_kube_file_input "${file}"
+
+    for kind in ${POD_KINDS}; do
+      for name in $(kube_get_service_names "${file}" "${kind}"); do
+        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+          pods+=("pod/${pod}")
+        done
+      done
+    done
+  done
+
+  # Cal monitor time
+  time=$3;
+  case ${time: -1} in
+    s) time=${time::-1};;
+    m) time=$((${time::-1} * 60));;
+    *) time=180;;
+  esac
+  [ ${time} -le 0 ] && time=180
+  monitor_time=$(($(date +%s) + "${time}"))
+
+  # monitor pods
+  pod_status=()
+  while [ ${monitor_time} -ge "$(date +%s)" ]; do
+    for i in "${!pods[@]}"; do
+      debug "${pods[${i}]}"
+
+      new_pod_status=$(kube_container_status "${pods[${i}]}" "$2")
+
+      if [ "${pod_status[${i}]}" != "${new_pod_status}" ]; then
+        if [ -n "${pod_status[${i}]}" ]; then
+          echo "---"
+        fi
+
+        pod_status[${i}]=${new_pod_status}
+
+        kube_get "${pods[${i}]}" "$2"
+      fi
+    done
+
+    sleep 1
+  done
+}
+
+function command_kube_top {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: config file; set as file path (string) [Required]
+  info "Get pod(s) resource use."
+
+  validate_kube_conf_input "$2"
+
+  for file in $1; do
+    validate_kube_file_input "${file}"
+
+    for kind in ${POD_KINDS}; do
+      for name in $(kube_get_service_names "${file}" "${kind}"); do
+        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+          kube_top_pod "${pod}" "$2"
+        done
+      done
+    done
+  done
+}
+
 # Version
 function command_normalize_version {
   debug "Get version."
@@ -295,6 +370,8 @@ function command_kube {
     delete) shift; command_kube_delete "$@";;
     status) shift; command_kube_status "$@";;
     outcome) shift; command_kube_describe_deploy "$@";;
+    monitor) shift; command_kube_monitor_containers "$@";;
+    top) shift; command_kube_top "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
