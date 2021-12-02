@@ -151,6 +151,24 @@ status:monitor_containers:
     #
     CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
+status:recurse_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:database
+    - deploy:api
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
+
 ### Test ###
 test:unit_api:
   extends: .unit
@@ -190,21 +208,9 @@ test:integration:
     - echo "run integration test cmds or script"
 
 test:performance:
-  extends:
-    - .performance
-    - .kube_top
+  extends: .performance
   needs:
     - test:integration
-  variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    #
-    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
 ### Post ###
 cleanup:stage_env:
