@@ -147,7 +147,7 @@ function kube_get {
 function kube_top_pod {
   # $1: pod name (string) [Required]
   # $2: config; file set as file path (string) [Required]
-  debug "Kind/name: \"$1\""
+  debug "Name: \"$1\""
   debug "Config file: \"$2\""
 
   kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
