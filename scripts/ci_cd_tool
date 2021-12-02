@@ -277,21 +277,22 @@ function command_kube_monitor_containers {
   monitor_time=$(($(date +%s) + "${time}"))
 
   # monitor pods
-  pod_status=()
+  container_status=()
   while [ ${monitor_time} -ge "$(date +%s)" ]; do
     for i in "${!pods[@]}"; do
       debug "${pods[${i}]}"
 
-      new_pod_status=$(kube_container_status "${pods[${i}]}" "$2")
+      new_container_status=$(kube_container_status "${pods[${i}]}" "$2")
+      debug "${new_container_status}"
 
-      if [ "${pod_status[${i}]}" != "${new_pod_status}" ]; then
-        if [ -n "${pod_status[${i}]}" ]; then
+      if [ "${container_status[${i}]}" != "${new_container_status}" ]; then
+        if [ -n "${container_status[${i}]}" ]; then
           echo "---"
         fi
 
-        pod_status[${i}]=${new_pod_status}
-
         kube_get "${pods[${i}]}" "$2"
+
+        container_status[${i}]=${new_container_status}
       fi
     done
 
