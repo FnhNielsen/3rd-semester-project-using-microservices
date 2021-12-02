@@ -290,10 +290,14 @@ default:
   #     kube/api.yml
   #   E.g. Multiple files at once
   #     kube/api.yml kube/database.yml
+  # CI_CD_TIME: (string) [Optional]
+  #   E.g. 10m or 100s
   #
   image: $CI_CD_KUBE_IMAGE
+  variables:
+    CI_CD_TIME: "3m"
   script:
-    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
+    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}"
 
 .kube_top:
   # Variables
