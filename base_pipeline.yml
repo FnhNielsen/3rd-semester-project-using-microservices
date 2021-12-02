@@ -310,6 +310,7 @@ default:
   #
   image: $CI_CD_KUBE_IMAGE
   script:
+    - sleep 60
     - ci_cd_tool kube top "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
 
 .kube_delete:
