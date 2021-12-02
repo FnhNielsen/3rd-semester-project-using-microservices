@@ -151,7 +151,7 @@ status:monitor_containers:
     #
     CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
 
-status:recurse_consumption:
+status:resource_consumption:
   extends:
     - .deploy
     - .kube_top
