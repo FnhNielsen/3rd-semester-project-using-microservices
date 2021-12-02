@@ -300,7 +300,7 @@ default:
     - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}"
 
 .kube_top:
-  # Variables
+  # Variable
   #
   # CI_CD_KUBE_FILES: (string) [Required]
   #   E.g. Only one file
@@ -313,7 +313,7 @@ default:
     - ci_cd_tool kube top "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
 
 .kube_delete:
-  # Variables
+  # Variable
   #
   # CI_CD_KUBE_FILES: (string) [Required]
   #   E.g. Only one file
