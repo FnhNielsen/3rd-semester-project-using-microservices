@@ -34,6 +34,8 @@ if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:u
 fi
 [ -n "${CI_CD_GUIDE_URL}" ] && GUIDE_TEXT=" See ${CI_CD_GUIDE_URL}."
 
+POD_KINDS="Deployment StatefulSet"
+
 function usage_help() {
     echo -e "${USAGE}"
     exit 0
@@ -42,6 +44,39 @@ function usage_help() {
 function unknown_help() {
     echo -e "${USAGE}" >&2;
     exit 1
+}
+
+# Common
+function validate_kube_file_input {
+  # $1: file; set as file path (string) [Required]
+  debug "File: \"$1\""
+
+  is_empty "$1" && error "No deploy file specified."
+
+  [ ! -f "$1" ] && error "Unable to locate the Kubernetes file."
+}
+
+function validate_kube_conf_input {
+  # $1: config file; set as file path (string) [Required]
+  debug "Config file: \"$1\""
+
+  is_empty "$1" && error "No config file specified."
+
+  [ ! -f "$1" ] && error "Unable to locate the configuration file."
+}
+
+function validate_docker_image_input {
+  # $1: Image name (string) [Required]
+  debug "Image: \"$1\""
+
+  is_empty "$1" && error "No Docker image name specified."
+}
+
+function validate_docker_tag_input {
+  # $1: Tag (string) [Required]
+  debug "Tag: \"$1\""
+
+  is_empty "$1" && error "No tag specified."
 }
 
 
@@ -71,8 +106,7 @@ function command_create_image {
   #     Eg: ["org.opencontainers.image.title=<a title>", "org.opencontainers.image.title=url=<a url>"]
   info "Build image."
 
-  debug "Image: \"$1\""
-  is_empty "$1" && error "Docker image name is empty."
+  validate_docker_image_input "$1"
 
   if [ -n "$4" ]; then
     labels=$(echo "$4" | jq -r ".[] | @sh")
@@ -83,15 +117,13 @@ function command_create_image {
   else
     docker_build_image "$1" "$2" "$3"
   fi
-
 }
 
 function command_push_image {
   # $1: Image (string) [Required]
   info "Push image."
 
-  debug "Image: \"$1\""
-  is_empty "$1" && error "Docker image name is empty."
+  validate_docker_image_input "$1"
 
   docker_push_image "$1"
 }
@@ -102,10 +134,8 @@ function command_exist_image {
   # $2: Tag (string) [Required]
   debug "Check if Docker image name and tag exist."
 
-  debug "Image: \"$1\""
-  debug "Tag: \"$2\""
-  is_empty "$1" && error "Docker image name is empty."
-  is_empty "$2" && error "Tag is empty."
+  validate_docker_image_input "$1"
+  validate_docker_tag_input "$2"
 
   if exist_image_tag_gitlab "$1" "$2"; then
     info "Docker image already exist."
@@ -119,10 +149,8 @@ function command_remove_image {
   # $2: Tag (string) [Required]
   info "Remove image from gitlab container registry."
 
-  debug "Image name: \"$1\""
-  debug "Tag: \"$2\""
-  is_empty "$1" && error "No Docker image name specified."
-  is_empty "$2" && error "No tag specified."
+  validate_docker_image_input "$1"
+  validate_docker_tag_input "$2"
 
   remove_registry_image_gitlab "$1" "$2"
 }
@@ -135,79 +163,65 @@ function command_kube_image {
   # $4: container image (string) [Required]
   info "Set container image."
 
-  debug "File: \"$1\""
+  validate_kube_file_input "$1"
+
   debug "Kind: \"$2\""
-  debug "Container name: \"$3\""
-  debug "Container image: \"$4\""
-  is_empty "$1" && error "No deployment file specified."
   is_empty "$2" && error "No kind specified."
+
+  debug "Container name: \"$3\""
   is_empty "$3" && error "No container name specified."
+
+  debug "Container image: \"$4\""
   is_empty "$4" && error "No container image specified."
 
-  kube_set_image "$1" "$2" "$3" "$4"
+  kube_set_image "$1" "$2" "$3" "$4" || exit 1
 }
 
 function command_kube_apply {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Applying to kube."
 
-  debug "File: \"$1\""
-  debug "Config file: \"$2\""
-  is_empty "$1" && error "No deploy file specified."
-  is_empty "$2" && error "No config file specified."
+  validate_kube_file_input "$1"
+  validate_kube_conf_input "$2"
 
-  kube_apply "$1" "$2"
+  kube_apply "$1" "$2" || exit 1
 }
 
 function command_kube_delete {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Remove from kube."
 
-  debug "File: \"$1\""
-  debug "Config file: \"$2\""
-  is_empty "$1" && error "No deploy file specified."
-  is_empty "$2" && error "No config file specified."
+  validate_kube_file_input "$1"
+  validate_kube_conf_input "$2"
 
-  kube_delete "$1" "$2"
+  kube_delete "$1" "$2" || warning "Deletion may not have taken place as expected."
 }
 
 function command_kube_describe_deploy {
-  # $1: file set as file path (string) [Required]
-  # $2: config file set as file path (string) [Required]
+  # $1: file; set as file path (string) [Required]
+  # $2: config file; set as file path (string) [Required]
   info "Describe kube deploy."
 
-  debug "File: \"$1\""
-  debug "Config file: \"$2\""
-  is_empty "$1" && error "No deploy file specified."
-  is_empty "$2" && error "No config file specified."
+  validate_kube_file_input "$1"
+  validate_kube_conf_input "$2"
 
-  for kind in $(yq e ".kind" "$1"); do
-    if [ "${kind}" != "---" ]; then
-      debug "kind: \"${kind}\""
+  for kind in $(kube_get_kinds "$1"); do
+    for name in $(kube_get_service_names "$1" "${kind}"); do
+        echo "==== describe ${kind,,}/${name} ===="
+        kube_describe "${kind,,}/${name}" "$2" || warning "It was not possible to describe ${kind,,}/${name}."
 
-      for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
-        if [ "${name}" != "---" ]; then
-          debug "name: \"${name}\""
+        if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
+          for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+            echo "==== describe pod/${pod} ===="
+            kube_describe "pod/${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
 
-          echo "==== describe ${kind,,}/${name} ===="
-          kube_describe "${kind,,}/${name}" "$2" || info "It was not possible to describe ${kind,,}/${name}."
-
-          if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
-            pods=$(kube_service_pods "${kind,,}/${name}" "$2")
-
-            for pod in ${pods}; do
-              echo "==== describe pod/${pod} ===="
-              kube_describe "pod/${pod}" "$2" || info "It was not possible to describe pod/${pod}."
-
-              echo "==== pod/${pod} log ===="
-              kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || info "No logs available."
-            done
-          fi
+            echo "==== pod/${pod} log ===="
+            kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || warning "No logs available."
+          done
         fi
       done
-    fi
   done
 }
 
@@ -217,19 +231,97 @@ function command_kube_status {
   # $3: timeout (string) [Optional]
   info "Get kube deploy status."
 
-  debug "File: \"$1\""
-  debug "Config file: \"$2\""
-  is_empty "$1" && error "No deploy file specified."
-  is_empty "$2" && error "No config file specified."
+  validate_kube_file_input "$1"
+  validate_kube_conf_input "$2"
 
-  kinds="Deployment StatefulSet"
-  for kind in ${kinds}; do
-    debug "kind: \"${kind}\""
-    for name in $(yq e "select(.kind==\"${kind}\") | .metadata.name" "$1"); do
-      if [ "${name}" != "---" ]; then
-        debug "name: \"${name}\""
-        kube_status "${kind,,}/${name}" "$2" "$3"
+  [ -z "$3" ] && timeout="3m" || timeout=$3
+  debug "Timeout: \"${timeout}\""
+
+  for kind in ${POD_KINDS}; do
+    for name in $(kube_get_service_names "$1" "${kind}"); do
+        kube_status "${kind,,}/${name}" "$2" "${timeout}" || exit 1
+    done
+  done
+}
+
+function command_kube_monitor_containers {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: config file; set as file path (string) [Required]
+  # $3: monitor time (string) [Optional]
+  info "Monitoring container(s)."
+
+  validate_kube_conf_input "$2"
+
+  # Create a pod list
+  pods=()
+  for file in $1; do
+    validate_kube_file_input "${file}"
+
+    for kind in ${POD_KINDS}; do
+      for name in $(kube_get_service_names "${file}" "${kind}"); do
+        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+          pods+=("pod/${pod}")
+        done
+      done
+    done
+  done
+
+  # Cal monitor time
+  time=$3;
+  case ${time: -1} in
+    s) time=${time::-1};;
+    m) time=$((${time::-1} * 60));;
+    *) time=180;;
+  esac
+  [ ${time} -le 0 ] && time=180
+  monitor_time=$(($(date +%s) + "${time}"))
+
+  # monitor pods
+  container_status=()
+  while [ ${monitor_time} -ge "$(date +%s)" ]; do
+    for i in "${!pods[@]}"; do
+      debug "${pods[${i}]}"
+
+      new_container_status=$(kube_container_status "${pods[${i}]}" "$2")
+      debug "${new_container_status}"
+
+      if [ "${container_status[${i}]}" != "${new_container_status}" ]; then
+        if [ -n "${container_status[${i}]}" ]; then
+          echo "---"
+        fi
+
+        kube_get "${pods[${i}]}" "$2"
+
+        container_status[${i}]=${new_container_status}
       fi
+    done
+
+    sleep 1
+  done
+
+  for status in ${container_status[*]}; do
+    [ "${status}" != "running" ] && exit 1
+  done
+
+  exit 0
+}
+
+function command_kube_top {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: config file; set as file path (string) [Required]
+  info "Get pod(s) resource use."
+
+  validate_kube_conf_input "$2"
+
+  for file in $1; do
+    validate_kube_file_input "${file}"
+
+    for kind in ${POD_KINDS}; do
+      for name in $(kube_get_service_names "${file}" "${kind}"); do
+        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
+          kube_top_pod "${pod}" "$2"
+        done
+      done
     done
   done
 }
@@ -285,6 +377,8 @@ function command_kube {
     delete) shift; command_kube_delete "$@";;
     status) shift; command_kube_status "$@";;
     outcome) shift; command_kube_describe_deploy "$@";;
+    monitor) shift; command_kube_monitor_containers "$@";;
+    top) shift; command_kube_top "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }

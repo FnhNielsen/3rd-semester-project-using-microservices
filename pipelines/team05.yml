@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v4.0
+    ref: v5.0
     file: base_pipeline.yml
 
 variables:
@@ -23,13 +23,13 @@ build:data_pull:
     CI_CD_IMAGE_NAME: data_pull
     CI_CD_PATH: Docker/Data_pull
 
-build:fluent:
+build:fluentd:
   extends:
     - .build
     - .build_image
   needs: []
   variables:
-    CI_CD_IMAGE_NAME: fluent
+    CI_CD_IMAGE_NAME: fluentd
     CI_CD_PATH: Docker/fluent
 
 build:api:
@@ -60,12 +60,13 @@ build:home:
     CI_CD_PATH: Docker/home
 
 ### Deploy ###
+# Deploy set 1
 deploy:elasticsearch_statefulset:
   extends:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
       optional: true
   variables:
     CI_CD_KUBE_FILE: kubernetes/elasticsearch_statefulset.yml
@@ -76,11 +77,12 @@ deploy:mongo:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
     CI_CD_TIMEOUT: 10m
 
+# Deploy set 2
 deploy:kibana:
   extends:
     - .deploy
@@ -97,6 +99,7 @@ deploy:data_pull:
     - .deploy
     - .kube
   needs:
+    - build:data_pull
     - deploy:elasticsearch_statefulset
     - deploy:mongo
   variables:
@@ -113,18 +116,6 @@ deploy:fluentd_config:
     - deploy:mongo
   variables:
     CI_CD_KUBE_FILE: kubernetes/fluentd-config.yml
-    CI_CD_TIMEOUT: 10m
-
-deploy:fluentd:
-  extends:
-    - .deploy
-    - .kube
-  needs:
-    - build:fluent
-    - deploy:fluentd_config
-  variables:
-    CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-fluentd", "image": "fluentd"}]'
     CI_CD_TIMEOUT: 10m
 
 deploy:api:
@@ -166,44 +157,144 @@ deploy:home:
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-home", "image": "home"}]'
     CI_CD_TIMEOUT: 10m
 
+# Deploy set 3
+deploy:fluentd:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:fluentd
+    - deploy:fluentd_config
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/fluentd-deployment.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-fluentd", "image": "fluentd"}]'
+    CI_CD_TIMEOUT: 10m
+
+# Status
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:kibana
+    - deploy:data_pull
+    - deploy:api
+    - deploy:visualisation
+    - deploy:home
+    - deploy:fluentd
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
+      kubernetes/mongo.yml
+      kubernetes/kibana.yml
+      kubernetes/data-puller.yml
+      kubernetes/api.yml
+      kubernetes/visualization.yml
+      kubernetes/home.yml
+      kubernetes/fluentd-deployment.yml"
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:kibana
+    - deploy:data_pull
+    - deploy:api
+    - deploy:visualisation
+    - deploy:home
+    - deploy:fluentd
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
+      kubernetes/mongo.yml
+      kubernetes/kibana.yml
+      kubernetes/data-puller.yml
+      kubernetes/api.yml
+      kubernetes/visualization.yml
+      kubernetes/home.yml
+      kubernetes/fluentd-deployment.yml"
+
 ### Test ###
 test:integration:
   extends: .integration
   needs:
-    - deploy:kibana
-    - deploy:data_pull
-    - deploy:fluentd
-    - deploy:api
-    - deploy:visualisation
-    - deploy:home
+    - status:monitor_containers
   script:
     - echo "run integration test cmds or script"
 
 ### Post ###
-cleanup:fluent:
+cleanup:stage_env:
   extends:
-    - .cleanup_test_image
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
+      kubernetes/mongo.yml
+      kubernetes/kibana.yml
+      kubernetes/data-puller.yml
+      kubernetes/fluentd-config.yml
+      kubernetes/api.yml
+      kubernetes/visualization.yml
+      kubernetes/home.yml
+      kubernetes/fluentd-deployment.yml"
+
+cleanup:data_pull:
+  extends:
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: fluent
+    CI_CD_IMAGE_NAME: data_pull
+
+cleanup:fluentd:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: fluentd
 
 cleanup:api:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: api
 
 cleanup:visualization:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: visualization
 
 cleanup:home:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: home
