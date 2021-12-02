@@ -299,7 +299,7 @@ default:
   #
   image: $CI_CD_KUBE_IMAGE
   script:
-    - for file in "${CI_CD_KUBE_FILES}"; do
+    - for file in ${CI_CD_KUBE_FILES}; do
         ci_cd_tool kube delete "${file}" "${CI_CD_KUBE_CONFIG}";
       done
 
