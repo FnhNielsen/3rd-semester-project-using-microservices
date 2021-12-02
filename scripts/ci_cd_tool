@@ -72,9 +72,9 @@ function validate_docker_image_input {
 
 function validate_docker_tag_input {
   # $1: Tag (string) [Required]
-  debug "Tag: \"$2\""
+  debug "Tag: \"$1\""
 
-  is_empty "$2" && error "No tag specified."
+  is_empty "$1" && error "No tag specified."
 }
 
 
