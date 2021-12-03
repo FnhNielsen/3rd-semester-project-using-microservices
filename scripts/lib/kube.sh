@@ -15,7 +15,7 @@ function kube_set_image {
   yq e -i "select(.kind==\"$2\") |= .spec.template.spec.containers[] |= select(.name==\"$3\").image=\"$4\"" "$1"
   image_name=$(yq e "select(.kind==\"$2\").spec.template.spec.containers[] | select(.name==\"$3\").image" "$1")
   if [ "${image_name}" != "$4" ]; then
-    error "Unable to set image."
+    error_return "Unable to set image."
   fi
 }
 
@@ -25,7 +25,7 @@ function kube_apply {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl apply --kubeconfig="$2" -f "$1" || error "Failed to apply $1."
+  kubectl apply --kubeconfig="$2" -f "$1" || error_return "Failed to apply $1."
 }
 
 function kube_delete {
@@ -34,7 +34,7 @@ function kube_delete {
   debug "File: \"$1\""
   debug "Config file: \"$2\""
 
-  kubectl delete --kubeconfig="$2" -f "$1" || error "Failed to delete."
+  kubectl delete --kubeconfig="$2" -f "$1" || error_return "There was a deletion error."
 }
 
 function kube_describe {
@@ -56,7 +56,33 @@ function kube_status {
   debug "Config file: \"$2\""
   debug "Timeout: \"${timeout}\""
 
-  kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error "Failed to get status."
+  kubectl rollout status --kubeconfig="$2" --timeout="${timeout}" "$1" || error_return "Failed to get status."
+}
+
+function kube_get_kinds {
+  # $1: file; set as file path (string) [Required]
+  debug "File: \"$1\""
+
+  for kind in $(yq e ".kind" "$1"); do
+    if [ "${kind}" != "---" ]; then
+      debug "kind: \"${kind}\""
+      echo "${kind}"
+    fi
+  done
+}
+
+function kube_get_service_names {
+  # $1: file; set as file path (string) [Required]
+  # $2: kind [Required]
+  debug "File: \"$1\""
+  debug "Kind: \"$2\""
+
+  for name in $(yq e "select(.kind==\"$2\") | .metadata.name" "$1"); do
+    if [ "${name}" != "---" ]; then
+      debug "name: \"${name}\""
+      echo "${name}"
+    fi
+  done
 }
 
 function kube_service_pods {
@@ -71,14 +97,17 @@ function kube_service_pods {
   if [ "${_split[0]}" == "statefulset" ]; then
     exp="[0-9]+"
   else
-    selector_names="${selector_names} $(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".metadata.selector.matchLabels | .[]")"
+    selector_names="${selector_names} $(kubectl get "$1" -o json --kubeconfig="$2" | jq -r ".spec.selector.matchLabels | .[]")"
     exp="[a-z0-9]+-[a-z0-9]+"
   fi
 
+  pods=()
   for selector_name in ${selector_names}; do
     debug "Selector name: \"${selector_name}\""
-    kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-${exp}$\")) | .metadata.name"
+    pods+=("$(kubectl get pod -o json --kubeconfig="$2" | jq -r ".items[] | select(.metadata.name? | match(\"^${selector_name}-${exp}$\")) | .metadata.name")")
   done
+
+  echo "${pods[*]}" | xargs -n1 | sort -u | xargs
 }
 
 function kube_service_pod_log {
@@ -93,4 +122,33 @@ function kube_service_pod_log {
     debug "Container name: \"${container_name}\""
     kubectl logs "$2" "${container_name}" --kubeconfig="$3" || error_return "Failed to get log."
   done
+}
+
+function kube_container_status {
+  # $1: "<kind>/<service name>" (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+
+  debug "Status of: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl get --kubeconfig="$2" -o json "$1" | jq -r ".status.containerStatuses[] | .state | keys | unique | .[]"
+}
+
+function kube_get {
+  # $1: "<kind>/<service name>" (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+
+  debug "Status of: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl get --kubeconfig="$2" "$1" || error_return "Failed to get $1."
+}
+
+function kube_top_pod {
+  # $1: pod name (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+  debug "Name: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
 }

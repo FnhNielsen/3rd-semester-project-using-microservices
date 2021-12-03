@@ -5,20 +5,22 @@ stages:
   - test
 
 variables:
+  # Setting variable to set up the pipeline for a repository
   CI_CD_PRODUCTION_BRANCH: main
   CI_CD_DEVELOPMENT_BRANCH: dev
   CI_CD_RELEASE_BRANCH: release
   CI_CD_HOTFIX_BRANCH: hotfix
-  CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
-  CI_CD_TEST_IMAGE_GROUP: test-image
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.3
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.3
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.3
-  CI_CD_TOOL_DEBUG: "false"
-  CI_CD_TAG: $CI_PIPELINE_ID
-  CI_CD_KUBE_CONFIG: ""
   CI_CD_TEST_IMAGE_PRE: "test-image/"
   CI_CD_PRODUCTION_IMAGE_PRE: ""
+  CI_CD_TOOL_DEBUG: "false"
+  # Setting variable to set up the base pipeline
+  CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.8
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.8
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.8
+  # These variables are handled by the base pipeline and must not be changed
+  CI_CD_TAG: $CI_PIPELINE_ID
+  CI_CD_KUBE_CONFIG: ""
   CI_CD_PRE_IMAGE_NAME: $CI_CD_TEST_IMAGE_PRE
   # All variables below come from Ahmad
   # https://discord.com/channels/881855784873496596/888744242720165948/907304043808948255
@@ -160,7 +162,7 @@ default:
   extends:
     - .except_development
 
-.cleanup_test_image:
+.cleanup:
   stage: .post
   extends:
     - .always_except_merge_production
@@ -282,6 +284,51 @@ default:
       ci_cd_tool kube outcome "${CI_CD_KUBE_FILE}" "${CI_CD_KUBE_CONFIG}";
       exit ${FAILURE_STATUS};
 
+.kube_monitor:
+  # Variables
+  #
+  # CI_CD_KUBE_FILES: (string) [Required]
+  #   E.g. Only one file
+  #     kube/api.yml
+  #   E.g. Multiple files at once
+  #     kube/api.yml kube/database.yml
+  # CI_CD_TIME: (string) [Optional]
+  #   E.g. 10m or 100s
+  #
+  image: $CI_CD_KUBE_IMAGE
+  variables:
+    CI_CD_TIME: "3m"
+  script:
+    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}"
+
+.kube_top:
+  # Variable
+  #
+  # CI_CD_KUBE_FILES: (string) [Required]
+  #   E.g. Only one file
+  #     kube/api.yml
+  #   E.g. Multiple files at once
+  #     kube/api.yml kube/database.yml
+  #
+  image: $CI_CD_KUBE_IMAGE
+  script:
+    - sleep 60
+    - ci_cd_tool kube top "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
+
+.kube_delete:
+  # Variable
+  #
+  # CI_CD_KUBE_FILES: (string) [Required]
+  #   E.g. Only one file
+  #     kube/api.yml
+  #   E.g. Multiple files at once
+  #     kube/common.yaml kube/api.yml kube/database.yml
+  #
+  image: $CI_CD_KUBE_IMAGE
+  script:
+    - for file in ${CI_CD_KUBE_FILES}; do
+        ci_cd_tool kube delete "${file}" "${CI_CD_KUBE_CONFIG}";
+      done
 
 ### Static Jobs ###
 test:check_request_title:
@@ -293,18 +340,10 @@ test:check_request_title:
   script:
     - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
 
-setup:state:
+setup:stage_env:
   stage: .pre
   extends:
     - .merge_request_production
   needs: []
   script:
-    - echo "init_state"
-
-cleanup:state:
-  allow_failure: true
-  stage: .post
-  extends:
-    - .always_merge_request_production
-  script:
-    - echo "takedown_state"
+    - echo "init_stage"

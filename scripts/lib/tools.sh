@@ -34,6 +34,11 @@ function info {
   echo -e "INFO (${FUNCNAME[1]}): $1"
 }
 
+function warning {
+  # $1: Message (string) [Required]
+  echo -e "WARNING (${FUNCNAME[1]}): $1" >&2
+}
+
 function debug {
   # $1: Message (string) [Required]
   [ "${DEBUG}" == "1" ] && echo -e "DEBUG (${FUNCNAME[1]}): $1" >&2

@@ -4,7 +4,7 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v4.0
+    ref: v5.0
     file: base_pipeline.yml
 
 ##############################
@@ -61,7 +61,7 @@ deploy:common:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
       optional: true
   variables:
     # Variables
@@ -128,6 +128,44 @@ deploy:api:
     CI_CD_KUBE_FILE: kube/api.yaml
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t12-api", "image": "api"}]'
 
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:database
+    - deploy:api
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:database
+    - deploy:api
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/api.yaml kube/database.yaml"
+
 ### Test ###
 test:unit_api:
   extends: .unit
@@ -161,8 +199,7 @@ test:acceptance:
 test:integration:
   extends: .integration
   needs:
-    - deploy:database
-    - deploy:api
+    - status:monitor_containers
   script:
     - echo "run integration test cmds or script"
     - echo "run integration test cmds or script"
@@ -176,9 +213,25 @@ test:performance:
     - echo "run performance test cmds or script"
 
 ### Post ###
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/common.yaml kube/api.yaml kube/database.yaml"
+
 cleanup:api:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     # Variable
@@ -189,7 +242,7 @@ cleanup:api:
 
 cleanup:database:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     # Variable
