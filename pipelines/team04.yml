@@ -3,6 +3,9 @@ include:
     ref: v5.0
     file: base_pipeline.yml
 
+
+variables:
+  CI_CD_PRODUCTION_IMAGE_PRE: "prod-"
 ##############################
 ############ JOBS ############
 ##############################
@@ -12,6 +15,7 @@ build:mailService:
     extends: 
       - .build 
       - .build_image
+    needs: []
     variables: 
          CI_CD_IMAGE_NAME: 'mailService' 
          CI_CD_PATH: 'dockerfiles/mailserviceDocker'
@@ -22,6 +26,7 @@ build:subscriptionService:
     extends: 
       - .build 
       - .build_image
+    needs: []
     variables: 
          CI_CD_IMAGE_NAME: 'subscriptionService'
          CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
@@ -53,42 +58,74 @@ deploy:subscriptionService:
     CI_CD_KUBE_FILE: /manifest.yml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]'
 
-deploy:status:
+    
+status:monitor_containers:
   extends:
     - .deploy
-    - .rollout_status
-    - .merge_request_production
+    - .kube_monitor
   needs:
-      - deploy:mailService
-      - deploy:subscriptionService
+    - deploy:mailService
+    - deploy:subscriptionService
   variables:
-    CI_CD_CHECK_STATUS: '[
-        {"type": "deployment", "name": "t04-mailService"},
-        {"type": "deployment", "name": "t04-subscription"}]'
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "/manifest.yml"
 
-deploy:failure:
+status:resource_consumption:
   extends:
     - .deploy
-    - .rollout_fail
-    - .on_failure_request_production
+    - .kube_top
   needs:
-    - deploy:status
+    - deploy:subscriptionService
+    - deploy:mailService
   variables:
-      CI_CD_DEPLOYMENT_FILES: "/manifest.yml"
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "/manifest.yml"
 
 
 
 ### Post ###
 cleanup:mailService:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: mailService
 
 cleanup:subscriptionService:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: subscriptionService
+
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "/manifest.yml"
