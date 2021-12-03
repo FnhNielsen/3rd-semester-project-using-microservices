@@ -11,7 +11,7 @@ variables:
 
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: v4.0
+    ref: v5.0
     file: 'base_pipeline.yml'
 
 ##############################
@@ -43,7 +43,7 @@ deploy:database:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
       optional: true
   variables:
     CI_CD_KUBE_FILE: database.yml
@@ -61,10 +61,38 @@ deploy:backend:
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-backend", "image": "backend"}]'
     CI_CD_TIMEOUT: 5m
 
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:database
+    - deploy:backend
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "database.yml backend.yml"
+
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    CI_CD_KUBE_FILES: "database.yml backend.yaml"
+
 ### Post ###
 cleanup:backend:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
 
@@ -72,7 +100,7 @@ cleanup:backend:
 
 cleanup:database:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
 
