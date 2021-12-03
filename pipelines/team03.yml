@@ -1,10 +1,9 @@
 ##############################
 ######## DON'T TOUCH #########
 ##############################
-
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v2.0.2
+    ref: v5.0
     file: base_pipeline.yml
 
 
@@ -16,67 +15,57 @@ variables:
   CI_CD_TOOL_DEBUG: "true"
 
 
-
+########### BUILD ############
 build:server:
   extends:
     - .build
     - .build_image
   needs: []
   variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    # CI_CD_FILE_NAME: (string) [Optional]
-    #   Default: Dockerfile
-    # CI_CD_PATH: (string) [Optional]
-    #   Default: .
-    #
     CI_CD_IMAGE_NAME: server
 
+########### DELIVER ############
 deploy:server:
   extends:
     - .deploy
     - .kube
   needs:
-    - deploy:kube_common
+    - build:server
   variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILE: (string) [Required]
-    # CI_CD_CONTAINER_IMAGES: (json) [Required]
-    #   E.g.
-    #     [
-    #       {"container": "t12-api", "image": "api"},
-    #       {"container": "t12-database", "image": "database"}
-    #     ]
-    #
-    CI_CD_KUBE_FILE: ./team03.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "development", "image": "server"}]'
+    CI_CD_KUBE_FILE: team03.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "development", "image": "server"}]'
 
-deploy:status:
+status:monitor_containers:
   extends:
     - .deploy
-    - .rollout_status
-    - .merge_request_production
+    - .kube_monitor
   needs:
     - deploy:server
   variables:
-    # Variable
-    #
-    # CI_CD_DEPLOYMENT_NAMES: (string) [Required]
-    #   E.g.
-    #     t12-common t12-api t12-database
-    #
-    CI_CD_DEPLOYMENT_NAMES: "development"
+    CI_CD_KUBE_FILES: "team03.yaml"
 
-cleanup:server_image:
+status:resource_consumption:
   extends:
-    - .cleanup_test_image
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:server
+  variables:
+    CI_CD_KUBE_FILES: "team03.yaml"
+
+########### POST ############
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    CI_CD_KUBE_FILES: "team03.yaml"
+
+cleanup:server:
+  extends:
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
-    # Variable
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    #
     CI_CD_IMAGE_NAME: server
 
