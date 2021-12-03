@@ -29,11 +29,8 @@ deploy:server:
   extends:
     - .deploy
     - .kube
-<<<<<<< HEAD
   needs:
     - build:server
-=======
->>>>>>> main
   variables:
     CI_CD_KUBE_FILE: team03.yaml
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "development", "image": "server"}]'
