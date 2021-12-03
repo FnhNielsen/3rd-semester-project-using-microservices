@@ -81,6 +81,25 @@ status:monitor_containers:
     #
     CI_CD_KUBE_FILES: "database.yml backend.yml"
 
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:database
+    - deploy:backend
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "database.yml backend.yml"
+
+
 cleanup:stage_env:
   extends:
     - .cleanup
