@@ -234,10 +234,16 @@ status:resource_consumption:
 ### Test ###
 test:integration:
   extends: .integration
+  image:
+    name: python:3.10-alpine3.14
+    entrypoint: ["/bin/sh"]
   needs:
     - status:monitor_containers
+  variables:
+    dataProvideUrl: http://debian.stream.stud-srv.sdu.dk
   script:
-    - echo "run integration test cmds or script"
+    - cd Test
+    - python ./test_api.py
 
 ### Post ###
 cleanup:stage_env:
