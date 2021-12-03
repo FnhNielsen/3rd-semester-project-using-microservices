@@ -1,11 +1,214 @@
-stages:
-  - build
+##############################
+######## DON'T TOUCH #########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
+include:
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v5.0
+    file: base_pipeline.yml
+
+variables:
+  CI_CD_PRODUCTION_IMAGE_PRE: "production/"
+
+##############################
+############ Jobs ############
+##############################
+### Build ###
+build:database:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: database
+    CI_CD_PATH: database/test/
+
+build:api:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: api
+
+### Deploy ###
+deploy:common:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - job: setup:stage_env
+      optional: true
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
+    #   E.g.
+    #     [
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
+    #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
+    #
+    CI_CD_KUBE_FILE: kube/common.yaml
+
+deploy:database:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:database
+    - deploy:common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
+    #   E.g.
+    #     [
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
+    #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
+    #
+    CI_CD_KUBE_FILE: kube/database-test.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t6-database-test ", "image": "database"}]'
+    CI_CD_TIMEOUT: 10m
+
+deploy:api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:api
+    - deploy:common
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILE: (string) [Required]
+    # CI_CD_CONTAINER_IMAGES: (json) [Optional]
+    #   E.g.
+    #     [
+    #       {"type": "Deployment", "container": "t12-api", "image": "api"},
+    #       {"type": "Deployment", "container": "t12-database", "image": "database"}
+    #     ]
+    # CI_CD_TIMEOUT: (string) [Optional]
+    #   Default: .
+    #   E.g. 5m or 10s ect..
+    #
+    CI_CD_KUBE_FILE: kube/webserver.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t6-webserver", "image": "api"}]'
+
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:database
+    - deploy:api
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "kube/database-test.yaml kube/webserver.yaml"
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:database
+    - deploy:api
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/database-test.yaml kube/webserver.yaml"
+
+### Test ###
+test:unit_api:
+  extends: .unit
+  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}api:${CI_CD_TAG}
+  needs:
+    - build:api
   script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: on_success
+    - mvn test -DrunUnitTests=true
+
+test:integration:
+  extends: .integration
+  needs:
+    - status:monitor_containers
+  script:
+    - echo "run integration test cmds or script"
+
+### Post ###
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "kube/common.yaml kube/database-test.yaml kube/webserver.yaml"
+
+cleanup:api:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: api
+
+cleanup:database:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: database
