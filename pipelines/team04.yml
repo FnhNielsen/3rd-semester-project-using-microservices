@@ -1,7 +1,7 @@
 include:
-- project: semester-project-e2021/team-12/ci-cd'
-  ref: v3.0
-  file: base_pipeline.yml
+  - project: semester-project-e2021/team-12/ci-cd
+    ref: v5.0
+    file: base_pipeline.yml
 
 ##############################
 ############ JOBS ############
@@ -13,8 +13,8 @@ build:mailService:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: 'mailService' 
-      - CI_CD_PATH: 'dockerfiles/mailserviceDocker'
+         CI_CD_IMAGE_NAME: 'mailService' 
+         CI_CD_PATH: 'dockerfiles/mailserviceDocker'
 
 
 #Builds subscriptionService image
@@ -23,8 +23,8 @@ build:subscriptionService:
       - .build 
       - .build_image
     variables: 
-      - CI_CD_IMAGE_NAME: 'subscriptionService'
-      - CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
+         CI_CD_IMAGE_NAME: 'subscriptionService'
+         CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
 
 
 #Run unit tests
@@ -92,4 +92,3 @@ cleanup:subscriptionService:
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: subscriptionService
-    

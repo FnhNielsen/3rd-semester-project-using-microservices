@@ -1,8 +1,10 @@
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v5.0
     file: base_pipeline.yml
 
+variables:
+  CI_CD_PRODUCTION_IMAGE_PRE: "prod-"
 ##############################
 ############ JOBS ############
 ##############################
@@ -12,9 +14,10 @@ build:mySQL:
     extends: 
       - .build 
       - .build_image
+    needs: []
     variables: 
-      - CI_CD_IMAGE_NAME: 'mysql' 
-      - CI_CD_PATH: 'MediaAcquisition/Docker/'
+        CI_CD_IMAGE_NAME: 'mysql' 
+        CI_CD_PATH: 'MediaAcquisition/Docker/'
 
 
 #Builds django service image
@@ -22,9 +25,10 @@ build:djangoService:
     extends: 
       - .build 
       - .build_image
+    needs: []
     variables: 
-      - CI_CD_IMAGE_NAME: 'django-service'
-      - CI_CD_PATH: 'MediaAcquisition/'
+         CI_CD_IMAGE_NAME: 'django-service'
+         CI_CD_PATH: 'MediaAcquisition/'
 
 
 # deliver
@@ -32,6 +36,8 @@ deploy:mySQL:
   extends:
     - .deploy
     - .kube
+  needs:
+    - build:mySQL
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t09-mysql", "image": "mysql"}]'
@@ -40,22 +46,76 @@ deploy:djangoService:
   extends:
     - .deploy
     - .kube
+  needs:
+  - build:djangoService
+  - deploy:mySQL
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t09-django", "image": "djangoService"}]'
 
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:djangoService
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: "MediaAcquisition/media-acquisition-kubernetes.yaml"
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:djangoService
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "MediaAcquisition/media-acquisition-kubernetes.yaml"
+
 ### Post ###
 cleanup:mySQL:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: mysql
 
 cleanup:djangoService:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: django-service
 
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: "MediaAcquisition/media-acquisition-kubernetes.yaml"
