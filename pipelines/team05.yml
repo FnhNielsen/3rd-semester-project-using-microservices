@@ -242,6 +242,7 @@ test:integration:
   variables:
     dataProvideUrl: http://debian.stream.stud-srv.sdu.dk
   script:
+    - pip install -U pytest=6.2.*
     - cd Test
     - python ./test_api.py
 
