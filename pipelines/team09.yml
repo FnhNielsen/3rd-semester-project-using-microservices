@@ -1,6 +1,6 @@
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v3.0
+    ref: v5.0
     file: base_pipeline.yml
 
 ##############################
@@ -43,6 +43,29 @@ deploy:djangoService:
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t09-django", "image": "djangoService"}]'
+  
+deploy:status:
+  extends:
+    - .deploy
+    - .rollout_status
+    - .merge_request_production
+  needs:
+      - deploy:mySQL
+      - deploy:djangoService
+  variables:
+    CI_CD_CHECK_STATUS: '[
+        {"type": "deployment", "name": "t09-mysql"},
+        {"type": "deployment", "name": "t09-django"}]'
+
+deploy:failure:
+  extends:
+    - .deploy
+    - .rollout_fail
+    - .on_failure_request_production
+  needs:
+    - deploy:status
+  variables:
+      CI_CD_DEPLOYMENT_FILES: "MediaAcquisition/media-acquisition-kubernetes.yaml"
 
 ### Post ###
 cleanup:mySQL:
@@ -58,4 +81,3 @@ cleanup:djangoService:
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: django-service
-
