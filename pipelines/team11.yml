@@ -39,19 +39,6 @@ build:database_image:
     CI_CD_PATH: Cassandra
 
 ### Deploy ###
-deploy:api:
-  extends:
-    - .deploy
-    - .kube
-  needs:
-    - build:api_image
-    - job: setup:stage_env
-      optional: true
-  variables:
-    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
-    CI_CD_TIMEOUT: 10m  
-
 deploy:database:
   extends:
     - .deploy
@@ -63,6 +50,20 @@ deploy:database:
   variables:
     CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "StatefulSet", "container": "t11-cassandra", "image": "database"}]'
+    CI_CD_TIMEOUT: 10m  
+
+deploy:api:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:api_image
+    - deploy:database
+    - job: setup:stage_env
+      optional: true
+  variables:
+    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
     CI_CD_TIMEOUT: 10m  
 
 deploy:db_service:
