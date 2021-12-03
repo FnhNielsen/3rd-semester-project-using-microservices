@@ -39,7 +39,7 @@ test:unit:
     - gradle:7.2.0-jdk17
   extends: .unit
   script:
-    - gradle test
+       gradle test
 
 # depliver
 deploy:mailService:
