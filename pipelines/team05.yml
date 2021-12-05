@@ -183,16 +183,6 @@ status:monitor_containers:
     - deploy:home
     - deploy:fluentd
   variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    # CI_CD_TIME: (string) [Optional]
-    #   E.g. 10m or 100s
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
@@ -214,14 +204,6 @@ status:resource_consumption:
     - deploy:home
     - deploy:fluentd
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
@@ -253,14 +235,6 @@ cleanup:stage_env:
     - .always_merge_request_production
     - .kube_delete
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/common.yaml kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
