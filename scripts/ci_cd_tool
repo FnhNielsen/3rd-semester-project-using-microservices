@@ -113,9 +113,8 @@ function command_create_image {
   validate_docker_image_input "$1"
 
   if [ -n "$4" ]; then
-    labels=$(echo "$4" | jq -r ".[] | @sh")
-    declare -a labels="($labels)"
-    labels=( "${arr[@]/#/--label }" )
+    readarray -t labels < <(echo "$4" | jq -r ".[]")
+    labels=( "${labels[@]/#/--label }" )
 
     docker_build_image "$1" "$2" "$3" "${labels[@]}"
   else
