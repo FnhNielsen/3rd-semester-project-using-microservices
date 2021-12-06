@@ -41,22 +41,22 @@ build:api:
     CI_CD_IMAGE_NAME: api
     CI_CD_PATH: api
 
-build:database:
-  extends:
-    - .build
-    - .build_image
-  needs: []
-  variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    # CI_CD_FILE_NAME: (string) [Optional]
-    #   Default: Dockerfile
-    # CI_CD_PATH: (string) [Optional]
-    #   Default: .
-    #
-    CI_CD_IMAGE_NAME: database
-    CI_CD_PATH: database
+#build:database:
+#  extends:
+#    - .build
+#    - .build_image
+#  needs: []
+#  variables:
+#    # Variables
+#    #
+#    # CI_CD_IMAGE_NAME: (string) [Required]
+#    # CI_CD_FILE_NAME: (string) [Optional]
+#    #   Default: Dockerfile
+#    # CI_CD_PATH: (string) [Optional]
+#    #   Default: .
+#    #
+#    CI_CD_IMAGE_NAME: database
+#    CI_CD_PATH: database
 
 ### Deploy ###
 deploy:common:
@@ -87,7 +87,6 @@ deploy:database:
     - .deploy
     - .kube
   needs:
-    - build:database
     - deploy:common
   variables:
     # Variables
