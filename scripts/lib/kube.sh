@@ -6,6 +6,65 @@ else
   source "./tools.sh"
 fi
 
+
+## Common
+function _kube_get_unique_values {
+  # $1: values (string) [Required]
+  # $2: filter (string) [Optional]
+  debug "Values: \"$1\""
+  debug "Filter: \"$2\""
+
+  values=$(echo " " | xargs -I"$2" echo " $1 " | xargs -n1 | sort -u | xargs)
+  debug "Result values: \"${values}\""
+  echo "${values}"
+}
+
+
+## Kube file methods
+function kube_get_kind {
+  # $1: file; set as file path (string) [Required]
+  # $2: service name [Required]
+  debug "File: \"$1\""
+  debug "Service name: \"$2\""
+
+  _kube_get_unique_values "$(yq e "select(.metadata.name==\"$2\") | .kind" "$1")" "---"
+}
+
+function kube_get_kinds {
+  # $1: file; set as file path (string) [Required]
+  debug "File: \"$1\""
+
+  _kube_get_unique_values "$(yq e ".kind" "$1")" "---"
+}
+
+function kube_get_service_name {
+  # $1: file; set as file path (string) [Required]
+  # $2: kind [Required]
+  debug "File: \"$1\""
+  debug "Kind: \"$2\""
+
+  yq e "select(.kind==\"$2\") | .metadata.name" "$1"
+}
+
+function kube_get_service_names {
+  # $1: file; set as file path (string) [Required]
+  debug "File: \"$1\""
+
+  _kube_get_unique_values "$(yq e ".metadata.name" "$1")" "---"
+}
+
+function kube_get_container_names {
+  # $1: file; set as file path (string) [Required]
+  # $2: kind (string) [Required]
+  # $3: service name (string) [Required]
+  debug "File: \"$1\""
+  debug "Kind: \"$2\""
+  debug "Service name: \"$3\""
+
+  _kube_get_unique_values "$(yq e "select(.kind==\"$2\") | select(.metadata.name==\"$3\") | .spec.template.spec.containers | .[] | .name" "$1")" "---"
+}
+
+
 function kube_set_image {
   # $1: file set as file path (string) [Required]
   # $2: kind (string) [Required]
@@ -50,6 +109,17 @@ function kube_delete {
   kubectl delete --kubeconfig="$2" -f "$1" || error_return "There was a deletion error."
 }
 
+function kube_get {
+  # $1: kind (string) [Required]
+  # $2: name (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+  debug "Kind: \"$1\""
+  debug "Name: \"$2\""
+  debug "Config file: \"$3\""
+
+  kubectl get --kubeconfig="$3" "${1,,}/$2" || error_return "Failed to get $1/$2."
+}
+
 function kube_describe {
   # $1: kind (string) [Required]
   # $2: name (string) [Required]
@@ -74,20 +144,7 @@ function kube_status {
   kubectl rollout status --kubeconfig="$3" --timeout="$4" "${1,,}/$2" || error_return "Failed to get status."
 }
 
-function kube_get_kinds {
-  # $1: file; set as file path (string) [Required]
-  debug "File: \"$1\""
-
-  _kube_get_unique_values "$(yq e ".kind" "$1")" "---"
-}
-
-function kube_get_service_names {
-  # $1: file; set as file path (string) [Required]
-  debug "File: \"$1\""
-
-  _kube_get_unique_values "$(yq e ".metadata.name" "$1")" "---"
-}
-
+# pod
 function kube_get_pods {
   # $1: file; set as file path (string) [Required]
   # $2: kind (string) [Required]
@@ -128,6 +185,16 @@ function kube_pod_log {
   kubectl logs "pod/$1" "$2" --kubeconfig="$3" || error_return "Failed to get log."
 }
 
+function kube_top_pod {
+  # $1: pod name (string) [Required]
+  # $2: config; file set as file path (string) [Required]
+  debug "Pod name: \"$1\""
+  debug "Config file: \"$2\""
+
+  kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
+}
+
+# container
 function kube_container_status {
   # $1: pod name (string) [Required]
   # $2: container name (string) [Required]
@@ -139,27 +206,6 @@ function kube_container_status {
   kubectl get --kubeconfig="$3" -o json "pod/$1" | jq -r ".status.containerStatuses[] | .state | keys | unique | .[]"
 }
 
-function kube_get {
-  # $1: kind (string) [Required]
-  # $2: name (string) [Required]
-  # $2: config; file set as file path (string) [Required]
-  debug "Kind: \"$1\""
-  debug "Name: \"$2\""
-  debug "Config file: \"$3\""
-
-  kubectl get --kubeconfig="$3" "${1,,}/$2" || error_return "Failed to get $1/$2."
-}
-
-function kube_top_pod {
-  # $1: pod name (string) [Required]
-  # $2: config; file set as file path (string) [Required]
-  debug "Pod name: \"$1\""
-  debug "Config file: \"$2\""
-
-  kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
-}
-
-# container
 function kube_container_exec {
   # $1: pod name (string) [Required]
   # $2: container name (string) [Required]
@@ -176,45 +222,4 @@ function kube_container_exec {
   debug "Config file: \"$4\""
 
   kubectl exec --kubeconfig="${config}" --stdin --tty "${pod}" -c "${container}" -- "${cmd_array[@]}"
-}
-
-
-function _kube_get_unique_values {
-  # $1: values (string) [Required]
-  # $2: filter (string) [Optional]
-  debug "Values: \"$1\""
-  debug "Filter: \"$2\""
-
-  values=$(echo " " | xargs -I"$2" echo " $1 " | xargs -n1 | sort -u | xargs)
-  debug "Result values: \"${values}\""
-  echo "${values}"
-}
-
-function kube_get_kind {
-  # $1: file; set as file path (string) [Required]
-  # $2: service name [Required]
-  debug "File: \"$1\""
-  debug "Service name: \"$2\""
-
-  _kube_get_unique_values "$(yq e "select(.metadata.name==\"$2\") | .kind" "$1")" "---"
-}
-
-function kube_get_service_name {
-  # $1: file; set as file path (string) [Required]
-  # $2: kind [Required]
-  debug "File: \"$1\""
-  debug "Kind: \"$2\""
-
-  yq e "select(.kind==\"$2\") | .metadata.name" "$1"
-}
-
-function kube_get_container_names {
-  # $1: file; set as file path (string) [Required]
-  # $2: kind (string) [Required]
-  # $3: service name (string) [Required]
-  debug "File: \"$1\""
-  debug "Kind: \"$2\""
-  debug "Service name: \"$3\""
-
-  _kube_get_unique_values "$(yq e "select(.kind==\"$2\") | select(.metadata.name==\"$3\") | .spec.template.spec.containers | .[] | .name" "$1")" "---"
 }
