@@ -163,3 +163,22 @@ function kube_top_pod {
 
   kubectl top pod --kubeconfig="$2" "$1" || error_return "Failed to get resource use."
 }
+
+# container
+function kube_container_exec {
+  # $1: pod name (string) [Required]
+  # $2: container name (string) [Required]
+  # $3: cmd (string) [Required]
+  # $4: config; file set as file path (string) [Required]
+  pod=$1
+  container=$2
+  eval "cmd_array=($3)"
+  config=$4
+
+  debug "Pod name: \"$1\""
+  debug "Container name: \"$2\""
+  debug "Command: $3"
+  debug "Config file: \"$4\""
+
+  kubectl exec --kubeconfig="${config}" --stdin --tty "${pod}" -c "${container}" -- "${cmd_array[@]}"
+}

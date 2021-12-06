@@ -325,6 +325,44 @@ function command_kube_top {
   done
 }
 
+function command_kube_exec {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: kind/service name (string) [Required]
+  # $3: container name (string) [Required]
+  # $4: cmd (string) [Required]
+  # $5: config; file set as file path (string) [Required]
+  info "Exec command."
+
+  validate_kube_file_input "$1"
+
+  tmp=("${2//\// }")
+  if [ -z "${tmp[1]}" ]; then
+    kind=$(kube_get_kind "$1" "${tmp[0]}")
+    service_name=${tmp[0]}
+  else
+    kind=${tmp[0]}
+    service_name=${tmp[1]}
+  fi
+
+  debug "Kind: \"${kind}\""
+  is_empty "${kind}" && error "No kind specified."
+
+  debug "Service name: \"${service_name}\""
+  is_empty "${service_name}" && error "No service name specified."
+
+  debug "Container name: \"$3\""
+  is_empty "$3" && error "No container name specified."
+
+  debug "Command: \"$4\""
+  is_empty "$4" && error "No command specified."
+
+  validate_kube_conf_input "$5"
+
+  for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$5"); do
+    kube_container_exec "${pod}" "$3" "$4" "$5"
+  done
+}
+
 # Version
 function command_normalize_version {
   debug "Get version."
@@ -378,6 +416,7 @@ function command_kube {
     outcome) shift; command_kube_describe_deploy "$@";;
     monitor) shift; command_kube_monitor_containers "$@";;
     top) shift; command_kube_top "$@";;
+    exec) shift; command_kube_exec "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
