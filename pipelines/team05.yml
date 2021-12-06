@@ -32,6 +32,16 @@ build:fluentd:
     CI_CD_IMAGE_NAME: fluentd
     CI_CD_PATH: Docker/fluent
 
+build:fakewithoutfluent:
+  extends:
+    - .build
+    - .build_image
+    - .merge_request_production
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: fakewithoutfluent
+    CI_CD_PATH: Docker/mockup/fakewithoutfluent
+
 build:api:
   extends:
     - .build
@@ -170,6 +180,19 @@ deploy:fluentd:
     CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-fluentd", "image": "fluentd"}]'
     CI_CD_TIMEOUT: 10m
 
+deploy:fakewithoutfluent:
+  extends:
+    - .deploy
+    - .kube
+    - .merge_request_production
+  needs:
+    - build:fakewithoutfluent
+    - deploy:api
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/mockup/fakemicroservice_temp.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-fake-temp", "image": "fakewithoutfluent"}]'
+    CI_CD_TIMEOUT: 10m
+
 # Status
 status:monitor_containers:
   extends:
@@ -182,17 +205,9 @@ status:monitor_containers:
     - deploy:visualisation
     - deploy:home
     - deploy:fluentd
+    - job: deploy:fakewithoutfluent
+      optional: true
   variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    # CI_CD_TIME: (string) [Optional]
-    #   E.g. 10m or 100s
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
@@ -200,7 +215,8 @@ status:monitor_containers:
       kubernetes/api.yml
       kubernetes/visualization.yml
       kubernetes/home.yml
-      kubernetes/fluentd-deployment.yml"
+      kubernetes/fluentd-deployment.yml
+      kubernetes/mockup/fakemicroservice_temp.yml"
 
 status:resource_consumption:
   extends:
@@ -213,15 +229,9 @@ status:resource_consumption:
     - deploy:visualisation
     - deploy:home
     - deploy:fluentd
+    - job: deploy:fakewithoutfluent
+      optional: true
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
@@ -229,7 +239,8 @@ status:resource_consumption:
       kubernetes/api.yml
       kubernetes/visualization.yml
       kubernetes/home.yml
-      kubernetes/fluentd-deployment.yml"
+      kubernetes/fluentd-deployment.yml
+      kubernetes/mockup/fakemicroservice_temp.yml"
 
 ### Test ###
 test:integration:
@@ -240,7 +251,7 @@ test:integration:
   needs:
     - status:monitor_containers
   variables:
-    dataProvideUrl: http://debian.stream.stud-srv.sdu.dk
+    DOMAIN: http://debian.stream.stud-srv.sdu.dk
   script:
     - pip install -U pytest==6.2.*
     - cd Test
@@ -253,14 +264,6 @@ cleanup:stage_env:
     - .always_merge_request_production
     - .kube_delete
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/common.yaml kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "kubernetes/elasticsearch_statefulset.yml
       kubernetes/mongo.yml
       kubernetes/kibana.yml
@@ -269,7 +272,8 @@ cleanup:stage_env:
       kubernetes/api.yml
       kubernetes/visualization.yml
       kubernetes/home.yml
-      kubernetes/fluentd-deployment.yml"
+      kubernetes/fluentd-deployment.yml
+      kubernetes/mockup/fakemicroservice_temp.yml"
 
 cleanup:data_pull:
   extends:
@@ -284,6 +288,14 @@ cleanup:fluentd:
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: fluentd
+
+cleanup:fakewithoutfluent:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+    - .always_merge_request_production
+  variables:
+    CI_CD_IMAGE_NAME: fakewithoutfluent
 
 cleanup:api:
   extends:

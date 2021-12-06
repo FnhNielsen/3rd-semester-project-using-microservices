@@ -17,17 +17,21 @@ Options:
   -v, --debug  Print more info.
   -h, --help   Print this help message."
 
-LIB_DIR="/usr/local/lib/ci_cd_lib"
-if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
-  LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/lib"
+if [ -f "/usr/local/lib/ci_cd_lib/gitlab.sh" ]; then
+  source "/usr/local/lib/ci_cd_lib/tools.sh"
+  source "/usr/local/lib/ci_cd_lib/semver_version.sh"
+  source "/usr/local/lib/ci_cd_lib/git.sh"
+  source "/usr/local/lib/ci_cd_lib/gitlab.sh"
+  source "/usr/local/lib/ci_cd_lib/docker.sh"
+  source "/usr/local/lib/ci_cd_lib/kube.sh"
+else
+  source "./lib/tools.sh"
+  source "./lib/semver_version.sh"
+  source "./lib/git.sh"
+  source "./lib/gitlab.sh"
+  source "./lib/docker.sh"
+  source "./lib/kube.sh"
 fi
-
-source "${LIB_DIR}/tools.sh"
-source "${LIB_DIR}/semver_version.sh"
-source "${LIB_DIR}/git.sh"
-source "${LIB_DIR}/gitlab.sh"
-source "${LIB_DIR}/docker.sh"
-source "${LIB_DIR}/kube.sh"
 
 if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:upper:]' '[:lower:]')" == "true" ]; then
   DEBUG=1
@@ -45,6 +49,7 @@ function unknown_help() {
     echo -e "${USAGE}" >&2;
     exit 1
 }
+
 
 # Common
 function validate_kube_file_input {
@@ -109,9 +114,8 @@ function command_create_image {
   validate_docker_image_input "$1"
 
   if [ -n "$4" ]; then
-    labels=$(echo "$4" | jq -r ".[] | @sh")
-    declare -a labels="($labels)"
-    labels=( "${arr[@]/#/--label }" )
+    readarray -t labels < <(echo "$4" | jq -r ".[]")
+    labels=( "${labels[@]/#/--label }" )
 
     docker_build_image "$1" "$2" "$3" "${labels[@]}"
   else
@@ -208,20 +212,23 @@ function command_kube_describe_deploy {
   validate_kube_conf_input "$2"
 
   for kind in $(kube_get_kinds "$1"); do
-    for name in $(kube_get_service_names "$1" "${kind}"); do
-        echo "==== describe ${kind,,}/${name} ===="
-        kube_describe "${kind,,}/${name}" "$2" || warning "It was not possible to describe ${kind,,}/${name}."
+    service_name=$(kube_get_service_name "$1" "${kind}")
 
-        if [ "${kind}" == "Deployment" ] || [ "${kind}" == "StatefulSet" ]; then
-          for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
-            echo "==== describe pod/${pod} ===="
-            kube_describe "pod/${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
+    echo "==== describe ${kind}/${service_name} ===="
+    kube_describe "${kind}" "${service_name}" "$2" || warning "It was not possible to describe ${kind}/${service_name}."
 
-            echo "==== pod/${pod} log ===="
-            kube_service_pod_log "${kind,,}/${name}" "${pod}" "$2" || warning "No logs available."
-          done
-        fi
+    for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
+      echo "==== get pod/${pod} ===="
+      kube_get "pod" "${pod}" "$2" || warning "It was not possible to get pod/${pod}."
+
+      echo "==== describe pod/${pod} ===="
+      kube_describe "pod" "${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
+
+      for container_name in $(kube_get_container_names "$1" "${kind}" "${service_name}"); do
+        echo "==== pod/${pod} container/${container_name} log ===="
+        kube_pod_log "${pod}" "${container_name}" "$2" || warning "No logs available."
       done
+    done
   done
 }
 
@@ -238,9 +245,10 @@ function command_kube_status {
   debug "Timeout: \"${timeout}\""
 
   for kind in ${POD_KINDS}; do
-    for name in $(kube_get_service_names "$1" "${kind}"); do
-        kube_status "${kind,,}/${name}" "$2" "${timeout}" || exit 1
-    done
+    service_name=$(kube_get_service_name "$1" "${kind}")
+    if [ -n "${service_name}" ]; then
+      kube_status "${kind,,}" "${service_name}" "$2" "${timeout}" || exit 1
+    fi
   done
 }
 
@@ -253,14 +261,17 @@ function command_kube_monitor_containers {
   validate_kube_conf_input "$2"
 
   # Create a pod list
-  pods=()
+  pods='[]'
   for file in $1; do
     validate_kube_file_input "${file}"
 
-    for kind in ${POD_KINDS}; do
-      for name in $(kube_get_service_names "${file}" "${kind}"); do
-        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
-          pods+=("pod/${pod}")
+    for kind in $(kube_get_kinds "${file}"); do
+      service_name=$(kube_get_service_name "${file}" "${kind}")
+      for pod in $(kube_get_pods "${file}" "${kind}" "${service_name}" "$2"); do
+        for container_name in $(kube_get_container_names "${file}" "${kind}" "${service_name}"); do
+          if [ "$(echo "${pods}" | jq -r ".[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\")")" == "" ]; then
+            pods=$(echo "${pods}" | jq -r ". += [{\"pod\": \"${pod}\", \"container_name\": \"${container_name}\", \"status\": \"\"}]")
+          fi
         done
       done
     done
@@ -276,34 +287,44 @@ function command_kube_monitor_containers {
   [ ${time} -le 0 ] && time=180
   monitor_time=$(($(date +%s) + "${time}"))
 
-  # monitor pods
-  container_status=()
+  # monitor containers
   while [ ${monitor_time} -ge "$(date +%s)" ]; do
-    for i in "${!pods[@]}"; do
-      debug "${pods[${i}]}"
+    for row in $(echo "${pods}" | jq -r ".[] | @base64"); do
+      _jq() { echo "${row}" | base64 -d | jq -r "$1"; }
 
-      new_container_status=$(kube_container_status "${pods[${i}]}" "$2")
-      debug "${new_container_status}"
+      pod=$(_jq ".pod")
+      container_name=$(_jq ".container_name")
+      status=$(_jq ".status")
 
-      if [ "${container_status[${i}]}" != "${new_container_status}" ]; then
-        if [ -n "${container_status[${i}]}" ]; then
-          echo "---"
-        fi
+      new_status=$(kube_container_status "${pod}" "${container_name}" "$2")
+      if [ "${status}" != "${new_status}" ]; then
+        pods=$(echo "${pods}" | jq -r "(.[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\") | .status) |= \"${new_status}\"")
 
-        kube_get "${pods[${i}]}" "$2"
-
-        container_status[${i}]=${new_container_status}
+        [ -n "${status}" ] && echo "---"
+        kube_get "pod" "${pod}" "$2"
       fi
     done
 
     sleep 1
   done
 
-  for status in ${container_status[*]}; do
-    [ "${status}" != "running" ] && exit 1
+  # outcome
+  exit_code=0
+  for row in $(echo "${pods}" | jq -r ".[] | @base64"); do
+    _jq() { echo "${row}" | base64 -d | jq -r "$1"; }
+
+    if [ "$(_jq ".status")" != "running" ]; then
+      pod=$(_jq ".pod")
+      container_name=$(_jq ".container_name")
+
+      echo "==== pod/${pod} container/${container_name} log ===="
+      kube_pod_log "${pod}" "${container_name}" "$2" || warning "No logs available."
+
+      exit_code=1
+    fi
   done
 
-  exit 0
+  exit ${exit_code}
 }
 
 function command_kube_top {
@@ -311,18 +332,52 @@ function command_kube_top {
   # $2: config file; set as file path (string) [Required]
   info "Get pod(s) resource use."
 
+  validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  for file in $1; do
-    validate_kube_file_input "${file}"
-
-    for kind in ${POD_KINDS}; do
-      for name in $(kube_get_service_names "${file}" "${kind}"); do
-        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
-          kube_top_pod "${pod}" "$2"
-        done
-      done
+  for kind in $(kube_get_kinds "$1"); do
+    service_name=$(kube_get_service_name "$1" "${kind}")
+    for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
+      kube_top_pod "${pod}" "$2" || warning "No resource available."
     done
+  done
+}
+
+function command_kube_exec {
+  # $1: files; set as file path foreach file (string) [Required]
+  # $2: kind/service name (string) [Required]
+  # $3: container name (string) [Required]
+  # $4: cmd (string) [Required]
+  # $5: config; file set as file path (string) [Required]
+  info "Exec command."
+
+  validate_kube_file_input "$1"
+
+  tmp=("${2//\// }")
+  if [ -z "${tmp[1]}" ]; then
+    kind=$(kube_get_kind "$1" "${tmp[0]}")
+    service_name=${tmp[0]}
+  else
+    kind=${tmp[0]}
+    service_name=${tmp[1]}
+  fi
+
+  debug "Kind: \"${kind}\""
+  is_empty "${kind}" && error "No kind specified."
+
+  debug "Service name: \"${service_name}\""
+  is_empty "${service_name}" && error "No service name specified."
+
+  debug "Container name: \"$3\""
+  is_empty "$3" && error "No container name specified."
+
+  debug "Command: \"$4\""
+  is_empty "$4" && error "No command specified."
+
+  validate_kube_conf_input "$5"
+
+  for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$5"); do
+    kube_container_exec "${pod}" "$3" "$4" "$5"
   done
 }
 
@@ -379,6 +434,7 @@ function command_kube {
     outcome) shift; command_kube_describe_deploy "$@";;
     monitor) shift; command_kube_monitor_containers "$@";;
     top) shift; command_kube_top "$@";;
+    exec) shift; command_kube_exec "$@";;
     *) echo "Unknown command: $1"; unknown_help;;
   esac
 }
@@ -400,7 +456,6 @@ function command_git {
 
 for arg in "$@"; do
   shift
-  # shellcheck disable=SC2034
   case $arg in
     --help|-h) usage_help;;
     -v|--debug) DEBUG=1;;

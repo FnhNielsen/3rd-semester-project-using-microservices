@@ -15,9 +15,9 @@ variables:
   CI_CD_TOOL_DEBUG: "false"
   # Setting variable to set up the base pipeline
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.8
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.8
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.8
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.11
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.11
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.11
   # These variables are handled by the base pipeline and must not be changed
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
@@ -63,19 +63,16 @@ default:
 ### Rules ###
 # Run rules
 .merge_request_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .merge_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .except_merge_production:
-  allow_failure: false
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
@@ -93,7 +90,6 @@ default:
       when: on_success
 
 .except_development:
-  allow_failure: false
   rules:
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
@@ -102,13 +98,11 @@ default:
       when: on_success
 
 .always_merge_request_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
 .always_except_merge_production:
-  allow_failure: false
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
@@ -125,13 +119,6 @@ default:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
-.on_failure_request_production:
-  allow_failure: false
-  rules:
-    # production
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
-      when: on_failure
-
 # Job rules
 .build:
   stage: build
@@ -141,26 +128,31 @@ default:
   stage: test
   extends:
     - .except_merge_production
+  allow_failure: false
 
 .acceptance:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .integration:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .performance:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .deploy:
   stage: deploy
   extends:
     - .except_development
+  allow_failure: false
 
 .cleanup:
   stage: .post
@@ -313,7 +305,9 @@ default:
   image: $CI_CD_KUBE_IMAGE
   script:
     - sleep 60
-    - ci_cd_tool kube top "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
+    - for file in ${CI_CD_KUBE_FILES}; do
+        ci_cd_tool kube top "${file}" "${CI_CD_KUBE_CONFIG}";
+      done
 
 .kube_delete:
   # Variable
