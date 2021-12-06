@@ -30,6 +30,8 @@ function kube_set_image {
   fi
 }
 
+
+## Kube methods
 function kube_apply {
   # $1: file set as file path (string) [Required]
   # $2: config; file set as file path (string) [Required]
