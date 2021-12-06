@@ -313,7 +313,9 @@ default:
   image: $CI_CD_KUBE_IMAGE
   script:
     - sleep 60
-    - ci_cd_tool kube top "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}"
+    - for file in ${CI_CD_KUBE_FILES}; do
+        ci_cd_tool kube top "${file}" "${CI_CD_KUBE_CONFIG}";
+      done
 
 .kube_delete:
   # Variable

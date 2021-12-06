@@ -314,17 +314,13 @@ function command_kube_top {
   # $2: config file; set as file path (string) [Required]
   info "Get pod(s) resource use."
 
+  validate_kube_file_input "$1"
   validate_kube_conf_input "$2"
 
-  for file in $1; do
-    validate_kube_file_input "${file}"
-
-    for kind in ${POD_KINDS}; do
-      for name in $(kube_get_service_names "${file}" "${kind}"); do
-        for pod in $(kube_service_pods "${kind,,}/${name}" "$2"); do
-          kube_top_pod "${pod}" "$2"
-        done
-      done
+  for kind in $(kube_get_kinds "$1"); do
+    service_name=$(kube_get_service_name "$1" "${kind}")
+    for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
+      kube_top_pod "${pod}" "$2"
     done
   done
 }
