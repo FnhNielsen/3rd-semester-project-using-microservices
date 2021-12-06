@@ -41,22 +41,22 @@ build:api:
     CI_CD_IMAGE_NAME: api
     CI_CD_PATH: api
 
-#build:database:
-#  extends:
-#    - .build
-#    - .build_image
-#  needs: []
-#  variables:
-#    # Variables
-#    #
-#    # CI_CD_IMAGE_NAME: (string) [Required]
-#    # CI_CD_FILE_NAME: (string) [Optional]
-#    #   Default: Dockerfile
-#    # CI_CD_PATH: (string) [Optional]
-#    #   Default: .
-#    #
-#    CI_CD_IMAGE_NAME: database
-#    CI_CD_PATH: database
+build:database:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    # Variables
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    # CI_CD_FILE_NAME: (string) [Optional]
+    #   Default: Dockerfile
+    # CI_CD_PATH: (string) [Optional]
+    #   Default: .
+    #
+    CI_CD_IMAGE_NAME: database
+    CI_CD_PATH: database
 
 ### Deploy ###
 deploy:common:
@@ -87,6 +87,7 @@ deploy:database:
     - .deploy
     - .kube
   needs:
+    - build:database
     - deploy:common
   variables:
     # Variables
@@ -135,7 +136,6 @@ status:monitor_containers:
     - .deploy
     - .kube_monitor
   needs:
-    - deploy:database
     - deploy:api
   variables:
     # Variables
@@ -155,7 +155,6 @@ status:resource_consumption:
     - .deploy
     - .kube_top
   needs:
-    - deploy:database
     - deploy:api
   variables:
     # Variable
@@ -182,6 +181,9 @@ test:unit_api:
 test:unit_database:
   extends: .unit
   image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
+  needs:
+    - job: build:database
+      optional: true
   script:
     - echo "run unit test cmds or script"
     - echo "run unit test cmds or script"
