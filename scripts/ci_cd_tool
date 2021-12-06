@@ -268,9 +268,9 @@ function command_kube_monitor_containers {
     for kind in $(kube_get_kinds "${file}"); do
       service_name=$(kube_get_service_name "${file}" "${kind}")
       for pod in $(kube_get_pods "${file}" "${kind}" "${service_name}" "$2"); do
-        for container_name in $(kube_get_container_names "$1" "${kind}" "${service_name}"); do
-          if [ "$(echo $pods | jq -r ".[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\")")" == "" ]; then
-            pods=$(echo ${pods} | jq -r ". += [{\"pod\": \"${pod}\", \"container_name\": \"${container_name}\", \"status\": \"\"}]")
+        for container_name in $(kube_get_container_names "${file}" "${kind}" "${service_name}"); do
+          if [ "$(echo "${pods}" | jq -r ".[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\")")" == "" ]; then
+            pods=$(echo "${pods}" | jq -r ". += [{\"pod\": \"${pod}\", \"container_name\": \"${container_name}\", \"status\": \"\"}]")
           fi
         done
       done
