@@ -63,19 +63,16 @@ default:
 ### Rules ###
 # Run rules
 .merge_request_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .merge_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_CD_PRODUCTION_BRANCH
       when: on_success
 
 .except_merge_production:
-  allow_failure: false
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
@@ -93,7 +90,6 @@ default:
       when: on_success
 
 .except_development:
-  allow_failure: false
   rules:
     # production
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
@@ -102,13 +98,11 @@ default:
       when: on_success
 
 .always_merge_request_production:
-  allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_PRODUCTION_BRANCH
       when: always
 
 .always_except_merge_production:
-  allow_failure: false
   rules:
     # development
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_CD_DEVELOPMENT_BRANCH
@@ -134,26 +128,31 @@ default:
   stage: test
   extends:
     - .except_merge_production
+  allow_failure: false
 
 .acceptance:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .integration:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .performance:
   stage: test
   extends:
     - .merge_request_production
+  allow_failure: false
 
 .deploy:
   stage: deploy
   extends:
     - .except_development
+  allow_failure: false
 
 .cleanup:
   stage: .post
