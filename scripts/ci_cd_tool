@@ -17,17 +17,21 @@ Options:
   -v, --debug  Print more info.
   -h, --help   Print this help message."
 
-LIB_DIR="/usr/local/lib/ci_cd_lib"
-if [ ! -f "${LIB_DIR}/gitlab.sh" ]; then
-  LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/lib"
+if [ -f "/usr/local/lib/ci_cd_lib/gitlab.sh" ]; then
+  source "/usr/local/lib/ci_cd_lib/tools.sh"
+  source "/usr/local/lib/ci_cd_lib/semver_version.sh"
+  source "/usr/local/lib/ci_cd_lib/git.sh"
+  source "/usr/local/lib/ci_cd_lib/gitlab.sh"
+  source "/usr/local/lib/ci_cd_lib/docker.sh"
+  source "/usr/local/lib/ci_cd_lib/kube.sh"
+else
+  source "./lib/tools.sh"
+  source "./lib/semver_version.sh"
+  source "./lib/git.sh"
+  source "./lib/gitlab.sh"
+  source "./lib/docker.sh"
+  source "./lib/kube.sh"
 fi
-
-source "${LIB_DIR}/tools.sh"
-source "${LIB_DIR}/semver_version.sh"
-source "${LIB_DIR}/git.sh"
-source "${LIB_DIR}/gitlab.sh"
-source "${LIB_DIR}/docker.sh"
-source "${LIB_DIR}/kube.sh"
 
 if [ "${CI_CD_TOOL_DEBUG}" == "1" ] || [ "$(echo "${CI_CD_TOOL_DEBUG}" | tr '[:upper:]' '[:lower:]')" == "true" ]; then
   DEBUG=1

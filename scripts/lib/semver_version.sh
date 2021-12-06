@@ -1,6 +1,10 @@
 #!/bin/bash
 
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/tools.sh"
+if [ -f "/usr/local/lib/ci_cd_lib/tools.sh" ]; then
+  source "/usr/local/lib/ci_cd_lib/tools.sh"
+else
+  source "./tools.sh"
+fi
 
 function check_version_scheme {
   # $1: Version (string) [Required]
