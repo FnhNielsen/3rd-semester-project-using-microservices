@@ -50,6 +50,7 @@ function unknown_help() {
     exit 1
 }
 
+
 # Common
 function validate_kube_file_input {
   # $1: file; set as file path (string) [Required]
@@ -438,7 +439,6 @@ function command_git {
 
 for arg in "$@"; do
   shift
-  # shellcheck disable=SC2034
   case $arg in
     --help|-h) usage_help;;
     -v|--debug) DEBUG=1;;
