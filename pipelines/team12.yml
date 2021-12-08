@@ -179,24 +179,27 @@ test:unit_api:
 
 test:acceptance:
   extends: .acceptance
-  needs: []
+  needs:
+    - test:unit_api
   script:
-    - docker compose up
-    - sleep 1m
-    - docker compose exec t12-api python ./app/tests/integration_test.py
+    - echo "run performance test cmds or script"
+    - echo "run performance test cmds or script"
 
 test:integration:
   extends: .integration
-  needs:
-    - status:monitor_containers
+  image: $CI_CD_DOCKER_IMAGE
+  services:
+    - docker:dind
+  needs: []
   script:
-    - echo "run integration test cmds or script"
-    - echo "run integration test cmds or script"
+    - docker compose up -d
+    - sleep 1m
+    - docker compose exec t12-api python ./app/tests/integration_test.py
 
 test:performance:
   extends: .performance
   needs:
-    - test:integration
+    - test:acceptance
   script:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
