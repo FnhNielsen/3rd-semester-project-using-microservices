@@ -293,7 +293,8 @@ default:
   variables:
     CI_CD_TIME: "3m"
   script:
-    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}"
+    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}" 
+        || echo "It may be helpful to see the guide on 'How to use and understand CI in your project' ${CI_CD_GUIDE_URL}#how-to-use-and-understand-ci-in-your-project"
 
 .kube_top:
   # Variable
@@ -335,6 +336,7 @@ test:check_request_title:
   needs: []
   script:
     - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
+        || echo "See the guide on 'Semantic Versioning' ${CI_CD_GUIDE_URL}#semantic-versioning"
 
 setup:stage_env:
   stage: .pre
