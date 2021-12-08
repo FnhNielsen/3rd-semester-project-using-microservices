@@ -192,7 +192,7 @@ test:integration:
     - docker:dind
   needs: []
   script:
-    - docker compose up -d
+    - docker-compose up -d
     - sleep 1m
     - docker compose exec t12-api python ./app/tests/integration_test.py
 
