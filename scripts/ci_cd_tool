@@ -313,7 +313,10 @@ function command_kube_monitor_containers {
   for row in $(echo "${pods}" | jq -r ".[] | @base64"); do
     _jq() { echo "${row}" | base64 -d | jq -r "$1"; }
 
-    if [ "$(_jq ".status")" != "running" ]; then
+    status=$(_jq ".status")
+    debug "Container status ${status}"
+
+    if [ "${status}" != "running" ]; then
       pod=$(_jq ".pod")
       container_name=$(_jq ".container_name")
 

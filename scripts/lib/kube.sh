@@ -203,7 +203,7 @@ function kube_container_status {
   debug "Container name: \"$2\""
   debug "Config file: \"$3\""
 
-  kubectl get --kubeconfig="$3" -o json "pod/$1" | jq -r ".status.containerStatuses[] | .state | keys | unique | .[]"
+  kubectl get --kubeconfig="$3" -o json "pod/$1" | jq -r ".status.containerStatuses[] | select(.name == \"$2\").state | keys | .[]"
 }
 
 function kube_container_exec {
