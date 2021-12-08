@@ -174,27 +174,16 @@ test:unit_api:
     - job: build:api
       optional: true
   script:
-    - echo "run unit test cmds or script"
-    - echo "run unit test cmds or script"
-
-test:unit_database:
-  extends: .unit
-  image: ${CI_REGISTRY_IMAGE}/${CI_CD_PRE_IMAGE_NAME}database:${CI_CD_TAG}
-  needs:
-    - job: build:database
-      optional: true
-  script:
-    - echo "run unit test cmds or script"
-    - echo "run unit test cmds or script"
+    - cd app
+    - pytest
 
 test:acceptance:
   extends: .acceptance
-  needs:
-    - test:unit_api
-    - test:unit_database
+  needs: []
   script:
-    - echo "run acceptance test cmds or script"
-    - echo "run acceptance test cmds or script"
+    - docker compose up
+    - sleep 1m
+    - docker compose exec t12-api python ./app/tests/integration_test.py
 
 test:integration:
   extends: .integration
