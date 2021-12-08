@@ -182,24 +182,21 @@ test:acceptance:
   needs:
     - test:unit_api
   script:
-    - echo "run performance test cmds or script"
-    - echo "run performance test cmds or script"
+    - echo "run acceptance test cmds or script"
+    - echo "run acceptance test cmds or script"
 
 test:integration:
   extends: .integration
-  image: $CI_CD_DOCKER_IMAGE
-  services:
-    - docker:dind
-  needs: []
+  needs: 
+    - test:acceptance
   script:
-    - docker-compose up -d
-    - sleep 1m
-    - docker compose exec t12-api python ./app/tests/integration_test.py
+    - echo "run integration test cmds or script"
+    - echo "run integration test cmds or script"
 
 test:performance:
   extends: .performance
   needs:
-    - test:acceptance
+    - test:integration
   script:
     - echo "run performance test cmds or script"
     - echo "run performance test cmds or script"
