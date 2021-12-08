@@ -246,7 +246,7 @@ status:resource_consumption:
 test:integration:
   extends: .integration
   image:
-    name: python:3.4-alpine3.9
+    name: python:3.10-alpine3.14
     entrypoint: ["/bin/sh"]
   needs:
     - status:monitor_containers
