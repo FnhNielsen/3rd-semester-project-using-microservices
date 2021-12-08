@@ -298,6 +298,7 @@ function command_kube_monitor_containers {
 
       new_status=$(kube_container_status "${pod}" "${container_name}" "$2")
       if [ "${status}" != "${new_status}" ]; then
+        # Update the pod status
         pods=$(echo "${pods}" | jq -r "(.[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\") | .status) |= \"${new_status}\"")
 
         [ -n "${status}" ] && echo "---"
@@ -341,7 +342,7 @@ function command_kube_top {
   for kind in $(kube_get_kinds "$1"); do
     service_name=$(kube_get_service_name "$1" "${kind}")
     for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
-      kube_top_pod "${pod}" "$2" || warning "No resource available."
+      kube_top_pod "${pod}" "$2" || warning "It was not possible to get resource."
     done
   done
 }
