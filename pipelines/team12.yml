@@ -190,8 +190,7 @@ test:integration:
   needs: 
     - test:acceptance
   script:
-    - echo "run integration test cmds or script"
-    - echo "run integration test cmds or script"
+    - kubectl exec deploy/t12-api -c t12-api --kubeconfig="${CI_CD_KUBE_CONFIG}" -- python /app/integration_t.py
 
 test:performance:
   extends: .performance
