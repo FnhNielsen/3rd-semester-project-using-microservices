@@ -188,7 +188,7 @@ test:acceptance:
 test:integration:
   extends: .integration
   needs: 
-    - test:acceptance
+    - deploy:api
   script:
     - kubectl exec deploy/t12-api -c t12-api --kubeconfig="${CI_CD_KUBE_CONFIG}" -- python /app/integration_t.py
 
