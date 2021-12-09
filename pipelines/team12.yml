@@ -174,7 +174,7 @@ test:unit_api:
     - job: build:api
       optional: true
   script:
-    - cd app
+    - cd /app
     - pytest
 
 test:acceptance:
