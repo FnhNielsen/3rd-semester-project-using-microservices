@@ -10,25 +10,25 @@ variables:
 ############ JOBS ############
 ##############################
 
-#Builds mailService image
-build:mailService:
+#Builds mail_service image
+build:mail_service:
     extends: 
       - .build 
       - .build_image
     needs: []
     variables: 
-         CI_CD_IMAGE_NAME: 'mailService' 
+         CI_CD_IMAGE_NAME: 'mail_service' 
          CI_CD_PATH: 'dockerfiles/mailserviceDocker'
 
 
-#Builds subscriptionService image
-build:subscriptionService:
+#Builds subscription_service image
+build:subscription_service:
     extends: 
       - .build 
       - .build_image
     needs: []
     variables: 
-         CI_CD_IMAGE_NAME: 'subscriptionService'
+         CI_CD_IMAGE_NAME: 'subscription_service'
          CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
 
 
@@ -42,21 +42,21 @@ test:unit:
        gradle test
 
 # depliver
-deploy:mailService:
+deploy:mail_service:
   extends:
     - .deploy
     - .kube
   variables:
     CI_CD_KUBE_FILE: /manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mailService"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mail_service"}]'
 
-deploy:subscriptionService:
+deploy:subscription_service:
   extends:
     - .deploy
     - .kube
   variables:
     CI_CD_KUBE_FILE: /manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionService"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscription_service"}]'
 
     
 status:monitor_containers:
@@ -64,8 +64,8 @@ status:monitor_containers:
     - .deploy
     - .kube_monitor
   needs:
-    - deploy:mailService
-    - deploy:subscriptionService
+    - deploy:mail_service
+    - deploy:subscription_service
   variables:
     # Variables
     #
@@ -84,8 +84,8 @@ status:resource_consumption:
     - .deploy
     - .kube_top
   needs:
-    - deploy:subscriptionService
-    - deploy:mailService
+    - deploy:subscription_service
+    - deploy:mail_service
   variables:
     # Variable
     #
@@ -100,19 +100,19 @@ status:resource_consumption:
 
 
 ### Post ###
-cleanup:mailService:
+cleanup:mail_service:
   extends:
     - .cleanup
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: mailService
+    CI_CD_IMAGE_NAME: mail_service
 
-cleanup:subscriptionService:
+cleanup:subscription_service:
   extends:
     - .cleanup
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: subscriptionService
+    CI_CD_IMAGE_NAME: subscription_service
 
 cleanup:stage_env:
   extends:
