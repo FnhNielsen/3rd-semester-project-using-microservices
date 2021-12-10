@@ -15,9 +15,9 @@ variables:
   CI_CD_TOOL_DEBUG: "false"
   # Setting variable to set up the base pipeline
   CI_CD_GUIDE_URL: https://gitlab.sdu.dk/semester-project-e2021/team-12/ci-cd/-/blob/dev/README.md
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.11
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.11
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.11
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.12
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.12
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.12
   # These variables are handled by the base pipeline and must not be changed
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
@@ -54,9 +54,10 @@ default:
   artifacts:
     name: job-${CI_JOB_NAME}-failed-commit-${CI_COMMIT_SHORT_SHA}
     paths:
-      - "${CI_PROJECT_DIR}/*"
+      - ${CI_PROJECT_DIR}/
     exclude:
-      - "${CI_PROJECT_DIR}/.git"
+      - ${CI_PROJECT_DIR}/.git/**/*
+    untracked: true
     when: on_failure
     expire_in: 8 hrs
 
@@ -166,10 +167,11 @@ default:
   artifacts:
     name: job-${CI_JOB_NAME}-commit-${CI_COMMIT_SHORT_SHA}
     paths:
-      - "${CI_PROJECT_DIR}/*"
+      - ${CI_PROJECT_DIR}/
     exclude:
-      - "${CI_PROJECT_DIR}/.git"
+      - ${CI_PROJECT_DIR}/.git/**/*
     untracked: true
+    when: always
     expire_in: 3 hrs
 
 .build_image:
@@ -291,7 +293,8 @@ default:
   variables:
     CI_CD_TIME: "3m"
   script:
-    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}"
+    - ci_cd_tool kube monitor "${CI_CD_KUBE_FILES}" "${CI_CD_KUBE_CONFIG}" "${CI_CD_TIME}" 
+        || echo "It may be helpful to see the guide on 'How to use and understand CI in your project' ${CI_CD_GUIDE_URL}#how-to-use-and-understand-ci-in-your-project"
 
 .kube_top:
   # Variable
@@ -333,6 +336,7 @@ test:check_request_title:
   needs: []
   script:
     - ci_cd_tool version validate ${CI_MERGE_REQUEST_TITLE}
+        || echo "See the guide on 'Semantic Versioning' ${CI_CD_GUIDE_URL}#semantic-versioning"
 
 setup:stage_env:
   stage: .pre

@@ -88,6 +88,7 @@ deploy:mongo:
     - .kube
   needs:
     - job: setup:stage_env
+      optional: true
   variables:
     CI_CD_KUBE_FILE: kubernetes/mongo.yml
     CI_CD_TIMEOUT: 10m
