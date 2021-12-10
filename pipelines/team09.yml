@@ -10,7 +10,7 @@ variables:
 ##############################
 
 #Builds mysql image
-build:mySQL:
+build:mysql:
     extends: 
       - .build 
       - .build_image
@@ -21,7 +21,7 @@ build:mySQL:
 
 
 #Builds django service image
-build:djangoService:
+build:django_service:
     extends: 
       - .build 
       - .build_image
@@ -37,28 +37,28 @@ deploy:mySQL:
     - .deploy
     - .kube
   needs:
-    - build:mySQL
+    - build:mysql
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
     CI_CD_CONTAINER_IMAGES: '[{"container": "t09-mysql", "image": "mysql"}]'
 
-deploy:djangoService:
+deploy:django_service:
   extends:
     - .deploy
     - .kube
   needs:
-  - build:djangoService
-  - deploy:mySQL
+  - build:django_service
+  - deploy:mysql
   variables:
     CI_CD_KUBE_FILE: MediaAcquisition/media-acquisition-kubernetes.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t09-django", "image": "djangoService"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t09-django", "image": "django-service"}]'
 
 status:monitor_containers:
   extends:
     - .deploy
     - .kube_monitor
   needs:
-    - deploy:djangoService
+    - deploy:django_service
   variables:
     # Variables
     #
@@ -77,7 +77,7 @@ status:resource_consumption:
     - .deploy
     - .kube_top
   needs:
-    - deploy:djangoService
+    - deploy:django_service
   variables:
     # Variable
     #
@@ -90,14 +90,14 @@ status:resource_consumption:
     CI_CD_KUBE_FILES: "MediaAcquisition/media-acquisition-kubernetes.yaml"
 
 ### Post ###
-cleanup:mySQL:
+cleanup:mysql:
   extends:
     - .cleanup
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: mysql
 
-cleanup:djangoService:
+cleanup:django_service:
   extends:
     - .cleanup
     - .remove_test_image_if_exist
