@@ -17,8 +17,8 @@ build:mail_service:
       - .build_image
     needs: []
     variables: 
-         CI_CD_IMAGE_NAME: 'mail_service' 
-         CI_CD_PATH: 'dockerfiles/mailserviceDocker'
+         CI_CD_IMAGE_NAME: mailservice 
+         CI_CD_PATH: dockerfiles/mailserviceDocker
 
 
 #Builds subscription_service image
@@ -28,16 +28,21 @@ build:subscription_service:
       - .build_image
     needs: []
     variables: 
-         CI_CD_IMAGE_NAME: 'subscription_service'
-         CI_CD_PATH: 'dockerfiles/subscriptionserviceDocker'
+         CI_CD_IMAGE_NAME: subscriptionservice
+         CI_CD_PATH: dockerfiles/subscriptionserviceDocker
 
 
 #Run unit tests
 test:unit:
+  extends: .unit
   image:
      openjdk:17
      gradle:7.2.0-jdk17
-  extends: .unit
+  needs: 
+    job:
+      - build:mail_service
+      - build:subscription_service
+    optional: true    
   script:
        gradle test
 
