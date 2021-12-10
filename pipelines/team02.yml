@@ -2,8 +2,8 @@
 ########## Settings ##########
 ##############################
 
-variables:
-  CI_CD_TOOL_DEBUG: "true"
+#variables:
+#  CI_CD_TOOL_DEBUG: "true"
 
 ##############################
 ######## DON'T TOUCH #########
