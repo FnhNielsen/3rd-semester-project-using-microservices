@@ -3,9 +3,9 @@ include:
     ref: v5.0
     file: base_pipeline.yml
 
-
 variables:
   CI_CD_PRODUCTION_IMAGE_PRE: "prod-"
+
 ##############################
 ############ JOBS ############
 ##############################
@@ -18,7 +18,7 @@ build:mail_service:
     needs: []
     variables: 
          CI_CD_IMAGE_NAME: mailservice 
-         CI_CD_PATH: dockerfiles/mailserviceDocker
+         CI_CD_FILE_NAME: MailDockerfile
 
 
 #Builds subscription_service image
@@ -29,20 +29,15 @@ build:subscription_service:
     needs: []
     variables: 
          CI_CD_IMAGE_NAME: subscriptionservice
-         CI_CD_PATH: dockerfiles/subscriptionserviceDocker
+         CI_CD_FILE_NAME: SubDockerfile
 
 
 #Run unit tests
 test:unit:
-  extends: .unit
   image:
      openjdk:17
      gradle:7.2.0-jdk17
-  needs: 
-    job:
-      - build:mail_service
-      - build:subscription_service
-    optional: true    
+  extends: .unit
   script:
        gradle test
 
