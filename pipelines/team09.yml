@@ -32,7 +32,7 @@ build:django_service:
 
 
 # deliver
-deploy:mySQL:
+deploy:mysql:
   extends:
     - .deploy
     - .kube
