@@ -37,7 +37,7 @@ test:unit:
   image: gitlab.sdu.dk:5050/semester-project-e2021/team-04/subscription/gradle:7.2.0-jdk17
   extends: .unit
   script:
-       gradle test
+       gradle build
 
 # depliver
 deploy:mail_service:
