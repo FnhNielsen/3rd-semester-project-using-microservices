@@ -27,14 +27,6 @@ build:api:
   needs:
     - build:compile
   variables:
-    # Variables
-    #
-    # CI_CD_IMAGE_NAME: (string) [Required]
-    # CI_CD_FILE_NAME: (string) [Optional]
-    #   Default: Dockerfile
-    # CI_CD_PATH: (string) [Optional]
-    #   Default: .
-    #
     CI_CD_IMAGE_NAME: api
     CI_CD_PATH: api
 
@@ -187,6 +179,7 @@ test:acceptance:
 
 test:integration:
   extends: .integration
+  image: $CI_CD_KUBE_IMAGE
   needs: 
     - deploy:api
   script:
