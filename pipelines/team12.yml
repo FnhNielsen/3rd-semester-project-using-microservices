@@ -181,7 +181,7 @@ test:integration:
   extends: .integration
   image: $CI_CD_KUBE_IMAGE
   needs: 
-    - deploy:api
+    - status:monitor_containers
   script:
     - kubectl exec deploy/t12-api -c t12-api --kubeconfig="${CI_CD_KUBE_CONFIG}" -- python /app/integration_t.py
 
