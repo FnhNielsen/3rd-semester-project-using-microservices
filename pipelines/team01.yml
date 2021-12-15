@@ -4,18 +4,15 @@
 
 include:
   - project: semester-project-e2021/team-12/ci-cd
-    ref: v4.0
+    ref: v5.0
     file: base_pipeline.yml
-
-    variables:
-      CI_CD_TOOL_DEBUG: true
 
 ##############################
 ############ Jobs ############
 ##############################
 
 ### Build ###
-build:api:
+build:web:
   extends:
     - .build
     - .build_image
@@ -30,17 +27,27 @@ build:api:
     # CI_CD_PATH: (string) [Optional]
     #   Default: .
     #
-    CI_CD_IMAGE_NAME: api
+    CI_CD_IMAGE_NAME: web
+
+build:flask:
+  extends:
+    - .build
+    - .build_image
+  
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: flask
+    CI_CD_IMAGE_PATH: /src/flask
 
 ### Deploy ###
-deploy:api:
+deploy:web:
   extends:
     - .deploy
     - .kube
   needs:
-    - job: setup:state
+    - job: setup:stage_env
       optional: true
-    - build:api
+    - build:web
   variables:
   #Variables
 
@@ -52,33 +59,89 @@ deploy:api:
 #     #       {"container": "t12-database", "image": "database"}
 #     #     ]
 #     #
-    CI_CD_KUBE_FILE: api.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image": "api"}]'
+    CI_CD_KUBE_FILE: deployment.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t01-api", "image": "web"}]'
 
 
 ### Test ###
 #test:unit:
- # image: 
-  #  name: python:3.10-alpine3.14
-   # entrypoint: ["/bin/sh"]
   #needs: []
   #extends: .unit
   #script:
-    #- cd ${CI_PROJECT_DIR}/src/flask
-    #- pip install -U flask
-    #- export FLASK_APP=${CI_PROJECT_DIR}/src/flask/flaskTest.py
     #- flask test
 
 
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:web
+  variables:
+    # Variables
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    # CI_CD_TIME: (string) [Optional]
+    #   E.g. 10m or 100s
+    #
+    CI_CD_KUBE_FILES: deployment.yaml
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:web
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: deployment.yaml
 
 ### Post ###
-cleanup:api:
+cleanup:web:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     # Variable
     #
     # CI_CD_IMAGE_NAME: (string) [Required]
     #
-    CI_CD_IMAGE_NAME: api
+    CI_CD_IMAGE_NAME: web
+
+cleanup:flask:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+  variables:
+    # Variable
+    #
+    # CI_CD_IMAGE_NAME: (string) [Required]
+    #
+    CI_CD_IMAGE_NAME: flask
+
+cleanup:stage_env:
+  extends:
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    # Variable
+    #
+    # CI_CD_KUBE_FILES: (string) [Required]
+    #   E.g. Only one file
+    #     kube/api.yml
+    #   E.g. Multiple files at once
+    #     kube/common.yaml kube/api.yml kube/database.yml
+    #
+    CI_CD_KUBE_FILES: deployment.yaml
