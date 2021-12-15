@@ -38,7 +38,7 @@ test:unit:
   extends: .unit
   script:
   - cd ./java-backend
-  - gradle build
+  - gradle test
 
 # depliver
 deploy:mail_service:
