@@ -47,7 +47,7 @@ deploy:mail_service:
     - .kube
   variables:
     CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mail_service"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mailservice"}]'
 
 deploy:subscription_service:
   extends:
@@ -55,7 +55,7 @@ deploy:subscription_service:
     - .kube
   variables:
     CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscription_service"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionservice"}]'
 
     
 status:monitor_containers:
