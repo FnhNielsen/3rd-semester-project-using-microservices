@@ -9,13 +9,110 @@ DEBUG=0
 
 PROG="ci_cd_tool"
 
-USAGE="\
+USAGE="
 Usage:
+  ${PROG} [--debug] <command> <sub command> <required arguments> [<optional arguments>]
   ${PROG} --help
 
 Options:
   -v, --debug  Print more info.
-  -h, --help   Print this help message."
+  -h, --help   Print this help message.
+
+Commands:
+  docker:
+      create    - Create a docker image
+                  Required arguments:
+                    <user> Username
+                    <password> Password
+                    <registry> Registry address
+
+      login     - Log in to a docker registry
+                  Required argument:
+                    <image>       Image name. E.g. registry.example.com/group/project/image:tag
+                  Optional arguments:
+                    <docker file> Specify alternate docker filename or alternate location for a docker file.
+                                  Can also be combined. Default Dockerfile
+                    <path>        Specify path to source dir. Default .
+                    <labels>      Specify image labels as json format. Default empty
+                                  Eg: '[\"org.opencontainers.image.title=<a title>\",
+                                        \"org.opencontainers.image.title=url=<a url>\"]'
+
+      push      - Push a local docker image to a docker registry
+                  Required argument:
+                    <image>       Image name. E.g. registry.example.com/group/project/image:tag
+
+  registry:
+      exist     - Check if a docker image exists in the GitLab docker registry
+                  Required arguments:
+                    <image>       Image name. ! Remove registry.example.com/group/project/ and tag from the image name
+                    <tag>         Tag. E.g. 0.0.1
+
+      remove    - Delete a docker image from the GitLab docker registry
+                  Required arguments:
+                    <image>       Image name. ! Remove registry.example.com/group/project/ and tag from the image name
+                    <tag>         Tag. E.g. 0.0.1
+
+  kube:
+      image     - Set the image name of a given Kubernetes manifest container
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <type>        Specify node kind
+                    <container>   The name of the container
+                    <image>       Image name. E.g. registry.example.com/group/project/image:tag
+
+      apply     - Implement a Kubernetes manifest in a namespace
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <config>      Kubernetes config
+
+      delete    - Removes a Kubernetes manifest from a namespace
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <config>      Kubernetes config
+
+      status    - Wait for a period of time to roll out one or more pods for a given Kubernetes manifest
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <config>      Kubernetes config
+                  Optional argument:
+                    <timeout>     Specify how long to wait before fail. Default 3m
+
+      outcome   - Get a description of a Kubernetes manifest implementation.
+                  If the implementation has one or more pods, pod status and log from containers will be included
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <config>      Kubernetes config
+
+      monitor   - Monitors container status for a period of time and retrieves log from failed container
+                  Required arguments:
+                    <manifests>   Specify one or more kubernetes manifests
+                    <config>      Kubernetes config
+                  Optional argument:
+                    <timeout>     Specify how long to monitor containers. Default 3m
+
+      top       - Describes resource consumption for a given Kubernetes manifest that has pods
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <config>      Kubernetes config
+
+      exec      - Execute a command in a container
+                  Required arguments:
+                    <manifest>    Specify kubernetes manifest
+                    <type/name>   Specify node kind and name
+                    <cmd>         Command to executed
+                    <config>      Kubernetes config
+
+  git:
+      tag       - Add a git tag to a commit in a GitLab repository
+                  Required argument:
+                    <tag>         Tag name
+
+  version:
+      validate  - Validate if a version follows the Semantic Versioning scheme
+                  Required argument:
+                    <version>     Specify Semantic Versioning
+
+      normalize - Return the version without v and build metadata"
 
 if [ -f "/usr/local/lib/ci_cd_lib/gitlab.sh" ]; then
   source "/usr/local/lib/ci_cd_lib/tools.sh"
@@ -212,21 +309,21 @@ function command_kube_describe_deploy {
   validate_kube_conf_input "$2"
 
   for kind in $(kube_get_kinds "$1"); do
-    service_name=$(kube_get_service_name "$1" "${kind}")
+    for service_name in $(kube_get_service_names "$1" "${kind}"); do
+      echo "==== describe ${kind}/${service_name} ===="
+      kube_describe "${kind}" "${service_name}" "$2" || warning "It was not possible to describe ${kind}/${service_name}."
 
-    echo "==== describe ${kind}/${service_name} ===="
-    kube_describe "${kind}" "${service_name}" "$2" || warning "It was not possible to describe ${kind}/${service_name}."
+      for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
+        echo "==== get pod/${pod} ===="
+        kube_get "pod" "${pod}" "$2" || warning "It was not possible to get pod/${pod}."
 
-    for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
-      echo "==== get pod/${pod} ===="
-      kube_get "pod" "${pod}" "$2" || warning "It was not possible to get pod/${pod}."
+        echo "==== describe pod/${pod} ===="
+        kube_describe "pod" "${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
 
-      echo "==== describe pod/${pod} ===="
-      kube_describe "pod" "${pod}" "$2" || warning "It was not possible to describe pod/${pod}."
-
-      for container_name in $(kube_get_container_names "$1" "${kind}" "${service_name}"); do
-        echo "==== pod/${pod} container/${container_name} log ===="
-        kube_pod_log "${pod}" "${container_name}" "$2" || warning "No logs available."
+        for container_name in $(kube_get_container_names "$1" "${kind}" "${service_name}"); do
+          echo "==== pod/${pod} container/${container_name} log ===="
+          kube_pod_log "${pod}" "${container_name}" "$2" || warning "No logs available."
+        done
       done
     done
   done
@@ -245,10 +342,9 @@ function command_kube_status {
   debug "Timeout: \"${timeout}\""
 
   for kind in ${POD_KINDS}; do
-    service_name=$(kube_get_service_name "$1" "${kind}")
-    if [ -n "${service_name}" ]; then
+    for service_name in $(kube_get_service_names "$1" "${kind}"); do
       kube_status "${kind,,}" "${service_name}" "$2" "${timeout}" || exit 1
-    fi
+    done
   done
 }
 
@@ -264,14 +360,15 @@ function command_kube_monitor_containers {
   pods='[]'
   for file in $1; do
     validate_kube_file_input "${file}"
-
+  
     for kind in $(kube_get_kinds "${file}"); do
-      service_name=$(kube_get_service_name "${file}" "${kind}")
-      for pod in $(kube_get_pods "${file}" "${kind}" "${service_name}" "$2"); do
-        for container_name in $(kube_get_container_names "${file}" "${kind}" "${service_name}"); do
-          if [ "$(echo "${pods}" | jq -r ".[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\")")" == "" ]; then
-            pods=$(echo "${pods}" | jq -r ". += [{\"pod\": \"${pod}\", \"container_name\": \"${container_name}\", \"status\": \"\"}]")
-          fi
+      for service_name in $(kube_get_service_names "$1" "${kind}"); do
+        for pod in $(kube_get_pods "${file}" "${kind}" "${service_name}" "$2"); do
+          for container_name in $(kube_get_container_names "${file}" "${kind}" "${service_name}"); do
+            if [ "$(echo "${pods}" | jq -r ".[] | select(.pod==\"${pod}\") | select(.container_name==\"${container_name}\")")" == "" ]; then
+              pods=$(echo "${pods}" | jq -r ". += [{\"pod\": \"${pod}\", \"container_name\": \"${container_name}\", \"status\": \"\"}]")
+            fi
+          done
         done
       done
     done
@@ -340,9 +437,10 @@ function command_kube_top {
   validate_kube_conf_input "$2"
 
   for kind in $(kube_get_kinds "$1"); do
-    service_name=$(kube_get_service_name "$1" "${kind}")
-    for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
-      kube_top_pod "${pod}" "$2" || warning "It was not possible to get resource."
+    for service_name in $(kube_get_service_names "$1" "${kind}"); do
+      for pod in $(kube_get_pods "$1" "${kind}" "${service_name}" "$2"); do
+        kube_top_pod "${pod}" "$2" || warning "It was not possible to get resource."
+      done
     done
   done
 }

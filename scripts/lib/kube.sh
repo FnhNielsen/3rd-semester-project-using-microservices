@@ -37,20 +37,19 @@ function kube_get_kinds {
   _kube_get_unique_values "$(yq e ".kind" "$1")" "---"
 }
 
-function kube_get_service_name {
-  # $1: file; set as file path (string) [Required]
-  # $2: kind [Required]
-  debug "File: \"$1\""
-  debug "Kind: \"$2\""
-
-  yq e "select(.kind==\"$2\") | .metadata.name" "$1"
-}
-
 function kube_get_service_names {
   # $1: file; set as file path (string) [Required]
+  # $2: kind [Optional]
   debug "File: \"$1\""
+  debug "Kind: \"$2\""
+  
+  if [ -n "$2" ]; then
+    values=$(yq e "select(.kind==\"$2\") | .metadata.name" "$1")
+  else
+    values=$(yq e ".metadata.name" "$1")
+  fi
 
-  _kube_get_unique_values "$(yq e ".metadata.name" "$1")" "---"
+  _kube_get_unique_values "${values}" "---"
 }
 
 function kube_get_container_names {
@@ -63,7 +62,6 @@ function kube_get_container_names {
 
   _kube_get_unique_values "$(yq e "select(.kind==\"$2\") | select(.metadata.name==\"$3\") | .spec.template.spec.containers | .[] | .name" "$1")" "---"
 }
-
 
 function kube_set_image {
   # $1: file set as file path (string) [Required]

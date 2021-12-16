@@ -14,9 +14,9 @@ variables:
   CI_CD_PRODUCTION_IMAGE_PRE: ""
   CI_CD_TOOL_DEBUG: "false"
   # Setting variable to set up the base pipeline
-  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.12
-  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.12
-  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.12
+  CI_CD_BASE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:4.0.13
+  CI_CD_DOCKER_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/docker:4.0.13
+  CI_CD_KUBE_IMAGE: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/kube:3.0.13
   # These variables are handled by the base pipeline and must not be changed
   CI_CD_TAG: $CI_PIPELINE_ID
   CI_CD_KUBE_CONFIG: ""
