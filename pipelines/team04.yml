@@ -5,6 +5,7 @@ include:
 
 variables:
   CI_CD_PRODUCTION_IMAGE_PRE: "prod-"
+  CI_CD_TOOL_DEBUG: "true"
 
 ##############################
 ############ JOBS ############
