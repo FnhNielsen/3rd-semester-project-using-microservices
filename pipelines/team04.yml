@@ -41,21 +41,23 @@ test:unit:
   - gradle test
 
 # depliver
-deploy:mail_service:
+deploy:all:
   extends:
     - .deploy
     - .kube
   variables:
     CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-mailservice", "image": "mailservice"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-mailservice", "image": "mailservice"},
+    {"type": "Deployment", "container": "t04-subscription", "image": "subscriptionservice"}]'
 
-deploy:subscription_service:
-  extends:
-    - .deploy
-    - .kube
-  variables:
-    CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-subscription", "image": "subscriptionservice"}]'
+
+#deploy:subscription_service:
+#  extends:
+#    - .deploy
+#    - .kube
+#  variables:
+#    CI_CD_KUBE_FILE: ./manifest.yml
+#    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-subscription", "image": "subscriptionservice"}]'
 
     
 status:monitor_containers:
