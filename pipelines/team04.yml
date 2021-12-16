@@ -66,7 +66,7 @@ status:monitor_containers:
     - deploy:mail_service
     - deploy:subscription_service
   variables:
-    CI_CD_KUBE_FILES: "/manifest.yml"
+    CI_CD_KUBE_FILES: "./manifest.yml"
 
 status:resource_consumption:
   extends:
@@ -76,7 +76,7 @@ status:resource_consumption:
     - deploy:subscription_service
     - deploy:mail_service
   variables:
-    CI_CD_KUBE_FILES: "/manifest.yml"
+    CI_CD_KUBE_FILES: "./manifest.yml"
 
 
 
@@ -101,4 +101,4 @@ cleanup:stage_env:
     - .always_merge_request_production
     - .kube_delete
   variables:
-    CI_CD_KUBE_FILES: "/manifest.yml"
+    CI_CD_KUBE_FILES: "./manifest.yml"
