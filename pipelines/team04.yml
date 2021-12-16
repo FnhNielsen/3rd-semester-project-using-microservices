@@ -31,7 +31,6 @@ build:subscription_service:
          CI_CD_IMAGE_NAME: subscriptionservice
          CI_CD_FILE_NAME: SubDockerfile
 
-
 #Run unit tests
 test:unit:
   image: gitlab.sdu.dk:5050/semester-project-e2021/team-04/subscription/gradle:7.2.0-jdk17
