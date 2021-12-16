@@ -47,7 +47,7 @@ deploy:mail_service:
     - .kube
   variables:
     CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-mailService", "image": "mailservice"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-mailservice", "image": "mailservice"}]'
 
 deploy:subscription_service:
   extends:
@@ -55,7 +55,7 @@ deploy:subscription_service:
     - .kube
   variables:
     CI_CD_KUBE_FILE: ./manifest.yml
-    CI_CD_CONTAINER_IMAGES: '[{"container": "t04-subscription", "image": "subscriptionservice"}]'
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t04-subscription", "image": "subscriptionservice"}]'
 
     
 status:monitor_containers:
@@ -66,16 +66,6 @@ status:monitor_containers:
     - deploy:mail_service
     - deploy:subscription_service
   variables:
-    # Variables
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    # CI_CD_TIME: (string) [Optional]
-    #   E.g. 10m or 100s
-    #
     CI_CD_KUBE_FILES: "/manifest.yml"
 
 status:resource_consumption:
@@ -86,14 +76,6 @@ status:resource_consumption:
     - deploy:subscription_service
     - deploy:mail_service
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "/manifest.yml"
 
 
@@ -104,14 +86,14 @@ cleanup:mail_service:
     - .cleanup
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: mail_service
+    CI_CD_IMAGE_NAME: mailservice
 
 cleanup:subscription_service:
   extends:
     - .cleanup
     - .remove_test_image_if_exist
   variables:
-    CI_CD_IMAGE_NAME: subscription_service
+    CI_CD_IMAGE_NAME: subscriptionservice
 
 cleanup:stage_env:
   extends:
@@ -119,12 +101,4 @@ cleanup:stage_env:
     - .always_merge_request_production
     - .kube_delete
   variables:
-    # Variable
-    #
-    # CI_CD_KUBE_FILES: (string) [Required]
-    #   E.g. Only one file
-    #     kube/api.yml
-    #   E.g. Multiple files at once
-    #     kube/common.yaml kube/api.yml kube/database.yml
-    #
     CI_CD_KUBE_FILES: "/manifest.yml"
