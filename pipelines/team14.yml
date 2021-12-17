@@ -95,7 +95,7 @@ deploy:kube_audience_targeting:
       - deploy:kube_mongo
     variables:
         CI_CD_KUBE_FILE: kubernetes_production/at_deployment.yml
-        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-at", "image": "at"}]'
+        CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t14-at", "image": "audience_targeting"}]'
 
 deploy:kube_billing:
     extends:
