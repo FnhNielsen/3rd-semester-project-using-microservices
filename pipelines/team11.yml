@@ -44,9 +44,7 @@ deploy:database:
     - .deploy
     - .kube
   needs:
-    - build:database_image
-    - job: setup:stage_env
-      optional: true
+    - deploy:db_service
   variables:
     CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "StatefulSet", "container": "t11-cassandra", "image": "database"}]'
@@ -71,7 +69,9 @@ deploy:db_service:
     - .deploy
     - .kube
   needs:
-    - deploy:database
+    - build:database
+    - job: setup:stage_env
+      optional: true
   variables:
     CI_CD_KUBE_FILE:  Cassandra/service.yml
     CI_CD_TIMEOUT: 5m
