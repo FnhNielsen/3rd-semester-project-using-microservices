@@ -4,7 +4,7 @@ FROM alpine:3.13
 # Semver tool: https://github.com/fsaintjacques/semver-tool
 RUN apk --no-cache add curl bash && \
     curl -fSL "https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver" -o "/usr/local/bin/semver" && \
-    if [ "$(echo "d5055fc17cf00a1d56107746a991ba0b6ef817fcfc063459c1eacedbb277bbd5  /usr/local/bin/semver" | sha256sum -c -)" == "/usr/local/bin/reg: OK" ]; then echo "ERROR: semver has wrong check sum"; exit 1; fi && \
+    if [ "$(echo "d5055fc17cf00a1d56107746a991ba0b6ef817fcfc063459c1eacedbb277bbd5  /usr/local/bin/semver" | sha256sum -c -)" != "/usr/local/bin/semver: OK" ]; then exit 1; fi && \
     chmod a+x "/usr/local/bin/semver" && \
     apk --no-cache del curl
 
