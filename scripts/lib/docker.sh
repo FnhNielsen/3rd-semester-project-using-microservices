@@ -33,7 +33,7 @@ function docker_build_image {
   cd "./${path}" || error "Cannot cd to '$(pwd)/${path}': No such directory."
 
   # Do we have a docker file?
-  [ ! -f "${file}" ] && error "Cannot locate docker file '${file}' in directory '$(pwd)/${path}'."
+  [ ! -f "${file}" ] && error "Cannot locate Docker file '${file}' in directory '$(pwd)/${path}'."
 
   # Build image
   labels=("${@:4}")

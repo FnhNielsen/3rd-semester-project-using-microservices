@@ -20,34 +20,34 @@ Options:
 
 Commands:
   docker:
-      create    - Create a docker image
+      create    - Create a Docker image
                   Required arguments:
                     <user> Username
                     <password> Password
                     <registry> Registry address
 
-      login     - Log in to a docker registry
+      login     - Log in to a Docker registry
                   Required argument:
                     <image>       Image name. E.g. registry.example.com/group/project/image:tag
                   Optional arguments:
-                    <docker file> Specify alternate docker filename or alternate location for a docker file.
+                    <docker file> Specify alternate Docker filename or alternate location for a Docker file.
                                   Can also be combined. Default Dockerfile
                     <path>        Specify path to source dir. Default .
                     <labels>      Specify image labels as json format. Default empty
                                   Eg: '[\"org.opencontainers.image.title=<a title>\",
                                         \"org.opencontainers.image.title=url=<a url>\"]'
 
-      push      - Push a local docker image to a docker registry
+      push      - Push a local Docker image to a Docker registry
                   Required argument:
                     <image>       Image name. E.g. registry.example.com/group/project/image:tag
 
   registry:
-      exist     - Check if a docker image exists in the GitLab docker registry
+      exist     - Check if a Docker image exists in the GitLab Docker registry
                   Required arguments:
                     <image>       Image name. ! Remove registry.example.com/group/project/ and tag from the image name
                     <tag>         Tag. E.g. 0.0.1
 
-      remove    - Delete a docker image from the GitLab docker registry
+      remove    - Delete a Docker image from the GitLab Docker registry
                   Required arguments:
                     <image>       Image name. ! Remove registry.example.com/group/project/ and tag from the image name
                     <tag>         Tag. E.g. 0.0.1
@@ -55,24 +55,24 @@ Commands:
   kube:
       image     - Set the image name of a given Kubernetes manifest container
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <type>        Specify node kind
                     <container>   The name of the container
                     <image>       Image name. E.g. registry.example.com/group/project/image:tag
 
       apply     - Implement a Kubernetes manifest in a namespace
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <config>      Kubernetes config
 
       delete    - Removes a Kubernetes manifest from a namespace
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <config>      Kubernetes config
 
       status    - Wait for a period of time to roll out one or more pods for a given Kubernetes manifest
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <config>      Kubernetes config
                   Optional argument:
                     <timeout>     Specify how long to wait before fail. Default 3m
@@ -80,24 +80,24 @@ Commands:
       outcome   - Get a description of a Kubernetes manifest implementation.
                   If the implementation has one or more pods, pod status and log from containers will be included
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <config>      Kubernetes config
 
-      monitor   - Monitors container status for a period of time and retrieves log from failed container
+      monitor   - Monitors container status for a period of time and retrieves logs from failed container
                   Required arguments:
-                    <manifests>   Specify one or more kubernetes manifests
+                    <manifests>   Specify one or more Kubernetes manifests
                     <config>      Kubernetes config
                   Optional argument:
                     <timeout>     Specify how long to monitor containers. Default 3m
 
       top       - Describes resource consumption for a given Kubernetes manifest that has pods
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <config>      Kubernetes config
 
       exec      - Execute a command in a container
                   Required arguments:
-                    <manifest>    Specify kubernetes manifest
+                    <manifest>    Specify Kubernetes manifest
                     <type/name>   Specify node kind and name
                     <cmd>         Command to executed
                     <config>      Kubernetes config

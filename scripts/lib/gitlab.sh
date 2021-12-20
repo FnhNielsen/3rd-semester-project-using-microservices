@@ -14,13 +14,13 @@ function exist_image_tag_gitlab {
 
   debug "Image name: \"$1\""
 
-  # Lookup docker images
+  # Lookup Docker images
   content=$(get_content "${url}" "${header[@]}")
   if is_empty "${content}" || [ "$(echo "${content}" | jq ". | type!=\"array\"")" == "true" ]; then
     error "Wrong response."
   fi
 
-  # Get docker image id if there is one
+  # Get Docker image id if there is one
   image_id=$(echo "${content}" | jq ".[] | select(.name == \"$1\") | .id")
   debug "Image id: \"${image_id}\""
 
