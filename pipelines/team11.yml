@@ -12,7 +12,7 @@ variables:
 
 include:
   - project: 'semester-project-e2021/team-12/ci-cd'
-    ref: v4.0
+    ref: v5.0
     file: 'base_pipeline.yml'
 
 ##############################
@@ -39,43 +39,79 @@ build:database_image:
     CI_CD_PATH: Cassandra
 
 ### Deploy ###
-deploy:api:
+deploy:db_service:
   extends:
     - .deploy
     - .kube
   needs:
-    - build:api_image
-    - job: setup:state
+    - build:database_image
+    - job: setup:stage_env
       optional: true
   variables:
-    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
-    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
+    CI_CD_KUBE_FILE:  Cassandra/service.yml
+    CI_CD_TIMEOUT: 5m
 
 deploy:database:
   extends:
     - .deploy
     - .kube
   needs:
-    - build:database_image
-    - job: setup:state
-      optional: true
+    - deploy:db_service
   variables:
     CI_CD_KUBE_FILE:  Cassandra/deploy-cass.yml
     CI_CD_CONTAINER_IMAGES: '[{"type": "StatefulSet", "container": "t11-cassandra", "image": "database"}]'
+    CI_CD_TIMEOUT: 10m  
 
-deploy:db_service:
+deploy:api:
   extends:
     - .deploy
     - .kube
   needs:
+    - build:api_image
     - deploy:database
+    - job: setup:stage_env
+      optional: true
   variables:
-    CI_CD_KUBE_FILE:  Cassandra/service.yml
+    CI_CD_KUBE_FILE: NodeJS/deployment.yaml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t11-api", "image": "api"}]'
+    CI_CD_TIMEOUT: 5m  
+
+
+status:monitor_containers:
+  extends:
+    - .deploy
+    - .kube_monitor
+  needs:
+    - deploy:api
+    - deploy:database
+    - deploy:db_service
+  variables:
+    CI_CD_KUBE_FILES: "NodeJS/deployment.yaml Cassandra/deploy-cass.yml Cassandra/service.yml"
+
+status:resource_consumption:
+  extends:
+    - .deploy
+    - .kube_top
+  needs:
+    - deploy:api
+    - deploy:database
+    - deploy:db_service
+  variables:
+    CI_CD_KUBE_FILES: "NodeJS/deployment.yaml Cassandra/deploy-cass.yml Cassandra/service.yml"
 
 ### Post ###
-cleanup:api_image:
+cleanup:stage_env:
   extends:
-    - .cleanup_test_image
+    - .cleanup
+    - .always_merge_request_production
+    - .kube_delete
+  variables:
+    CI_CD_KUBE_FILES: "NodeJS/deployment.yaml Cassandra/deploy-cass.yml Cassandra/service.yml"
+
+
+cleanup:api:
+  extends:
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     # Variables
@@ -84,9 +120,9 @@ cleanup:api_image:
     #
     CI_CD_IMAGE_NAME: api
 
-cleanup:database_image:
+cleanup:database:
   extends:
-    - .cleanup_test_image
+    - .cleanup
     - .remove_test_image_if_exist
   variables:
     # Variables

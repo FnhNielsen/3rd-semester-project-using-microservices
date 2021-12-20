@@ -1,11 +1,79 @@
-stages:
-  - build
+##############################
+########## Settings ##########
+##############################
 
-temporary_job:
-  stage: build
-  image: gitlab.sdu.dk:5050/semester-project-e2021/team-12/ci-cd/base_image:2.0.4
-  script:
-    - echo "This is temporary"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: on_success
+variables:
+  CI_CD_TOOL_DEBUG: "true"
+
+##############################
+######## DON'T TOUCH #########
+##############################
+
+include:
+  - project: 'semester-project-e2021/team-12/ci-cd'
+    ref: v4.0
+    file: 'base_pipeline.yml'
+
+##############################
+############ JOBS ############
+##############################
+
+###Build###
+build:backend:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: backend
+    CI_CD_PATH: .
+
+build:database:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: database
+    CI_CD_PATH: database
+
+###Deploy###
+deploy:database:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - job: setup:state
+      optional: true
+  variables:
+    CI_CD_KUBE_FILE: database.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-database", "image": "database"}]'
+    CI_CD_TIMEOUT: 5m
+    
+deploy:backend:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - deploy:database
+  variables:
+    CI_CD_KUBE_FILE: backend.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t02-backend", "image": "backend"}]'
+    CI_CD_TIMEOUT: 5m
+
+### Post ###
+cleanup:backend:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+
+    CI_CD_IMAGE_NAME: backend
+
+cleanup:database:
+  extends:
+    - .cleanup_test_image
+    - .remove_test_image_if_exist
+  variables:
+
+    CI_CD_IMAGE_NAME: database
