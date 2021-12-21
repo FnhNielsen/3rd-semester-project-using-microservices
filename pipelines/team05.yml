@@ -69,6 +69,15 @@ build:home:
     CI_CD_IMAGE_NAME: home
     CI_CD_PATH: Docker/home
 
+build:proxy:
+  extends:
+    - .build
+    - .build_image
+  needs: []
+  variables:
+    CI_CD_IMAGE_NAME: proxy
+    CI_CD_PATH: Docker/proxy
+
 ### Deploy ###
 # Deploy set 1
 deploy:elasticsearch_statefulset:
@@ -169,6 +178,20 @@ deploy:home:
     CI_CD_TIMEOUT: 10m
 
 # Deploy set 3
+deploy:proxy:
+  extends:
+    - .deploy
+    - .kube
+  needs:
+    - build:proxy
+    - deploy:kibana
+    - deploy:data_pull
+    - deploy:visualisation
+  variables:
+    CI_CD_KUBE_FILE: kubernetes/nginx.yml
+    CI_CD_CONTAINER_IMAGES: '[{"type": "Deployment", "container": "t05-nginx", "image": "proxy"}]'
+    CI_CD_TIMEOUT: 10m
+
 deploy:fluentd:
   extends:
     - .deploy
@@ -217,7 +240,8 @@ status:monitor_containers:
       kubernetes/visualization.yml
       kubernetes/home.yml
       kubernetes/fluentd-deployment.yml
-      kubernetes/mockup/fakemicroservice_temp.yml"
+      kubernetes/mockup/fakemicroservice_temp.yml
+      kubernetes/nginx.yml"
 
 status:resource_consumption:
   extends:
@@ -241,7 +265,8 @@ status:resource_consumption:
       kubernetes/visualization.yml
       kubernetes/home.yml
       kubernetes/fluentd-deployment.yml
-      kubernetes/mockup/fakemicroservice_temp.yml"
+      kubernetes/mockup/fakemicroservice_temp.yml
+      kubernetes/nginx.yml"
 
 ### Test ###
 test:integration:
@@ -318,3 +343,10 @@ cleanup:home:
     - .remove_test_image_if_exist
   variables:
     CI_CD_IMAGE_NAME: home
+
+cleanup:proxy:
+  extends:
+    - .cleanup
+    - .remove_test_image_if_exist
+  variables:
+    CI_CD_IMAGE_NAME: proxy
